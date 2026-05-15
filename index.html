@@ -1195,6 +1195,15 @@
       <div class="nav-item" data-section="usuarios" onclick="showSection('usuarios')">
         <span class="nav-icon">◈</span> Usuários
       </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Elogios</div>
+      <div class="nav-item" data-section="elogios-pendentes" onclick="showSection('elogios-pendentes')">
+        <span class="nav-icon">★</span> Elogios Pendentes
+        <span class="nav-badge" id="badge-elogios-pend" style="display:none;">0</span>
+      </div>
+      <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
+        <span class="nav-icon">☆</span> Ver Elogios
+      </div>
       <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
         <span class="nav-icon">↓</span> Exportar
       </div>
@@ -1243,6 +1252,9 @@
       </div>
       <div class="nav-item" data-section="meus-vereditos" onclick="showSection('meus-vereditos')">
         <span class="nav-icon">◆</span> Vereditos
+      </div>
+      <div class="nav-item" data-section="meus-elogios" onclick="showSection('meus-elogios')">
+        <span class="nav-icon">★</span> Meus Elogios
       </div>
     </div>
 
@@ -2212,6 +2224,42 @@
       </div>
     </section>
 
+
+    <!-- ── MEUS ELOGIOS (cadete + dia_cfo + xerife) ── -->
+    <section class="section" id="section-meus-elogios">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Minhas Anotações</div>
+          <div class="page-title">Meus <span>Elogios</span></div>
+          <div class="page-meta" id="meta-meus-elogios">Elogios aprovados pelo coordenador</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadMeusElogios()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Data do Evento</th>
+                <th>Aprovado em</th>
+                <th>Tipo de Elogio</th>
+                <th>Pontos</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-meus-elogios">
+              <tr class="loading-row"><td colspan="6">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-meus-elogios">—</span>
+          <div class="pag-btns" id="pag-btns-meus-elogios"></div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -2503,7 +2551,7 @@
 
 
 <script>
-  const API = 'http://localhost:8000';
+  const API = 'https://gerenciamentodisciplinarabm-production.up.railway.app';
 
   // ── UTILS ──────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -2556,6 +2604,7 @@
     if (name === 'lancar-elogio')          initLancarElogio();
     if (name === 'justificar')             loadJustificar();
     if (name === 'meus-vereditos')         loadMeusVereditos();
+    if (name === 'meus-elogios')           loadMeusElogios();
   }
 
   // ── INIT LISTENERS (DOM ready) ──────────────────────────────────
