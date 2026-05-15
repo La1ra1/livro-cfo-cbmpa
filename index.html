@@ -1195,15 +1195,6 @@
       <div class="nav-item" data-section="usuarios" onclick="showSection('usuarios')">
         <span class="nav-icon">◈</span> Usuários
       </div>
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-label">Elogios</div>
-      <div class="nav-item" data-section="elogios-pendentes" onclick="showSection('elogios-pendentes')">
-        <span class="nav-icon">★</span> Elogios Pendentes
-        <span class="nav-badge" id="badge-elogios-pend" style="display:none;">0</span>
-      </div>
-      <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
-        <span class="nav-icon">☆</span> Ver Elogios
-      </div>
       <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
         <span class="nav-icon">↓</span> Exportar
       </div>
@@ -2512,7 +2503,7 @@
 
 
 <script>
-  const API = 'https://gerenciamentodisciplinarabm-production.up.railway.app';
+  const API = 'http://localhost:8000';
 
   // ── UTILS ──────────────────────────────────
   const $ = id => document.getElementById(id);
