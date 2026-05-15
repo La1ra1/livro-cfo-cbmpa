@@ -5721,6 +5721,60 @@
       </div>`).join('');
   }
 
+
+  // ── MEUS ELOGIOS (cadete + dia_cfo + xerife) ──────────────────────────────────
+  async function loadMeusElogios(page = 1) {
+    const tbody = document.getElementById('tbody-meus-elogios');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6">CARREGANDO...</td></tr>';
+
+    try {
+      const res = await fetch(`${API}/cadete/elogios?page=${page}&limit=${LIMIT}`, {
+        headers: { 'Authorization': `Bearer ${token()}` },
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">${d.detail || 'ERRO ' + res.status}</td></tr>`;
+        document.getElementById('pag-info-meus-elogios').textContent = '';
+        document.getElementById('pag-btns-meus-elogios').innerHTML = '';
+        return;
+      }
+      const json = await res.json();
+
+      document.getElementById('meta-meus-elogios').textContent =
+        `${json.total} elogio(s) aprovado(s)`;
+
+      if (!json.data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM ELOGIO APROVADO</td></tr>';
+        document.getElementById('pag-info-meus-elogios').textContent = '0 registros';
+        document.getElementById('pag-btns-meus-elogios').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = json.data.map(e => {
+        const dataEvento = e.data_evento
+          ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
+        const motivoPreview = e.descricao_motivo
+          ? e.descricao_motivo.substring(0, 60) + (e.descricao_motivo.length > 60 ? '\u2026' : '') : '—';
+        return `
+        <tr>
+          <td class="td-mono">#${e.id}</td>
+          <td class="td-mono">${dataEvento}</td>
+          <td class="td-mono">${fmtDate(e.approved_at)}</td>
+          <td style="font-size:12px;">${e.tipo_elogio}</td>
+          <td class="td-mono" style="color:var(--success);font-weight:700;">+${e.pontos}</td>
+          <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${motivoPreview}</td>
+        </tr>`;
+      }).join('');
+
+      renderPagBar('pag-btns-meus-elogios', 'pag-info-meus-elogios',
+        { page, total: json.total, data: json.data }, loadMeusElogios);
+
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO: ${err.message}</td></tr>`;
+    }
+  }
+
   (async () => {
     if (token()) {
       await initApp();
