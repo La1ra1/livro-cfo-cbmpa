@@ -2058,11 +2058,20 @@
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadElogiosPendentes()">↻ Atualizar</button>
       </div>
+      <div class="bulk-bar" id="bulk-bar-elogios">
+        <span class="bulk-count" id="bulk-count-elogios">0 selecionado(s)</span>
+        <button class="btn btn-sm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onclick="bulkElogio('aprovado')">✓ Aprovar Selecionados</button>
+        <button class="btn btn-sm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onclick="bulkElogio('rejeitado')">✕ Rejeitar Selecionados</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelectionElogios()">Limpar seleção</button>
+      </div>
       <div class="card">
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-elogios" onclick="toggleAllElogios(this)" /></th>
                 <th>ID</th>
                 <th>Data Lançamento</th>
                 <th>Data Evento</th>
@@ -2070,7 +2079,6 @@
                 <th>Tipo de Elogio</th>
                 <th>Pontos</th>
                 <th>Motivo</th>
-                <th>Ação</th>
               </tr>
             </thead>
             <tbody id="tbody-elogios-pend">
@@ -5420,13 +5428,20 @@
         return;
       }
 
+      window._elogiosPendMap = {};
+      json.data.forEach(e => { window._elogiosPendMap[e.id] = e; });
+      clearSelectionElogios();
+
       tbody.innerHTML = json.data.map(e => {
         const motivoPreview = e.descricao_motivo
           ? e.descricao_motivo.substring(0, 55) + (e.descricao_motivo.length > 55 ? '…' : '')
           : '—';
         const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
         return `
-        <tr>
+        <tr id="elogio-row-${e.id}">
+          <td class="cb-wrap" onclick="event.stopPropagation()">
+            <input type="checkbox" class="cb-row cb-elogio" value="${e.id}" onchange="onElogioCheckChange()" />
+          </td>
           <td class="td-mono">#${e.id}</td>
           <td class="td-mono">${fmtDate(e.created_at)}</td>
           <td class="td-mono">${dataEvento}</td>
@@ -5434,14 +5449,6 @@
           <td style="font-size:12px;">${e.tipo_elogio}</td>
           <td class="td-mono" style="color:var(--success);font-weight:700;">+${e.pontos}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${motivoPreview}</td>
-          <td>
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-sm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-                onclick="aprovarElogio(${e.id}, 'aprovado', this)">✓ Aprovar</button>
-              <button class="btn btn-sm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-                onclick="aprovarElogio(${e.id}, 'rejeitado', this)">✕ Rejeitar</button>
-            </div>
-          </td>
         </tr>`;
       }).join('');
 
@@ -5774,6 +5781,65 @@
     } catch (err) {
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO: ${err.message}</td></tr>`;
     }
+  }
+
+
+  // ── ELOGIOS — seleção em lote ──────────────────────────────────
+  function getCheckedElogios() {
+    return [...document.querySelectorAll('.cb-elogio:checked')].map(cb => Number(cb.value));
+  }
+
+  function onElogioCheckChange() {
+    const checked = getCheckedElogios();
+    const all     = document.querySelectorAll('.cb-elogio');
+    const cbAll   = document.getElementById('cb-all-elogios');
+    const bar     = document.getElementById('bulk-bar-elogios');
+    const count   = document.getElementById('bulk-count-elogios');
+    if (cbAll) { cbAll.indeterminate = checked.length > 0 && checked.length < all.length; cbAll.checked = checked.length === all.length && all.length > 0; }
+    if (bar)   bar.classList.toggle('show', checked.length > 0);
+    if (count) count.textContent = `${checked.length} selecionado(s)`;
+    document.querySelectorAll('.cb-elogio').forEach(cb => {
+      const row = document.getElementById(`elogio-row-${cb.value}`);
+      if (row) row.classList.toggle('selected', cb.checked);
+    });
+  }
+
+  function toggleAllElogios(cbAll) {
+    document.querySelectorAll('.cb-elogio').forEach(cb => { cb.checked = cbAll.checked; });
+    onElogioCheckChange();
+  }
+
+  function clearSelectionElogios() {
+    document.querySelectorAll('.cb-elogio').forEach(cb => { cb.checked = false; });
+    const cbAll = document.getElementById('cb-all-elogios');
+    if (cbAll) { cbAll.checked = false; cbAll.indeterminate = false; }
+    const bar = document.getElementById('bulk-bar-elogios');
+    if (bar) bar.classList.remove('show');
+  }
+
+  async function bulkElogio(status) {
+    const ids = getCheckedElogios();
+    if (!ids.length) return;
+    const label = status === 'aprovado' ? 'aprovar' : 'rejeitar';
+    if (!confirm(`${label.charAt(0).toUpperCase()+label.slice(1)} ${ids.length} elogio(s)?`)) return;
+    const bar = document.getElementById('bulk-bar-elogios');
+    bar.querySelectorAll('button').forEach(b => b.disabled = true);
+    let ok = 0, err = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`${API}/elogios/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+          body: JSON.stringify({ status }),
+        });
+        res.ok ? ok++ : err++;
+      } catch { err++; }
+    }
+    bar.querySelectorAll('button').forEach(b => b.disabled = false);
+    if (err === 0)     toast(`${ok} elogio(s) ${status === 'aprovado' ? 'aprovados' : 'rejeitados'}.`);
+    else if (ok === 0) toast(`Todas as ${err} operações falharam.`, 'error');
+    else               toast(`${ok} concluído(s), ${err} falha(s).`, 'error');
+    loadElogiosPendentes(ELOGIO_STATE.page);
   }
 
   (async () => {
