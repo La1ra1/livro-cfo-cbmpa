@@ -1448,6 +1448,7 @@
                 <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-pendentes" onclick="toggleAllPendentes(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>OF Resp.</th>
                 <th>Cadete Anotado</th>
                 <th>Dia CFO</th>
@@ -1508,6 +1509,7 @@
               <tr>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>Aprovada em</th>
                 <th>Prazo</th>
                 <th>Cadete Anotado</th>
@@ -1568,6 +1570,7 @@
               <tr>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>Cadete Anotado</th>
                 <th>Infração / Pontos</th>
                 <th>Justificativa (prévia)</th>
@@ -1599,9 +1602,11 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <select class="role-select" id="filter-veredito-resultado" onchange="loadVeredito(1)" style="width:auto;">
             <option value="">Todos os resultados</option>
-            <option value="abonada">Abonada</option>
+            <option value="justificada">Justificada</option>
             <option value="perda_de_ponto">Perda de Ponto</option>
-            <option value="abonada_com_pernoite">Abonada c/ Pernoite</option>
+            <option value="pernoite">Pernoite</option>
+            <option value="licença_nao_concedida">Licença Não Concedida</option>
+            <option value="recolher">Recolher</option>
           </select>
           <button class="btn btn-ghost btn-sm" onclick="loadVeredito()">↻ Atualizar</button>
         </div>
@@ -1628,6 +1633,7 @@
               <tr>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>Cadete Anotado</th>
                 <th>Infração / Pontos</th>
                 <th>Justificativa (prévia)</th>
@@ -1704,6 +1710,11 @@
                 <label class="form-lbl">Descrição da ocorrência *</label>
                 <textarea class="form-ctrl" id="lanc-descricao" placeholder="Descreva detalhadamente os fatos observados..."></textarea>
               </div>
+              <div class="form-grid-1" style="margin-top:12px;">
+                <label class="form-lbl">Data do fato *</label>
+                <input type="date" class="form-ctrl" id="lanc-data-fato" style="font-family:'IBM Plex Mono',monospace;font-size:13px;"
+                  oninput="document.getElementById('resumo-data-fato').textContent = this.value ? this.value.split('-').reverse().join('/') : '—'" />
+              </div>
             </div>
           </div>
 
@@ -1741,6 +1752,7 @@
               <div>Oficial: <span id="resumo-oficial" style="color:var(--text);">—</span></div>
               <div>Infração: <span id="resumo-infracao" style="color:var(--text);">—</span></div>
               <div>Pontos: <span id="resumo-pts" style="color:var(--danger);">—</span></div>
+              <div>Data do fato: <span id="resumo-data-fato" style="color:var(--text);">—</span></div>
               <div>Cadetes: <span id="resumo-cadetes" style="color:var(--accent);">0</span></div>
             </div>
             <div style="padding:0 18px 18px;">
@@ -1795,6 +1807,7 @@
               <tr>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>Lançada por</th>
                 <th>Cadete Anotado</th>
                 <th>Infração / Pontos</th>
@@ -1829,6 +1842,7 @@
               <tr>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>Aprovada em</th>
                 <th>Infração / Pontos</th>
                 <th>Descrição do Fato</th>
@@ -1861,6 +1875,7 @@
               <tr>
                 <th>ID</th>
                 <th>Data</th>
+                <th>Data do Fato</th>
                 <th>Infração / Pontos</th>
                 <th>Descrição do Fato</th>
                 <th>Justificativa</th>
@@ -1920,9 +1935,11 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <select class="role-select" id="aux-filter-resultado" onchange="loadAuxVereditos(1)" style="width:auto;">
             <option value="">Todos os resultados</option>
-            <option value="abonada">Abonada</option>
+            <option value="justificada">Justificada</option>
             <option value="perda_de_ponto">Perda de Ponto</option>
-            <option value="abonada_com_pernoite">Abonada c/ Pernoite</option>
+            <option value="pernoite">Pernoite</option>
+            <option value="licença_nao_concedida">Licença Não Concedida</option>
+            <option value="recolher">Recolher</option>
           </select>
           <button class="btn btn-ghost btn-sm" onclick="loadAuxVereditos()">↻ Atualizar</button>
         </div>
@@ -2029,14 +2046,9 @@
                   <th>Nº Geral</th>
                   <th>Nome de Guerra</th>
                   <th>Pel</th>
-                  <th>Anotações</th>
-                  <th>Perdas</th>
-                  <th>Abonadas</th>
-                  <th>Abon. c/ Pernoite</th>
-                  <th>Desconto</th>
-                  <th>Elogios</th>
-                  <th>Pts Elogios</th>
-                  <th>Saldo</th>
+                  <th>Desconto (Anotações)</th>
+                  <th>Pontos (Elogios)</th>
+                  <th>Nota Final</th>
                 </tr>
               </thead>
               <tbody id="tbody-exportar"></tbody>
@@ -2306,7 +2318,8 @@
         <div class="detail-field"><label>Cadete Anotado</label><div class="dv" id="manot-cad-anot">—</div></div>
         <div class="detail-field"><label>Anotado por (Dia CFO)</label><div class="dv" id="manot-cad-resp">—</div></div>
         <div class="detail-field"><label>Fato observado por</label><div class="dv" id="manot-of-resp">—</div></div>
-        <div class="detail-field"><label>Data</label><div class="dv" id="manot-data">—</div></div>
+        <div class="detail-field"><label>Data do Lançamento</label><div class="dv" id="manot-data">—</div></div>
+        <div class="detail-field"><label>Data do Fato</label><div class="dv" id="manot-data-fato">—</div></div>
       </div>
 
       <!-- INFRAÇÃO com edição inline -->
@@ -2385,9 +2398,11 @@
             <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Resultado *</label>
             <select id="veredito-resultado" class="role-select" style="width:100%;padding:9px 10px;font-size:12px;">
               <option value="">— Selecione —</option>
-              <option value="abonada">Abonada</option>
+              <option value="justificada">Justificada</option>
               <option value="perda_de_ponto">Perda de Ponto</option>
-              <option value="abonada_com_pernoite">Abonada c/ Pernoite</option>
+              <option value="pernoite">Pernoite</option>
+              <option value="licença_nao_concedida">Licença Não Concedida</option>
+              <option value="recolher">Recolher</option>
             </select>
           </div>
           <div>
@@ -2448,7 +2463,8 @@
         <div class="detail-field"><label>Status</label><div class="dv" id="diacfo-status">—</div></div>
         <div class="detail-field"><label>Cadete Anotado</label><div class="dv" id="diacfo-cad-anot">—</div></div>
         <div class="detail-field"><label>Fato observado por</label><div class="dv" id="diacfo-of-resp">—</div></div>
-        <div class="detail-field"><label>Data</label><div class="dv" id="diacfo-data">—</div></div>
+        <div class="detail-field"><label>Data do Lançamento</label><div class="dv" id="diacfo-data">—</div></div>
+        <div class="detail-field"><label>Data do Fato</label><div class="dv" id="diacfo-data-fato">—</div></div>
       </div>
 
       <!-- INFRAÇÃO com edição inline -->
@@ -2514,6 +2530,7 @@
         <div class="detail-field"><label>ID da Anotação</label><div class="dv" id="just-id">—</div></div>
         <div class="detail-field"><label>Status</label><div class="dv" id="just-status">—</div></div>
         <div class="detail-field"><label>Infração</label><div class="dv" id="just-infracao">—</div></div>
+        <div class="detail-field"><label>Data do Fato</label><div class="dv" id="just-data-fato">—</div></div>
         <div class="detail-field"><label>Aprovada em</label><div class="dv" id="just-approved">—</div></div>
         <div class="detail-field"><label>Prazo (48h)</label><div class="dv" id="just-prazo">—</div></div>
       </div>
@@ -2522,6 +2539,9 @@
         <div class="descr-box-label">Descrição do Fato</div>
         <p id="just-descricao">—</p>
       </div>
+
+      <!-- MEMORANDO -->
+      <div id="just-memorando" style="margin-bottom:20px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.8;color:var(--text-dim);white-space:pre-wrap;"></div>
 
       <!-- Editor de justificativa -->
       <div id="just-editor-wrap">
@@ -2561,6 +2581,8 @@
 
 <script>
   const API = 'https://gerenciamentodisciplinarabm-production.up.railway.app';
+
+  //const API = 'http://localhost:8000';
 
   // ── UTILS ──────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -3360,6 +3382,13 @@
     return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
   }
 
+  function fmtDateOnly(iso) {
+    if (!iso) return '—';
+    // Parse YYYY-MM-DD sem conversão de fuso
+    const [y, m, d] = iso.substring(0, 10).split('-');
+    return `${d}/${m}/${y}`;
+  }
+
   function renderPagBar(containerId, infoId, state, loadFn) {
     const totalPages = Math.ceil(state.total / LIMIT) || 1;
     const $info = document.getElementById(infoId);
@@ -3381,7 +3410,7 @@
   // ── PENDENTES ──────────────────────────────────
   async function loadPendentes(page = 1) {
     const tbody = document.getElementById('tbody-pendentes');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>';
     clearSelectionPendentes();
 
     try {
@@ -3413,7 +3442,7 @@
         `${json.total} anotação(ões) aguardando aprovação`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO PENDENTE</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO PENDENTE</td></tr>';
         document.getElementById('pag-info-pendentes').textContent = '0 registros';
         document.getElementById('pag-btns-pendentes').innerHTML = '';
         return;
@@ -3427,6 +3456,7 @@
           </td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveOficial(a.of_resp)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
           <td class="td-mono">${resolveUser(a.cad_resp)}</td>
@@ -3437,7 +3467,7 @@
       renderPagBar('pag-btns-pendentes', 'pag-info-pendentes', ANOT_STATE.pendentes, loadPendentes);
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -3445,7 +3475,7 @@
   // ── AGUARDANDO JUSTIFICATIVA ──────────────────────────────────
   async function loadJustificativa(page = 1) {
     const tbody = document.getElementById('tbody-justificativa');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="6">CARREGANDO...</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">CARREGANDO...</td></tr>';
 
     try {
       const cadeteIdJ = getSdValue('sd-cadete-justificativa');
@@ -3469,7 +3499,7 @@
         `${json.total} anotação(ões) aprovadas aguardando justificativa`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO NESTE ESTADO</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO NESTE ESTADO</td></tr>';
         document.getElementById('pag-info-justificativa').textContent = '0 registros';
         document.getElementById('pag-btns-justificativa').innerHTML = '';
         return;
@@ -3488,6 +3518,7 @@
         <tr style="cursor:pointer;${vencido ? 'border-left:3px solid var(--danger);' : ''}" onclick="openAnotModal(${a.id}, 'justificativa')">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${fmtDate(a.approved_at)}</td>
           <td class="td-mono">${prazoLabel}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
@@ -3502,14 +3533,14 @@
       renderPagBar('pag-btns-justificativa', 'pag-info-justificativa', ANOT_STATE.justificativa, loadJustificativa);
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
   // ── JUSTIFICADAS ──────────────────────────────────
   async function loadJustificadas(page = 1) {
     const tbody = document.getElementById('tbody-justificadas');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">CARREGANDO...</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
     try {
       const cadeteIdJd = getSdValue('sd-cadete-justificadas');
@@ -3529,7 +3560,7 @@
         `${json.total} anotação(ões) com justificativa enviada — aguardando veredito`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO NESTE ESTADO</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO NESTE ESTADO</td></tr>';
         document.getElementById('pag-info-justificadas').textContent = '0 registros';
         document.getElementById('pag-btns-justificadas').innerHTML = '';
         return;
@@ -3541,6 +3572,7 @@
         <tr style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'justificadas')">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
           <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${preview}</td>
@@ -3552,7 +3584,7 @@
       renderPagBar('pag-btns-justificadas', 'pag-info-justificadas', ANOT_STATE.justificadas, loadJustificadas);
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -3575,6 +3607,7 @@
     document.getElementById('manot-of-resp').textContent = '...';
     document.getElementById('manot-infracao').textContent = '...';
     document.getElementById('manot-data').textContent = '...';
+    document.getElementById('manot-data-fato').textContent = '...';
     document.getElementById('manot-descricao').textContent = '...';
     document.getElementById('manot-just-wrap').style.display = 'none';
     document.getElementById('manot-veredito-wrap').style.display = 'none';
@@ -3611,6 +3644,7 @@
       document.getElementById('manot-of-resp').textContent  = resolveOficial(a.of_resp);
       document.getElementById('manot-infracao').textContent = resolveInfracao(a.infracao);
       document.getElementById('manot-data').textContent     = fmtDate(a.created_at);
+      document.getElementById('manot-data-fato').textContent = fmtDateOnly(a.data_do_fato);
       document.getElementById('manot-descricao').textContent = a.descricao ?? '—';
 
       // Botão de editar infração: pendente ou aprovada (não descartada)
@@ -3630,8 +3664,8 @@
 
       // Veredito existente
       if (a.veredito) {
-        const resultadoLabel = { abonada: 'Abonada', perda_de_ponto: 'Perda de Ponto', abonada_com_pernoite: 'Abonada c/ Pernoite' };
-        const resultadoStyle = { abonada: 'color:var(--success)', perda_de_ponto: 'color:var(--danger)', abonada_com_pernoite: 'color:var(--warn)' };
+        const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
+        const resultadoStyle = { justificada: 'color:var(--success)', perda_de_ponto: 'color:var(--danger)', pernoite: 'color:var(--warn)', 'licença_nao_concedida': 'color:#e67e22', recolher: 'color:var(--blue)' };
         document.getElementById('manot-veredito-wrap').style.display = 'block';
         const resEl = document.getElementById('manot-veredito-resultado');
         resEl.textContent = resultadoLabel[a.veredito] ?? a.veredito;
@@ -3727,18 +3761,22 @@
         `${json.total} anotação(ões) com veredito registrado`;
 
       const resultadoLabel = {
-        abonada:              'Abonada',
-        perda_de_ponto:       'Perda de Ponto',
-        abonada_com_pernoite: 'Abonada c/ Pernoite',
+        justificada:             'Justificada',
+        perda_de_ponto:          'Perda de Ponto',
+        pernoite:                'Pernoite',
+        'licença_nao_concedida': 'Licença Não Concedida',
+        recolher:                'Recolher',
       };
       const resultadoStyle = {
-        abonada:              'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
-        perda_de_ponto:       'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
-        abonada_com_pernoite: 'color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);',
+        justificada:             'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
+        perda_de_ponto:          'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
+        pernoite:                'color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);',
+        'licença_nao_concedida': 'color:#e67e22;border-color:rgba(230,126,34,.3);background:rgba(230,126,34,.1);',
+        recolher:                'color:var(--blue);border-color:rgba(52,152,219,.3);background:var(--blue-dim);',
       };
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO ENCONTRADA</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO ENCONTRADA</td></tr>';
         document.getElementById('pag-info-veredito').textContent = '0 registros';
         document.getElementById('pag-btns-veredito').innerHTML = '';
         return;
@@ -3757,6 +3795,7 @@
         <tr style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'veredito')">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${preview}</td>
@@ -3769,7 +3808,7 @@
       renderPagBar('pag-btns-veredito', 'pag-info-veredito', ANOT_STATE.veredito, loadVeredito);
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -3848,8 +3887,8 @@
       document.getElementById('btn-modal-edit-infracao').style.display = 'none';
 
       // Mostrar o veredito recém-registrado
-      const resultadoLabel = { abonada: 'Abonada', perda_de_ponto: 'Perda de Ponto', abonada_com_pernoite: 'Abonada c/ Pernoite' };
-      const resultadoStyle = { abonada: 'color:var(--success)', perda_de_ponto: 'color:var(--danger)', abonada_com_pernoite: 'color:var(--warn)' };
+      const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
+      const resultadoStyle = { justificada: 'color:var(--success)', perda_de_ponto: 'color:var(--danger)', pernoite: 'color:var(--warn)', 'licença_nao_concedida': 'color:#e67e22', recolher: 'color:var(--blue)' };
       document.getElementById('manot-veredito-wrap').style.display = 'block';
       const resEl = document.getElementById('manot-veredito-resultado');
       resEl.textContent = resultadoLabel[resultado] ?? resultado;
@@ -4036,10 +4075,12 @@
     });
 
     document.getElementById('lanc-descricao').value = '';
+    document.getElementById('lanc-data-fato').value = '';
     document.getElementById('lancamento-infracao-pts').textContent = '';
     document.getElementById('resumo-oficial').textContent = '—';
     document.getElementById('resumo-infracao').textContent = '—';
     document.getElementById('resumo-pts').textContent = '—';
+    document.getElementById('resumo-data-fato').textContent = '—';
     document.getElementById('resumo-cadetes').textContent = '0';
     document.getElementById('lanc-error').className = 'alert error';
     document.getElementById('lanc-success').className = 'alert success';
@@ -4049,9 +4090,10 @@
   }
 
   async function lancarLote() {
-    const ofResp   = _lancState.oficial;
-    const infracao = _lancState.infracao;
+    const ofResp    = _lancState.oficial;
+    const infracao  = _lancState.infracao;
     const descricao = document.getElementById('lanc-descricao').value.trim();
+    const dataFato  = document.getElementById('lanc-data-fato').value;
 
     document.getElementById('lanc-error').className = 'alert error';
     document.getElementById('lanc-success').className = 'alert success';
@@ -4059,6 +4101,7 @@
     if (!ofResp)    { showAlert('lanc-error', 'Selecione o oficial responsável.'); return; }
     if (!infracao)  { showAlert('lanc-error', 'Selecione a infração.'); return; }
     if (!descricao) { showAlert('lanc-error', 'Preencha a descrição do fato.'); return; }
+    if (!dataFato)  { showAlert('lanc-error', 'Informe a data do fato.'); return; }
     if (!_lancCadetes.length) { showAlert('lanc-error', 'Adicione ao menos um cadete.'); return; }
 
     const btn = document.getElementById('btn-lancar');
@@ -4081,7 +4124,7 @@
         const res = await fetch(`${API}/anotacoes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-          body: JSON.stringify({ of_resp: Number(ofResp), cad_anot: cadete.id, infracao: Number(infracao), descricao }),
+          body: JSON.stringify({ of_resp: Number(ofResp), cad_anot: cadete.id, infracao: Number(infracao), descricao, data_do_fato: dataFato }),
         });
         const data = await res.json();
         const el = document.getElementById(`lote-${cadete.id}`);
@@ -4146,7 +4189,7 @@
       lista.forEach(a => { window._minhasAnotMap[a.id] = a; });
 
       if (!filtrada.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO</td></tr>';
         return;
       }
 
@@ -4159,11 +4202,12 @@
         const isMinhaAnot = a.cad_resp === currentUserId;
         const descrPreview = a.descricao
           ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
-          : '—';
+          : isMinhaAnot ? '—' : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
         return `
         <tr style="cursor:pointer;${isMinhaAnot ? '' : 'opacity:.85;'}" onclick="openEditDescr(${a.id})">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_resp)}${isMinhaAnot ? ' <span style="font-size:9px;color:var(--accent);">você</span>' : ''}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
@@ -4177,7 +4221,7 @@
       }).join('');
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -4226,8 +4270,9 @@
     document.getElementById('diacfo-cad-anot').textContent = resolveUser(a.cad_anot);
     document.getElementById('diacfo-of-resp').textContent  = resolveOficial(a.of_resp);
     document.getElementById('diacfo-data').textContent     = fmtDate(a.created_at);
+    document.getElementById('diacfo-data-fato').textContent = fmtDateOnly(a.data_do_fato);
     document.getElementById('diacfo-infracao').textContent = resolveInfracao(a.infracao);
-    document.getElementById('diacfo-descricao-view').textContent = a.descricao || '—';
+    document.getElementById('diacfo-descricao-view').textContent = a.descricao || (a.cad_resp !== window._currentUser?.user_id ? '[ Descrição restrita — acesso somente ao cadete anotado e à coordenação ]' : '—');
     document.getElementById('diacfo-descricao-texto').value = a.descricao || '';
 
     // Show edit buttons only if pendente
@@ -4401,7 +4446,7 @@
         `${lista.length} anotação(ões) aguardando sua justificativa`;
 
       if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO AGUARDANDO JUSTIFICATIVA</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO AGUARDANDO JUSTIFICATIVA</td></tr>';
         return;
       }
 
@@ -4414,9 +4459,10 @@
         <tr style="cursor:pointer;" onclick="openJustModal(${a.id})">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${fmtDate(a.approved_at)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${(a.descricao ?? '').substring(0,50)}${(a.descricao||'').length>50?'…':''}</td>
+          <td style="max-width:200px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-style:italic;">[ RESTRITO ]</td>
           <td>${temRascunho
             ? '<span class="pill" style="color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);">Rascunho</span>'
             : '<span class="pill" style="color:var(--muted);border-color:var(--border);">Sem rascunho</span>'
@@ -4426,7 +4472,7 @@
       }).join('');
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -4444,6 +4490,7 @@
     document.getElementById('just-id').textContent         = `#${a.id}`;
     document.getElementById('just-status').innerHTML       = `<span class="pill ${statusCls[a.status]||''}">${statusMap[a.status]||a.status}</span>`;
     document.getElementById('just-infracao').textContent   = resolveInfracao(a.infracao);
+    document.getElementById('just-data-fato').textContent  = fmtDateOnly(a.data_do_fato);
     document.getElementById('just-approved').textContent   = fmtDate(a.approved_at);
     if (a.horas_desde_aprovacao != null) {
       const h = Math.floor(Number(a.horas_desde_aprovacao));
@@ -4454,8 +4501,18 @@
         prazoEl.innerHTML = `<span style='color:var(--success);'>${h}h de 48h</span>`;
       }
     }
-    document.getElementById('just-descricao').textContent  = a.descricao || '—';
-    document.getElementById('just-texto').value            = a.justificativa || '';
+    document.getElementById('just-descricao').textContent  = '[ Descrição restrita — acesso somente ao Dia CFO responsável e à coordenação ]';
+    document.getElementById('just-descricao').style.color  = 'var(--muted)';
+    document.getElementById('just-descricao').style.fontStyle = 'italic';
+
+    const u = window._currentUser;
+    const infracao = resolveInfracao(a.infracao);
+    const memorando = u
+      ? `Prezado(a) CAD BM ${u.numero_geral ?? ''} ${u.username},\n\nDeveis justificar no prazo de 48h sua anotação por ${infracao}.\n\nAtenciosamente,\nCoordenação CFO BM`
+      : '';
+    document.getElementById('just-memorando').textContent = memorando;
+
+    document.getElementById('just-texto').value = a.justificativa || '';
     document.getElementById('just-error').className   = 'alert error';
     document.getElementById('just-success').className = 'alert success';
 
@@ -4538,11 +4595,13 @@
     if (!tbody) return;
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
-    const resultadoLabel = { abonada: 'Abonada', perda_de_ponto: 'Perda de Ponto', abonada_com_pernoite: 'Abonada c/ Pernoite' };
+    const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
-      abonada:              'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
-      perda_de_ponto:       'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
-      abonada_com_pernoite: 'color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);',
+      justificada:             'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
+      perda_de_ponto:          'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
+      pernoite:                'color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);',
+      'licença_nao_concedida': 'color:#e67e22;border-color:rgba(230,126,34,.3);background:rgba(230,126,34,.1);',
+      recolher:                'color:var(--blue);border-color:rgba(52,152,219,.3);background:var(--blue-dim);',
     };
 
     try {
@@ -4556,7 +4615,7 @@
         `${json.total} anotação(ões) com veredito registrado`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM VEREDITO REGISTRADO</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM VEREDITO REGISTRADO</td></tr>';
         document.getElementById('pag-info-meus-vereditos').textContent = '0 registros';
         document.getElementById('pag-btns-meus-vereditos').innerHTML = '';
         return;
@@ -4572,8 +4631,9 @@
         <tr style="cursor:pointer;" onclick="openMeuVeredito(${a.id})">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
-          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${(a.descricao||'').substring(0,50)}${(a.descricao||'').length>50?'…':''}</td>
+          <td style="max-width:160px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-style:italic;">[ RESTRITO ]</td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${justPreview}</td>
           <td><span class="pill" style="${resultadoStyle[a.veredito]||''}">${resultadoLabel[a.veredito]||a.veredito}</span></td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${obsPreview}</td>
@@ -4585,7 +4645,7 @@
         { page, total: json.total, data: json.data }, loadMeusVereditos);
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -4745,11 +4805,13 @@
     if (resultado) params.set('resultado', resultado);
     if (cadeteId)  params.set('cadete_id', cadeteId);
 
-    const resultadoLabel = { abonada: 'Abonada', perda_de_ponto: 'Perda de Ponto', abonada_com_pernoite: 'Abonada c/ Pernoite' };
+    const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
-      abonada:              'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
-      perda_de_ponto:       'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
-      abonada_com_pernoite: 'color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);',
+      justificada:             'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
+      perda_de_ponto:          'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
+      pernoite:                'color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);',
+      'licença_nao_concedida': 'color:#e67e22;border-color:rgba(230,126,34,.3);background:rgba(230,126,34,.1);',
+      recolher:                'color:var(--blue);border-color:rgba(52,152,219,.3);background:var(--blue-dim);',
     };
 
     try {
@@ -4764,7 +4826,7 @@
         `${json.total} anotação(ões) com veredito registrado`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO ENCONTRADA</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO ENCONTRADA</td></tr>';
         document.getElementById('pag-info-aux-veredito').textContent = '0 registros';
         document.getElementById('pag-btns-aux-veredito').innerHTML = '';
         return;
@@ -4777,6 +4839,7 @@
         <tr style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'veredito')">
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
+          <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${preview}</td>
@@ -4789,7 +4852,7 @@
       renderPagBar('pag-btns-aux-veredito', 'pag-info-aux-veredito', AUX_VER_STATE, loadAuxVereditos);
 
     } catch {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>';
     }
   }
 
@@ -5073,39 +5136,36 @@
 
       if (!json.data.length) {
         document.getElementById('tbody-exportar').innerHTML =
-          '<tr><td colspan="11" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM RESULTADO</td></tr>';
+          '<tr><td colspan="6" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM RESULTADO</td></tr>';
         document.getElementById('exp-total-bar').textContent = '';
         return;
       }
 
       document.getElementById('tbody-exportar').innerHTML = json.data.map(r => {
-        const desconto = Number(r.desconto_total) || 0;
-        const elogios  = Number(r.pontos_elogios) || 0;
-        const saldo    = elogios - desconto;
+        const desconto   = Number(r.desconto_total) || 0;
+        const elogios    = Number(r.pontos_elogios) || 0;
+        const notaFinal  = 8 - desconto + elogios;
         return `
         <tr>
           <td class="td-mono">${r.numero_geral ?? '—'}</td>
           <td class="td-name">${r.username}</td>
           <td class="td-mono">${r.pel ?? '—'}</td>
-          <td class="td-mono" style="text-align:center;">${r.total_anotacoes}</td>
-          <td class="td-mono" style="text-align:center;color:var(--danger);">${r.perdas}</td>
-          <td class="td-mono" style="text-align:center;color:var(--success);">${r.abonadas}</td>
-          <td class="td-mono" style="text-align:center;color:var(--warn);">${r.abonadas_pernoite}</td>
           <td class="td-mono" style="text-align:center;font-weight:700;color:${desconto > 0 ? 'var(--danger)' : 'var(--muted)'};">-${desconto}</td>
-          <td class="td-mono" style="text-align:center;color:var(--success);">${r.total_elogios ?? 0}</td>
           <td class="td-mono" style="text-align:center;font-weight:700;color:${elogios > 0 ? 'var(--success)' : 'var(--muted)'};">+${elogios}</td>
-          <td class="td-mono" style="text-align:center;font-weight:700;color:${saldo > 0 ? 'var(--success)' : saldo < 0 ? 'var(--danger)' : 'var(--muted)'};">${ saldo > 0 ? '+' : ''}${saldo}</td>
+          <td class="td-mono" style="text-align:center;font-weight:700;color:${notaFinal >= 8 ? 'var(--success)' : notaFinal >= 6 ? 'var(--warn)' : 'var(--danger)'};">${notaFinal.toFixed(2)}</td>
         </tr>`;}).join('');
 
       // fix empty state colspan handled above
 
       const totalElogios = json.data.reduce((s, r) => s + (Number(r.pontos_elogios) || 0), 0);
-      const saldoFinal   = totalElogios - totalDesc;
+      const mediaNotas   = json.data.length
+        ? (json.data.reduce((s, r) => s + (8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0)), 0) / json.data.length).toFixed(2)
+        : '—';
       document.getElementById('exp-total-bar').innerHTML =
         `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
           Desconto total: <strong style="color:var(--danger);">-${totalDesc}</strong> &nbsp;|&nbsp;
           Pontos elogios: <strong style="color:var(--success);">+${totalElogios}</strong> &nbsp;|&nbsp;
-          Saldo: <strong style="color:${saldoFinal >= 0 ? 'var(--success)' : 'var(--danger)'};">${saldoFinal >= 0 ? '+' : ''}${saldoFinal}</strong>
+          Média das notas: <strong style="color:var(--accent);">${mediaNotas}</strong>
         </span>`;
 
       document.getElementById('btn-exportar-csv').style.display = 'inline-flex';
@@ -5126,20 +5186,20 @@
     const ano   = document.getElementById('exp-ano').value;
     const turma = document.getElementById('exp-turma').value;
 
-    const header = ['Nº Geral','Nome de Guerra','Pel','Total Anotações','Perdas de Ponto','Abonadas','Abonadas c/ Pernoite','Desconto Total','Elogios','Pontos Elogios','Saldo'];
-    const rows = _expData.map(r => [
-      r.numero_geral ?? '',
-      r.username,
-      r.pel ?? '',
-      r.total_anotacoes,
-      r.perdas,
-      r.abonadas,
-      r.abonadas_pernoite,
-      r.desconto_total,
-      r.total_elogios,
-      r.pontos_elogios,
-      (Number(r.pontos_elogios)||0) - (Number(r.desconto_total)||0),
-    ]);
+    const header = ['Nº Geral','Nome de Guerra','Pel','Desconto (Anotações)','Pontos (Elogios)','Nota Final'];
+    const rows = _expData.map(r => {
+      const desconto  = Number(r.desconto_total) || 0;
+      const elogios   = Number(r.pontos_elogios) || 0;
+      const notaFinal = (8 - desconto + elogios).toFixed(2);
+      return [
+        r.numero_geral ?? '',
+        r.username,
+        r.pel ?? '',
+        desconto,
+        elogios,
+        notaFinal,
+      ];
+    });
 
     const csv = [header, ...rows]
       .map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
@@ -5241,11 +5301,13 @@
 
     const statusMap = { pendente: 'Pendente', aprovada: 'Aprovada', descartada: 'Descartada' };
     const statusCls = { pendente: 'pill-pendente', aprovada: 'pill-aprovada', descartada: 'pill-descartada' };
-    const resultadoLabel = { abonada: 'Abonada', perda_de_ponto: 'Perda de Ponto', abonada_com_pernoite: 'Abonada c/ Pernoite' };
+    const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
-      abonada:              'color:var(--success)',
-      perda_de_ponto:       'color:var(--danger)',
-      abonada_com_pernoite: 'color:var(--warn)',
+      justificada:             'color:var(--success)',
+      perda_de_ponto:          'color:var(--danger)',
+      pernoite:                'color:var(--warn)',
+      'licença_nao_concedida': 'color:#e67e22',
+      recolher:                'color:var(--blue)',
     };
 
     // Populate modal-justificativa fields
@@ -5253,8 +5315,17 @@
     document.getElementById('just-id').textContent           = `#${a.id}`;
     document.getElementById('just-status').innerHTML         = `<span class="pill ${statusCls[a.status]||''}">${statusMap[a.status]||a.status}</span>`;
     document.getElementById('just-infracao').textContent     = resolveInfracao(a.infracao);
+    document.getElementById('just-data-fato').textContent    = fmtDateOnly(a.data_do_fato);
     document.getElementById('just-approved').textContent     = fmtDate(a.approved_at);
-    document.getElementById('just-descricao').textContent    = a.descricao || '—';
+    document.getElementById('just-descricao').textContent    = '[ Descrição restrita — acesso somente ao Dia CFO responsável e à coordenação ]';
+    document.getElementById('just-descricao').style.color    = 'var(--muted)';
+    document.getElementById('just-descricao').style.fontStyle = 'italic';
+
+    const u2 = window._currentUser;
+    const infracao2 = resolveInfracao(a.infracao);
+    document.getElementById('just-memorando').textContent = u2
+      ? `Prezado(a) CAD BM ${u2.numero_geral ?? ''} ${u2.username},\n\nDeveis justificar no prazo de 48h sua anotação por ${infracao2}.\n\nAtenciosamente,\nCoordenação CFO BM`
+      : '';
 
     // Justificativa — read only
     document.getElementById('just-texto').value   = a.justificativa || '';
