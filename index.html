@@ -1707,13 +1707,24 @@
                 </div>
               </div>
               <div class="form-grid-1" style="margin-top:16px;">
-                <label class="form-lbl">Descrição da ocorrência *</label>
+                <label class="form-lbl">Descrição da ocorrência <span style="font-size:10px;color:var(--muted);">(opcional)</span></label>
                 <textarea class="form-ctrl" id="lanc-descricao" placeholder="Descreva detalhadamente os fatos observados..."></textarea>
               </div>
               <div class="form-grid-1" style="margin-top:12px;">
                 <label class="form-lbl">Data do fato *</label>
                 <input type="date" class="form-ctrl" id="lanc-data-fato" style="font-family:'IBM Plex Mono',monospace;font-size:13px;"
                   oninput="document.getElementById('resumo-data-fato').textContent = this.value ? this.value.split('-').reverse().join('/') : '—'" />
+              </div>
+              <div class="form-grid-1" style="margin-top:12px;">
+                <label class="form-lbl">Anexos <span style="font-size:10px;color:var(--muted);">(opcional — JPG, PNG, PDF · máx. 20 MB cada)</span></label>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                  <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                    📎 Selecionar arquivos
+                    <input type="file" id="lanc-anexos" multiple accept=".jpg,.jpeg,.png,.pdf" style="display:none;" onchange="updateAnexosList()">
+                  </label>
+                  <span id="lanc-anexos-label" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Nenhum arquivo selecionado</span>
+                </div>
+                <div id="lanc-anexos-preview" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>
               </div>
             </div>
           </div>
@@ -2581,8 +2592,6 @@
 
 <script>
   const API = 'https://gerenciamentodisciplinarabm-production.up.railway.app';
-
-  //const API = 'http://localhost:8000';
 
   // ── UTILS ──────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -3460,8 +3469,8 @@
           <td class="td-mono">${resolveOficial(a.of_resp)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
           <td class="td-mono">${resolveUser(a.cad_resp)}</td>
-          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
-          <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${a.descricao ?? '—'}</td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span>${a.descricao ? ' <span title="Possui descrição" style="font-size:10px;color:var(--accent);">📝</span>' : ''}</td>
+          <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${a.descricao ?? '<span style="color:var(--muted);font-style:italic;font-size:11px;">sem descrição</span>'}</td>
         </tr>`).join('');
 
       renderPagBar('pag-btns-pendentes', 'pag-info-pendentes', ANOT_STATE.pendentes, loadPendentes);
@@ -3522,7 +3531,7 @@
           <td class="td-mono">${fmtDate(a.approved_at)}</td>
           <td class="td-mono">${prazoLabel}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
-          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span>${a.descricao ? ' <span title="Possui descrição" style="font-size:10px;color:var(--accent);">📝</span>' : ''}</td>
           <td>${temRascunho
             ? '<span class="pill" style="color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);">Rascunho salvo</span>'
             : '<span class="pill" style="color:var(--muted);border-color:var(--border);">Sem rascunho</span>'
@@ -3574,7 +3583,7 @@
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
-          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span>${a.descricao ? ' <span title="Possui descrição" style="font-size:10px;color:var(--accent);">📝</span>' : ''}</td>
           <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${preview}</td>
           <td class="td-mono">${fmtDate(a.justificativa_enviado_em)}</td>
           <td><span class="pill" style="color:var(--warn);border-color:rgba(243,156,18,.3);background:var(--warn-dim);">Pendente</span></td>
@@ -3797,7 +3806,7 @@
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
-          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span>${a.descricao ? ' <span title="Possui descrição" style="font-size:10px;color:var(--accent);">📝</span>' : ''}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${preview}</td>
           <td class="td-mono">${fmtDate(a.veredito_decidido_em)}</td>
           <td><span class="pill" style="${res_style}">${res_label}</span></td>
@@ -4058,6 +4067,17 @@
       </div>`).join('');
   }
 
+  function updateAnexosList() {
+    const input   = document.getElementById('lanc-anexos');
+    const label   = document.getElementById('lanc-anexos-label');
+    const preview = document.getElementById('lanc-anexos-preview');
+    const files   = Array.from(input.files);
+    label.textContent = files.length ? `${files.length} arquivo(s) selecionado(s)` : 'Nenhum arquivo selecionado';
+    preview.innerHTML = files.map(f =>
+      `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:4px;color:var(--text-dim);">📎 ${f.name}</span>`
+    ).join('');
+  }
+
   function resetLancamento() {
     _lancCadetes = [];
     _lancState.oficial = null;
@@ -4076,6 +4096,8 @@
 
     document.getElementById('lanc-descricao').value = '';
     document.getElementById('lanc-data-fato').value = '';
+    const anexosInput = document.getElementById('lanc-anexos');
+    if (anexosInput) { anexosInput.value = ''; updateAnexosList(); }
     document.getElementById('lancamento-infracao-pts').textContent = '';
     document.getElementById('resumo-oficial').textContent = '—';
     document.getElementById('resumo-infracao').textContent = '—';
@@ -4100,9 +4122,11 @@
 
     if (!ofResp)    { showAlert('lanc-error', 'Selecione o oficial responsável.'); return; }
     if (!infracao)  { showAlert('lanc-error', 'Selecione a infração.'); return; }
-    if (!descricao) { showAlert('lanc-error', 'Preencha a descrição do fato.'); return; }
     if (!dataFato)  { showAlert('lanc-error', 'Informe a data do fato.'); return; }
     if (!_lancCadetes.length) { showAlert('lanc-error', 'Adicione ao menos um cadete.'); return; }
+
+    const anexosInput = document.getElementById('lanc-anexos');
+    const arquivos    = anexosInput ? Array.from(anexosInput.files) : [];
 
     const btn = document.getElementById('btn-lancar');
     btn.classList.add('btn-loading');
@@ -4124,13 +4148,25 @@
         const res = await fetch(`${API}/anotacoes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-          body: JSON.stringify({ of_resp: Number(ofResp), cad_anot: cadete.id, infracao: Number(infracao), descricao, data_do_fato: dataFato }),
+          body: JSON.stringify({ of_resp: Number(ofResp), cad_anot: cadete.id, infracao: Number(infracao), descricao: descricao || null, data_do_fato: dataFato }),
         });
         const data = await res.json();
         const el = document.getElementById(`lote-${cadete.id}`);
         if (res.ok) {
+          // Upload anexos for this anotacao
+          let anexoErro = false;
+          for (const arquivo of arquivos) {
+            const fd = new FormData();
+            fd.append('file', arquivo);
+            const ar = await fetch(`${API}/anotacoes/${data.id}/anexo`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token()}` },
+              body: fd,
+            });
+            if (!ar.ok) { anexoErro = true; }
+          }
           el.className = 'lote-item ok';
-          el.textContent = `✓ ${cadete.label} — #${data.id}`;
+          el.textContent = `✓ ${cadete.label} — #${data.id}${arquivos.length ? (anexoErro ? ' ⚠ (anexo com erro)' : ` 📎 ${arquivos.length}`) : ''}`;
           ok++;
         } else {
           el.className = 'lote-item err';
@@ -4200,9 +4236,10 @@
       tbody.innerHTML = filtrada.map(a => {
         const isPendente = a.status === 'pendente';
         const isMinhaAnot = a.cad_resp === currentUserId;
+        const temDescricao = isMinhaAnot && !!a.descricao;
         const descrPreview = a.descricao
           ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
-          : isMinhaAnot ? '—' : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
+          : isMinhaAnot ? '<span style="font-size:10px;color:var(--muted);">sem descrição</span>' : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
         return `
         <tr style="cursor:pointer;${isMinhaAnot ? '' : 'opacity:.85;'}" onclick="openEditDescr(${a.id})">
           <td class="td-mono">#${a.id}</td>
@@ -4210,7 +4247,7 @@
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_resp)}${isMinhaAnot ? ' <span style="font-size:9px;color:var(--accent);">você</span>' : ''}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
-          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span>${temDescricao ? ' <span title="Possui descrição" style="font-size:10px;color:var(--accent);">📝</span>' : ''}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${descrPreview}</td>
           <td><span class="pill ${statusCls[a.status] || ''}">${statusMap[a.status] || a.status}</span></td>
           <td>${isMinhaAnot && isPendente
@@ -4841,7 +4878,7 @@
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${resolveUser(a.cad_anot)}</td>
-          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span>${a.descricao ? ' <span title="Possui descrição" style="font-size:10px;color:var(--accent);">📝</span>' : ''}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${preview}</td>
           <td class="td-mono">${fmtDate(a.veredito_decidido_em)}</td>
           <td><span class="pill" style="${resultadoStyle[a.veredito]||''}">${resultadoLabel[a.veredito]||a.veredito}</span></td>
