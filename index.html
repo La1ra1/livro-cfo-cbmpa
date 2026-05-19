@@ -1123,8 +1123,8 @@
       <div class="login-emblem" style="flex-direction:column;align-items:center;gap:12px;">
         <img src="ABM.png" alt="Brasão ABM" style="width:80px;height:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));" />
         <div style="text-align:center;">
+          <div class="login-sub">Sistema de Anotações</div>
           <div class="login-sub">Academia Bombeiro Militar</div>
-          <div class="login-sub">Sistema de Controle do Corpo de Alunos</div>
         </div>
       </div>
 
@@ -1209,6 +1209,9 @@
       <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
         <span class="nav-icon">↓</span> Exportar
       </div>
+      <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
+        <span class="nav-icon">📅</span> Punições
+      </div>
     </div>
 
     <!-- Seção visível só para dia_cfo -->
@@ -1241,6 +1244,9 @@
       </div>
       <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
         <span class="nav-icon">↓</span> Exportar
+      </div>
+      <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
+        <span class="nav-icon">📅</span> Punições
       </div>
     </div>
 
@@ -1288,6 +1294,10 @@
       <span class="bnav-icon">◈</span>
       <span>Usuários</span>
     </button>
+    <button class="bnav-item coord-nav" id="bnav-punicoes" style="display:none;" onclick="showSection('punicoes');setActiveNav('bnav-punicoes')">
+      <span class="bnav-icon">📅</span>
+      <span>Punições</span>
+    </button>
     <!-- Itens dia_cfo -->
     <button class="bnav-item diacfo-nav" id="bnav-lancamento" style="display:none;" onclick="showSection('lancamento');setActiveNav('bnav-lancamento')">
       <span class="bnav-icon">✚</span>
@@ -1314,6 +1324,10 @@
     <button class="bnav-item aux-nav" id="bnav-aux-vereditos" style="display:none;" onclick="showSection('aux-vereditos');setActiveNav('bnav-aux-vereditos')">
       <span class="bnav-icon">◆</span>
       <span>Vereditos</span>
+    </button>
+    <button class="bnav-item aux-nav" id="bnav-aux-punicoes" style="display:none;" onclick="showSection('punicoes');setActiveNav('bnav-aux-punicoes')">
+      <span class="bnav-icon">📅</span>
+      <span>Punições</span>
     </button>
   </nav>
 
@@ -2293,6 +2307,72 @@
       </div>
     </section>
 
+    <!-- ── PUNIÇÕES ── -->
+    <section class="section" id="section-punicoes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
+          <div class="page-title">Calendário de <span>Punições</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-pun-export-csv" style="display:none;" onclick="exportarPunicoesCsv()">↓ Exportar CSV</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Tipo</label>
+            <select id="pun-filtro-tipo" class="role-select" style="min-width:180px;" onchange="loadPunicoesList()">
+              <option value="">Todos os tipos</option>
+              <option value="pernoite">Pernoite</option>
+              <option value="licença_nao_concedida">Licença Não Concedida</option>
+              <option value="recolher">Recolher</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Data de Cumprimento</label>
+            <input type="date" id="pun-filtro-data" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:160px;" oninput="loadPunicoesList()" />
+          </div>
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-end;" onclick="document.getElementById('pun-filtro-data').value='';document.getElementById('pun-filtro-tipo').value='';loadPunicoesList()">✕ Limpar</button>
+        </div>
+      </div>
+
+      <!-- Calendário -->
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" onclick="punMesAnterior()">‹</button>
+          <div id="pun-cal-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text);"></div>
+          <button class="btn btn-ghost btn-sm" onclick="punMesProximo()">›</button>
+        </div>
+        <div id="pun-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;"></div>
+      </div>
+
+      <!-- Lista -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div id="pun-lista-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Selecione uma data no calendário</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>Nome de Guerra</th>
+                <th>Pel</th>
+                <th>Turma</th>
+                <th>Punição</th>
+                <th>Data de Cumprimento</th>
+                <th>Observação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-punicoes">
+              <tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">Selecione uma data no calendário ou use os filtros acima</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -2387,6 +2467,10 @@
               <div id="manot-veredito-data" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);"></div>
             </div>
           </div>
+          <div id="manot-veredito-cumprimento-wrap" style="display:none;margin-top:12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Data de Cumprimento</div>
+            <div id="manot-veredito-cumprimento" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--warn);"></div>
+          </div>
           <div id="manot-veredito-obs-wrap" style="display:none;margin-top:12px;">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Observação</div>
             <p id="manot-veredito-obs" style="font-size:13px;line-height:1.6;color:var(--text-dim);"></p>
@@ -2408,7 +2492,7 @@
         <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
           <div>
             <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Resultado *</label>
-            <select id="veredito-resultado" class="role-select" style="width:100%;padding:9px 10px;font-size:12px;">
+            <select id="veredito-resultado" class="role-select" style="width:100%;padding:9px 10px;font-size:12px;" onchange="toggleVeredtoCumprimento()">
               <option value="">— Selecione —</option>
               <option value="justificada">Justificada</option>
               <option value="perda_de_ponto">Perda de Ponto</option>
@@ -2421,6 +2505,10 @@
             <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação</label>
             <input type="text" id="veredito-observacao" placeholder="Opcional..." style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-family:inherit;font-size:12px;outline:none;" />
           </div>
+        </div>
+        <div id="veredito-cumprimento-wrap" style="display:none;margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Data de Cumprimento *</label>
+          <input type="date" id="veredito-data-cumprimento" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:13px;" />
         </div>
         <button class="btn btn-primary btn-full" id="btn-dar-veredito" onclick="submitVeredito()">REGISTRAR VEREDITO</button>
       </div>
@@ -2640,6 +2728,7 @@
     if (name === 'aux-usuarios')          loadAuxUsuarios();
     if (name === 'aux-vereditos')          loadAuxVereditos();
     if (name === 'exportar')               initExportar();
+    if (name === 'punicoes')               initPunicoes();
     if (name === 'elogios-pendentes')      loadElogiosPendentes();
     if (name === 'elogios-lista')          loadElogiosLista();
     if (name === 'lancar-elogio')          initLancarElogio();
@@ -3634,6 +3723,8 @@
     document.getElementById('manot-infracao-editor').style.display = 'none';
     document.getElementById('veredito-resultado').value = '';
     document.getElementById('veredito-observacao').value = '';
+    document.getElementById('veredito-data-cumprimento').value = '';
+    document.getElementById('veredito-cumprimento-wrap').style.display = 'none';
     document.getElementById('modal-anot').classList.add('open');
 
     try {
@@ -3681,6 +3772,13 @@
         resEl.textContent = resultadoLabel[a.veredito] ?? a.veredito;
         resEl.style.cssText = resultadoStyle[a.veredito] ?? '';
         document.getElementById('manot-veredito-data').textContent = fmtDate(a.veredito_decidido_em);
+        const cwrap = document.getElementById('manot-veredito-cumprimento-wrap');
+        if (a.veredito_data_cumprimento) {
+          cwrap.style.display = 'block';
+          document.getElementById('manot-veredito-cumprimento').textContent = fmtDateOnly(a.veredito_data_cumprimento);
+        } else {
+          cwrap.style.display = 'none';
+        }
         if (a.veredito_observacao) {
           document.getElementById('manot-veredito-obs-wrap').style.display = 'block';
           document.getElementById('manot-veredito-obs').textContent = a.veredito_observacao;
@@ -3872,11 +3970,24 @@
   }
 
   // ── DAR VEREDITO NO MODAL ──────────────────────────────────
+  function toggleVeredtoCumprimento() {
+    const resultado = document.getElementById('veredito-resultado').value;
+    const requer = ['pernoite', 'recolher', 'licença_nao_concedida'];
+    const wrap = document.getElementById('veredito-cumprimento-wrap');
+    wrap.style.display = requer.includes(resultado) ? 'block' : 'none';
+    if (!requer.includes(resultado)) document.getElementById('veredito-data-cumprimento').value = '';
+  }
+
   async function submitVeredito() {
     if (!_modalAnotId) return;
-    const resultado  = document.getElementById('veredito-resultado').value;
-    const observacao = document.getElementById('veredito-observacao').value.trim();
+    const resultado        = document.getElementById('veredito-resultado').value;
+    const observacao       = document.getElementById('veredito-observacao').value.trim();
+    const dataCumprimento  = document.getElementById('veredito-data-cumprimento').value;
+    const requerData       = ['pernoite', 'recolher', 'licença_nao_concedida'];
     if (!resultado) { showAlert('manot-error', 'Selecione um resultado.'); return; }
+    if (requerData.includes(resultado) && !dataCumprimento) {
+      showAlert('manot-error', 'Informe a data de cumprimento para este resultado.'); return;
+    }
 
     const btn = document.getElementById('btn-dar-veredito');
     btn.classList.add('btn-loading');
@@ -3887,7 +3998,7 @@
       const res = await fetch(`${API}/anotacoes/${_modalAnotId}/veredito`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-        body: JSON.stringify({ resultado, observacao: observacao || null }),
+        body: JSON.stringify({ resultado, observacao: observacao || null, data_cumprimento: dataCumprimento || null }),
       });
       const data = await res.json();
       if (!res.ok) { showAlert('manot-error', data.detail || 'Erro ao registrar veredito.'); return; }
@@ -3904,6 +4015,13 @@
       resEl.textContent = resultadoLabel[resultado] ?? resultado;
       resEl.style.cssText = resultadoStyle[resultado] ?? '';
       document.getElementById('manot-veredito-data').textContent = fmtDate(data.decidido_em);
+      const cumprWrap = document.getElementById('manot-veredito-cumprimento-wrap');
+      if (dataCumprimento && requerData.includes(resultado)) {
+        cumprWrap.style.display = 'block';
+        document.getElementById('manot-veredito-cumprimento').textContent = fmtDateOnly(dataCumprimento);
+      } else {
+        cumprWrap.style.display = 'none';
+      }
       if (observacao) {
         document.getElementById('manot-veredito-obs-wrap').style.display = 'block';
         document.getElementById('manot-veredito-obs').textContent = observacao;
@@ -4385,8 +4503,7 @@
 
   async function submitDiaCfoDescricao() {
     if (!_diacfoAnotId) return;
-    const texto = document.getElementById('diacfo-descricao-texto').value.trim();
-    if (!texto) { showAlert('diacfo-error', 'A descrição não pode ser vazia.'); return; }
+    const texto = document.getElementById('diacfo-descricao-texto').value;
 
     const btn = document.getElementById('btn-diacfo-save-descr');
     btn.classList.add('btn-loading'); btn.textContent = '...';
@@ -4401,7 +4518,8 @@
       const data = await res.json();
       if (!res.ok) { showAlert('diacfo-error', data.detail || 'Erro ao salvar.'); return; }
       window._minhasAnotMap[_diacfoAnotId].descricao = texto;
-      document.getElementById('diacfo-descricao-view').textContent = texto;
+      document.getElementById('diacfo-descricao-view').textContent = texto || '—';
+      document.getElementById('diacfo-descricao-view').style.fontStyle = texto ? 'normal' : 'italic';
       toggleDiaCfoDescrEditor(false);
       showAlert('diacfo-success', 'Descrição atualizada.', 'success');
       toast('Descrição atualizada.');
@@ -5399,6 +5517,11 @@
             <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);">${fmtDate(a.veredito_decidido_em)}</div>
           </div>
         </div>
+        ${a.veredito_data_cumprimento ? `
+        <div style="margin-top:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Data de Cumprimento</div>
+          <p style="font-size:13px;font-weight:700;color:var(--warn);font-family:'IBM Plex Mono',monospace;">${fmtDateOnly(a.veredito_data_cumprimento)}</p>
+        </div>` : ''}
         ${a.veredito_observacao ? `
         <div style="margin-top:10px;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Observação</div>
@@ -5952,6 +6075,184 @@
     else if (ok === 0) toast(`Todas as ${err} operações falharam.`, 'error');
     else               toast(`${ok} concluído(s), ${err} falha(s).`, 'error');
     loadElogiosPendentes(ELOGIO_STATE.page);
+  }
+
+  // ══════════════════════════════════════════════════
+  // PUNIÇÕES — calendário e lista
+  // ══════════════════════════════════════════════════
+
+  const _punState = { ano: new Date().getFullYear(), mes: new Date().getMonth() + 1, dotData: [] };
+  const _punResultadoLabel = { pernoite: 'Pernoite', licença_nao_concedida: 'Licença N.C.', recolher: 'Recolher' };
+  const _punResultadoColor = { pernoite: 'var(--warn)', licença_nao_concedida: '#ed1e24', recolher: 'var(--blue)' };
+
+  async function initPunicoes() {
+    await loadPunCalendario();
+    loadPunicoesList();
+  }
+
+  async function loadPunCalendario() {
+    const { ano, mes } = _punState;
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    document.getElementById('pun-cal-titulo').textContent = `${meses[mes - 1]} ${ano}`;
+
+    try {
+      const res = await fetch(`${API}/punicoes/calendario?ano=${ano}&mes=${mes}`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      _punState.dotData = res.ok ? await res.json() : [];
+    } catch { _punState.dotData = []; }
+
+    renderPunCalendario();
+  }
+
+  function renderPunCalendario() {
+    const { ano, mes, dotData } = _punState;
+    const cal = document.getElementById('pun-calendario');
+
+    // Build dot map: 'YYYY-MM-DD' → [resultado,...]
+    const dotMap = {};
+    dotData.forEach(d => {
+      const k = typeof d.data_cumprimento === 'string'
+        ? d.data_cumprimento.substring(0, 10)
+        : new Date(d.data_cumprimento).toISOString().substring(0, 10);
+      if (!dotMap[k]) dotMap[k] = [];
+      dotMap[k].push(d.resultado);
+    });
+
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const primeiroDia = new Date(ano, mes - 1, 1).getDay();
+    const totalDias   = new Date(ano, mes, 0).getDate();
+    const hoje        = new Date().toISOString().substring(0, 10);
+
+    let html = dias.map(d =>
+      `<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);padding:4px 0;">${d}</div>`
+    ).join('');
+
+    // Empty cells before first day
+    for (let i = 0; i < primeiroDia; i++) html += '<div></div>';
+
+    for (let d = 1; d <= totalDias; d++) {
+      const iso = `${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dots = dotMap[iso] || [];
+      const isHoje = iso === hoje;
+      const hasPun = dots.length > 0;
+      html += `
+        <div onclick="punSelecionarData('${iso}')" style="cursor:pointer;padding:6px 2px;border-radius:4px;position:relative;
+          background:${hasPun ? 'rgba(200,168,75,.08)' : 'transparent'};
+          border:1px solid ${isHoje ? 'var(--accent)' : hasPun ? 'var(--border)' : 'transparent'};
+          transition:background .15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${hasPun ? 'rgba(200,168,75,.08)' : 'transparent'}'">
+          <div style="font-size:12px;${isHoje ? 'color:var(--accent);font-weight:700;' : 'color:var(--text);'}">${d}</div>
+          ${dots.length ? `<div style="display:flex;justify-content:center;gap:2px;margin-top:3px;flex-wrap:wrap;">
+            ${dots.slice(0, 3).map(r => `<span style="width:6px;height:6px;border-radius:50%;background:${_punResultadoColor[r]||'var(--accent)'};display:inline-block;"></span>`).join('')}
+          </div>` : ''}
+        </div>`;
+    }
+
+    cal.innerHTML = html;
+  }
+
+  function punMesAnterior() {
+    if (_punState.mes === 1) { _punState.mes = 12; _punState.ano--; }
+    else { _punState.mes--; }
+    loadPunCalendario();
+  }
+
+  function punMesProximo() {
+    if (_punState.mes === 12) { _punState.mes = 1; _punState.ano++; }
+    else { _punState.mes++; }
+    loadPunCalendario();
+  }
+
+  function punSelecionarData(iso) {
+    document.getElementById('pun-filtro-data').value = iso;
+    loadPunicoesList();
+  }
+
+  async function loadPunicoesList() {
+    const data     = document.getElementById('pun-filtro-data').value;
+    const tipo     = document.getElementById('pun-filtro-tipo').value;
+    const tbody    = document.getElementById('tbody-punicoes');
+    const titulo   = document.getElementById('pun-lista-titulo');
+    const btnCsv   = document.getElementById('btn-pun-export-csv');
+
+    if (!data) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">Selecione uma data no calendário ou use os filtros acima</td></tr>`;
+      titulo.textContent = 'Selecione uma data no calendário';
+      btnCsv.style.display = 'none';
+      return;
+    }
+
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</td></tr>`;
+
+    try {
+      const params = new URLSearchParams({ data });
+      if (tipo) params.set('resultado', tipo);
+      const res  = await fetch(`${API}/punicoes/lista?${params}`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      const json = await res.json();
+      window._punListaData = json;
+
+      if (!json.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA PUNIÇÃO NESTA DATA</td></tr>`;
+        titulo.textContent = `${fmtDateOnly(data)} — nenhuma punição`;
+        btnCsv.style.display = 'none';
+        return;
+      }
+
+      const tipoLabel = tipo ? ` · ${_punResultadoLabel[tipo] || tipo}` : '';
+      titulo.textContent = `${fmtDateOnly(data)}${tipoLabel} — ${json.length} cadete(s)`;
+      btnCsv.style.display = 'inline-flex';
+
+      tbody.innerHTML = json.map(r => {
+        const cor = _punResultadoColor[r.resultado] || 'var(--text)';
+        const label = _punResultadoLabel[r.resultado] || r.resultado;
+        return `<tr>
+          <td class="td-mono">${r.numero_geral ?? '—'}</td>
+          <td class="td-name">${r.username}</td>
+          <td class="td-mono">${r.pel ?? '—'}</td>
+          <td class="td-mono">${r.turma ?? '—'}</td>
+          <td><span class="pill" style="color:${cor};border-color:${cor}33;background:${cor}14;">${label}</span></td>
+          <td class="td-mono">${fmtDateOnly(r.data_cumprimento)}</td>
+          <td style="font-size:12px;color:var(--text-dim);">${r.observacao || '—'}</td>
+        </tr>`;
+      }).join('');
+
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>`;
+      btnCsv.style.display = 'none';
+    }
+  }
+
+  function exportarPunicoesCsv() {
+    const data  = document.getElementById('pun-filtro-data').value;
+    const tipo  = document.getElementById('pun-filtro-tipo').value;
+    const lista = window._punListaData || [];
+    if (!lista.length) return;
+
+    const tipoLabel = tipo ? _punResultadoLabel[tipo] || tipo : 'Todas';
+    const header = ['Nº Geral','Nome de Guerra','Pel','Turma','Punição','Data de Cumprimento','Observação'];
+    const rows = lista.map(r => [
+      r.numero_geral ?? '',
+      r.username,
+      r.pel ?? '',
+      r.turma ?? '',
+      _punResultadoLabel[r.resultado] || r.resultado,
+      r.data_cumprimento ? r.data_cumprimento.substring(0, 10).split('-').reverse().join('/') : '',
+      r.observacao || '',
+    ]);
+
+    const csv = [header, ...rows].map(r =>
+      r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')
+    ).join('\n');
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `punicoes_${data}_${tipoLabel}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   (async () => {
