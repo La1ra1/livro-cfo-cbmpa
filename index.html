@@ -6575,17 +6575,21 @@
 <body>
 
   <!-- Cabeçalho institucional -->
-  <div style="position:relative;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;min-height:140px;">
-    ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="position:absolute;top:0;left:8px;width:130px;height:130px;object-fit:contain;" />` : ''}
-    <div style="text-align:center;padding:0 90px;">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.9;">
+  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;gap:12px;">
+    <div style="flex-shrink:0;margin-left:8px;">
+      ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:90px;width:auto;display:block;" />` : ''}
+    </div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:2.0;">
         Corpo de Bombeiros Militar do Pará<br>
         Coordenadoria Estadual de Proteção e Defesa Civil<br>
         Departamento-Geral de Cultura, Educação e Pesquisa<br>
         Academia Bombeiro Militar
       </div>
     </div>
-    ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="position:absolute;top:0;right:8px;width:72px;height:72px;object-fit:contain;" />` : ''}
+    <div style="flex-shrink:0;margin-right:8px;">
+      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:90px;width:auto;display:block;" />` : ''}
+    </div>
   </div>
 
   <!-- Corpo do documento -->
