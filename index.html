@@ -2425,7 +2425,10 @@
           <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
           <div class="page-title">Calendário de <span>Punições</span></div>
         </div>
-        <button class="btn btn-ghost btn-sm" id="btn-pun-export-csv" style="display:none;" onclick="exportarPunicoesCsv()">↓ Exportar CSV</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="btn-pun-export-lista" style="display:none;" onclick="exportarPunicoesLista()">↓ Lista do Dia</button>
+          <button class="btn btn-ghost btn-sm" id="btn-pun-export-csv" style="display:none;" onclick="exportarPunicoesCsv()">↓ Exportar CSV</button>
+        </div>
       </div>
 
       <!-- Filtros -->
@@ -6436,6 +6439,8 @@
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">Selecione uma data no calendário ou use os filtros acima</td></tr>`;
       titulo.textContent = 'Selecione uma data no calendário';
       btnCsv.style.display = 'none';
+      const btnListaReset = document.getElementById('btn-pun-export-lista');
+      if (btnListaReset) btnListaReset.style.display = 'none';
       return;
     }
 
@@ -6456,12 +6461,16 @@
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA PUNIÇÃO NESTA DATA</td></tr>`;
         titulo.textContent = `${fmtDateOnly(data)} — nenhuma punição`;
         btnCsv.style.display = 'none';
+        const btnListaHide = document.getElementById('btn-pun-export-lista');
+        if (btnListaHide) btnListaHide.style.display = 'none';
         return;
       }
 
       const tipoLabel = tipo ? ` · ${_punResultadoLabel[tipo] || tipo}` : '';
       titulo.textContent = `${fmtDateOnly(data)}${tipoLabel} — ${json.length} cadete(s)`;
       btnCsv.style.display = 'inline-flex';
+      const btnLista = document.getElementById('btn-pun-export-lista');
+      if (btnLista) btnLista.style.display = 'inline-flex';
 
       tbody.innerHTML = json.map(r => {
         const cor = _punResultadoColor[r.resultado] || 'var(--text)';
@@ -6483,6 +6492,93 @@
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>`;
       btnCsv.style.display = 'none';
     }
+  }
+
+  function exportarPunicoesLista() {
+    const data  = document.getElementById('pun-filtro-data').value;
+    const tipo  = document.getElementById('pun-filtro-tipo').value;
+    const lista = window._punListaData || [];
+    if (!lista.length) return;
+
+    const tipoLabel  = tipo ? (_punResultadoLabel[tipo] || tipo) : 'Todas as punições';
+    const dataFmt    = data ? data.split('-').reverse().join('/') : '—';
+
+    // Agrupar por tipo de punição para facilitar a organização
+    const grupos = {};
+    lista.forEach(r => {
+      const g = _punResultadoLabel[r.resultado] || r.resultado;
+      if (!grupos[g]) grupos[g] = [];
+      grupos[g].push(r);
+    });
+
+    const gruposHtml = Object.entries(grupos).map(([grp, cadetes]) => `
+      <div style="margin-bottom:24px;">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#666;border-bottom:1px solid #ccc;padding-bottom:4px;margin-bottom:10px;">${grp} — ${cadetes.length} cadete(s)</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:#f0f0f0;">
+              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;width:40px;">Nº</th>
+              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;">Nome de Guerra</th>
+              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;width:60px;">Pel</th>
+              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;width:70px;">Turma</th>
+              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;">Observação</th>
+              <th style="text-align:center;padding:5px 8px;border:1px solid #ddd;width:60px;">✓</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cadetes.map((r, i) => `
+              <tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'};">
+                <td style="padding:6px 8px;border:1px solid #ddd;font-family:monospace;">${r.numero_geral ?? '—'}</td>
+                <td style="padding:6px 8px;border:1px solid #ddd;font-weight:600;">${r.username}</td>
+                <td style="padding:6px 8px;border:1px solid #ddd;font-family:monospace;">${r.pel ?? '—'}</td>
+                <td style="padding:6px 8px;border:1px solid #ddd;font-family:monospace;">${r.turma ?? '—'}</td>
+                <td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#555;">${r.observacao || '—'}</td>
+                <td style="padding:6px 8px;border:1px solid #ddd;text-align:center;"></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Punições — ${dataFmt}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
+    @media print {
+      body { padding: 16px; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px;">
+    <div>
+      <div style="font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Lista de Punições</div>
+      <div style="font-size:13px;color:#555;margin-top:4px;">${tipoLabel}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:20px;font-weight:700;font-family:monospace;">${dataFmt}</div>
+      <div style="font-size:11px;color:#777;margin-top:2px;">Total: ${lista.length} cadete(s)</div>
+    </div>
+  </div>
+  ${gruposHtml}
+  <div style="margin-top:40px;border-top:1px solid #ccc;padding-top:16px;font-size:10px;color:#999;">
+    Gerado em ${new Date().toLocaleString('pt-BR')} · CFO Sistema de Anotações
+  </div>
+  <div class="no-print" style="margin-top:24px;text-align:center;">
+    <button onclick="window.print()" style="padding:10px 28px;font-size:13px;cursor:pointer;background:#222;color:#fff;border:none;border-radius:4px;letter-spacing:1px;">IMPRIMIR / SALVAR PDF</button>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (win) win.focus();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   function exportarPunicoesCsv() {
@@ -6983,6 +7079,87 @@
     window._batchPunIds = null;
   }
 
+  function switchBatchPunTab(tab) {
+    const isAdd = tab === 'add';
+    document.getElementById('tab-pun-add-content').style.display = isAdd ? '' : 'none';
+    document.getElementById('tab-pun-rem-content').style.display = isAdd ? 'none' : '';
+    document.getElementById('tab-pun-add').style.borderBottomColor = isAdd ? 'var(--accent)' : 'transparent';
+    document.getElementById('tab-pun-add').style.color = isAdd ? 'var(--accent)' : 'var(--muted)';
+    document.getElementById('tab-pun-rem').style.borderBottomColor = isAdd ? 'transparent' : 'var(--accent)';
+    document.getElementById('tab-pun-rem').style.color = isAdd ? 'var(--muted)' : 'var(--accent)';
+    document.getElementById('batch-pun-error').className = 'alert error';
+    document.getElementById('batch-pun-success').className = 'alert success';
+    if (!isAdd) loadBatchPunRemList();
+  }
+
+  async function loadBatchPunRemList() {
+    const ids = window._batchPunIds || getSelectedJustIds();
+    const listEl = document.getElementById('batch-pun-rem-list');
+    listEl.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Carregando...</div>';
+    try {
+      const results = await Promise.all(ids.map(async anotId => {
+        const res = await fetch(`${API}/vereditos/${anotId}/cumprimentos`, {
+          headers: { 'Authorization': `Bearer ${token()}` }
+        });
+        const list = res.ok ? await res.json() : [];
+        return { anotId, list };
+      }));
+      const allDatas = results.flatMap(({ anotId, list }) =>
+        list.map(c => ({ ...c, anotId }))
+      );
+      if (!allDatas.length) {
+        listEl.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Nenhuma data registrada nos selecionados.</div>';
+        return;
+      }
+      // Agrupar por anotId para exibir com contexto
+      const byAnot = {};
+      allDatas.forEach(c => {
+        if (!byAnot[c.anotId]) byAnot[c.anotId] = [];
+        byAnot[c.anotId].push(c);
+      });
+      listEl.innerHTML = Object.entries(byAnot).map(([anotId, cumprs]) => `
+        <div style="margin-bottom:8px;">
+          <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--muted);margin-bottom:4px;">Anotação #${anotId}</div>
+          ${cumprs.map(c => `
+            <label style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);padding:6px 10px;border-radius:4px;cursor:pointer;margin-bottom:4px;">
+              <input type="checkbox" class="cb-row cb-pun-rem" data-cumpr-id="${c.id}" style="flex-shrink:0;" />
+              <span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:var(--warn);">${fmtDateOnly(c.data)}</span>
+              ${c.tipo ? `<span style="font-size:10px;color:var(--muted);">${c.tipo}</span>` : ''}
+            </label>`).join('')}
+        </div>`).join('');
+    } catch {
+      listEl.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--danger);">Erro ao carregar datas.</div>';
+    }
+  }
+
+  async function submitBatchPunRemove() {
+    const checked = [...document.querySelectorAll('.cb-pun-rem:checked')];
+    if (!checked.length) { showAlert('batch-pun-error', 'Selecione ao menos uma data para remover.'); return; }
+    const btn = document.getElementById('btn-batch-pun-rem-submit');
+    btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...';
+    document.getElementById('batch-pun-error').className = 'alert error';
+    let ok = 0, err = 0;
+    for (const cb of checked) {
+      try {
+        const res = await fetch(`${API}/vereditos/cumprimentos/${cb.dataset.cumprId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token()}` }
+        });
+        if (res.ok) ok++; else err++;
+      } catch { err++; }
+    }
+    btn.classList.remove('btn-loading'); btn.textContent = 'REMOVER SELECIONADAS';
+    if (err === 0) {
+      showAlert('batch-pun-success', `${ok} data(s) removida(s) com sucesso.`, 'success');
+      loadPunCalendario(); loadPunicoesList();
+      if (window._batchPunIds) loadVeredito(); else loadJustificadas();
+      setTimeout(() => loadBatchPunRemList(), 600);
+    } else {
+      showAlert('batch-pun-error', `${ok} removida(s), ${err} com erro.`);
+      setTimeout(() => loadBatchPunRemList(), 600);
+    }
+  }
+
   async function submitBatchPun() {
     const ids   = window._batchPunIds || getSelectedJustIds();
     const datas = dpGetSelected('dp-batch-pun');
@@ -7007,7 +7184,7 @@
       }
     }
 
-    btn.classList.remove('btn-loading'); btn.textContent = 'REAGENDAR';
+    btn.classList.remove('btn-loading'); btn.textContent = 'ADICIONAR DATAS';
     if (err === 0) {
       showAlert('batch-pun-success', `${ok} data(s) adicionada(s) com sucesso.`, 'success');
       setTimeout(() => {
@@ -7196,32 +7373,48 @@
 
   <!-- Modal: Reagendar Punições em Lote -->
   <div class="modal-overlay" id="modal-batch-pun" onclick="if(event.target===this)closeBatchPun()">
-    <div class="modal-box" style="max-width:420px;">
+    <div class="modal-box" style="max-width:440px;">
       <div class="modal-header">
-        <div class="modal-title">Reagendar Punições em Lote</div>
+        <div class="modal-title">Punições em Lote</div>
         <button class="modal-close" onclick="closeBatchPun()">✕</button>
       </div>
       <div style="padding:20px;">
-        <div id="batch-pun-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:100px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
-        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Nova(s) Data(s) de Cumprimento *</label>
-        <div class="dp-wrap">
-          <div class="dp-trigger" onclick="dpToggle('dp-batch-pun', event)">
-            <span class="dp-icon">📅</span>
-            <span class="dp-label">Selecionar datas</span>
-          </div>
-          <div class="dp-popup" id="dp-batch-pun">
-            <div class="dp-header">
-              <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',-1,event)\">‹</button>
-              <div class="dp-month" id="dp-batch-pun-month"></div>
-              <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',1,event)\">›</button>
-            </div>
-            <div class="dp-grid" id="dp-batch-pun-grid"></div>
-          </div>
+        <div id="batch-pun-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:80px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
+        <!-- Abas -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);">
+          <button id="tab-pun-add" onclick="switchBatchPunTab('add')" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;">+ ADICIONAR</button>
+          <button id="tab-pun-rem" onclick="switchBatchPunTab('rem')" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;">✕ REMOVER</button>
         </div>
-        <div class="dp-pills" id="dp-batch-pun-pills"></div>
-        <div class="alert error"   id="batch-pun-error"   style="margin-top:12px;margin-bottom:10px;"></div>
-        <div class="alert success" id="batch-pun-success" style="margin-bottom:10px;"></div>
-        <button class="btn btn-primary btn-full" id="btn-batch-pun-submit" style="margin-top:12px;" onclick="submitBatchPun()">REAGENDAR</button>
+        <!-- Aba Adicionar -->
+        <div id="tab-pun-add-content">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Nova(s) Data(s) de Cumprimento *</label>
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-batch-pun', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label">Selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-batch-pun">
+              <div class="dp-header">
+                <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',-1,event)\">‹</button>
+                <div class="dp-month" id="dp-batch-pun-month"></div>
+                <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',1,event)\">›</button>
+              </div>
+              <div class="dp-grid" id="dp-batch-pun-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-batch-pun-pills"></div>
+          <button class="btn btn-primary btn-full" id="btn-batch-pun-submit" style="margin-top:14px;" onclick="submitBatchPun()">ADICIONAR DATAS</button>
+        </div>
+        <!-- Aba Remover -->
+        <div id="tab-pun-rem-content" style="display:none;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">Datas existentes — marque para remover</label>
+          <div id="batch-pun-rem-list" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;margin-bottom:12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
+          </div>
+          <button class="btn btn-danger btn-full" id="btn-batch-pun-rem-submit" style="margin-top:4px;" onclick="submitBatchPunRemove()">REMOVER SELECIONADAS</button>
+        </div>
+        <div class="alert error"   id="batch-pun-error"   style="margin-top:10px;margin-bottom:6px;"></div>
+        <div class="alert success" id="batch-pun-success" style="margin-bottom:6px;"></div>
       </div>
     </div>
   </div>
