@@ -1278,6 +1278,14 @@
       <div class="nav-item" data-section="aux-usuarios" onclick="showSection('aux-usuarios')">
         <span class="nav-icon">◈</span> Usuários
       </div>
+      <div class="nav-item" data-section="anot-pendentes" onclick="showSection('anot-pendentes')">
+        <span class="nav-icon">⏳</span> Pendentes de Aprovação
+        <span class="nav-badge" id="badge-pendentes-aux" style="display:none;background:var(--warn);">0</span>
+      </div>
+      <div class="nav-item" data-section="anot-justificativa" onclick="showSection('anot-justificativa')">
+        <span class="nav-icon">✉</span> Aguardando Justificativa
+        <span class="nav-badge" id="badge-justificativa-aux" style="display:none;background:var(--blue);">0</span>
+      </div>
       <div class="nav-item" data-section="aux-vereditos" onclick="showSection('aux-vereditos')">
         <span class="nav-icon">◆</span> Com Veredito
       </div>
@@ -2087,7 +2095,7 @@
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Data</th><th>Cadete Anotado</th>
+                <th>ID</th><th>Data</th><th>Data do Fato</th><th>Cadete Anotado</th>
                 <th>Infração / Pontos</th><th>Justificativa (prévia)</th>
                 <th>Decidido em</th><th>Resultado</th><th>Observação</th>
               </tr>
@@ -3761,6 +3769,11 @@
         badge.textContent = json.total;
         badge.style.display = json.total > 0 ? 'inline-block' : 'none';
       }
+      const badgeAux = document.getElementById('badge-pendentes-aux');
+      if (badgeAux) {
+        badgeAux.textContent = json.total;
+        badgeAux.style.display = json.total > 0 ? 'inline-block' : 'none';
+      }
 
       document.getElementById('meta-pendentes').textContent =
         `${json.total} anotação(ões) aguardando aprovação`;
@@ -3813,10 +3826,15 @@
 
       ANOT_STATE.justificativa = { page, total: json.total, data: json.data };
 
+      const badgeJustAux = document.getElementById('badge-justificativa-aux');
       const badge = document.getElementById('badge-justificativa');
       if (badge) {
         badge.textContent = json.total;
         badge.style.display = json.total > 0 ? 'inline-block' : 'none';
+      }
+      if (badgeJustAux) {
+        badgeJustAux.textContent = json.total;
+        badgeJustAux.style.display = json.total > 0 ? 'inline-block' : 'none';
       }
 
       document.getElementById('meta-justificativa').textContent =
@@ -4610,12 +4628,12 @@
         const isPendente = a.status === 'pendente';
         const isMinhaAnot = a.cad_resp === currentUserId;
         const temDescricao = isMinhaAnot && !!a.descricao;
-        const hasDescricao = a.descricao != null;  // null = sem acesso, "" = acesso mas vazio
-        const descrPreview = hasDescricao
-          ? (a.descricao
-              ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
-              : '<span style="font-size:10px;color:var(--muted);">sem descrição</span>')
-          : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
+        // RESTRITO só quando não é o responsável E a API não retornou a descrição
+        const descrPreview = a.descricao
+          ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
+          : (isMinhaAnot || a.descricao === '')
+            ? '<span style="font-size:10px;color:var(--muted);">sem descrição</span>'
+            : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
         return `
         <tr style="cursor:pointer;${isMinhaAnot ? '' : 'opacity:.85;'}" onclick="openEditDescr(${a.id})">
           <td class="td-mono">#${a.id}</td>
