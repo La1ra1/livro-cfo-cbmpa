@@ -1112,6 +1112,51 @@
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border2); }
     ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ── DatePicker ── */
+    .dp-wrap { position:relative; }
+    .dp-trigger {
+      display:flex; align-items:center; gap:8px;
+      background:var(--bg); border:1px solid var(--border);
+      padding:8px 12px; cursor:pointer; font-family:'IBM Plex Mono',monospace;
+      font-size:12px; color:var(--text); border-radius:2px;
+      transition:border-color .15s;
+    }
+    .dp-trigger:hover { border-color:var(--accent); }
+    .dp-trigger .dp-label { flex:1; }
+    .dp-trigger .dp-icon { color:var(--accent); font-size:14px; }
+    .dp-popup {
+      position:fixed; z-index:9999;
+      background:var(--surface); border:1px solid var(--border2);
+      box-shadow:0 8px 32px rgba(0,0,0,.6); padding:16px;
+      min-width:280px; display:none;
+    }
+    .dp-popup.open { display:block; }
+    .dp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .dp-month { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; color:var(--accent); text-transform:uppercase; }
+    .dp-nav { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:16px; padding:2px 6px; }
+    .dp-nav:hover { color:var(--text); }
+    .dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; font-family:'IBM Plex Mono',monospace; font-size:10px; text-align:center; }
+    .dp-dow { color:var(--muted); padding:3px 0; font-size:9px; letter-spacing:1px; text-transform:uppercase; }
+    .dp-day {
+      padding:5px 2px; border-radius:3px; cursor:pointer; border:1px solid transparent;
+      transition:background .1s, border-color .1s; line-height:1;
+    }
+    .dp-day:hover { background:var(--surface2); }
+    .dp-day.today { border-color:var(--accent); color:var(--accent); }
+    .dp-day.selected { background:var(--accent); color:#000; font-weight:700; border-color:var(--accent); }
+    .dp-day.multi-sel { background:rgba(200,168,75,.2); color:var(--accent); border-color:rgba(200,168,75,.4); }
+    .dp-day.empty { cursor:default; }
+    .dp-day.empty:hover { background:transparent; }
+    .dp-pills { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; min-height:24px; }
+    .dp-pill {
+      display:inline-flex; align-items:center; gap:4px;
+      font-family:'IBM Plex Mono',monospace; font-size:10px;
+      background:rgba(200,168,75,.15); border:1px solid rgba(200,168,75,.3);
+      color:var(--accent); padding:2px 7px; border-radius:3px;
+    }
+    .dp-pill button { background:none; border:none; color:inherit; cursor:pointer; padding:0; line-height:1; font-size:11px; }
+
   </style>
 </head>
 <body>
@@ -1261,6 +1306,9 @@
       <div class="nav-item" data-section="meus-vereditos" onclick="showSection('meus-vereditos')">
         <span class="nav-icon">◆</span> Vereditos
       </div>
+      <div class="nav-item" data-section="minhas-punicoes" onclick="showSection('minhas-punicoes')">
+        <span class="nav-icon">📅</span> Minhas Punições
+      </div>
       <div class="nav-item" data-section="meus-elogios" onclick="showSection('meus-elogios')">
         <span class="nav-icon">★</span> Meus Elogios
       </div>
@@ -1315,6 +1363,10 @@
     <button class="bnav-item shared-nav" id="bnav-vereditos" style="display:none;" onclick="showSection('meus-vereditos');setActiveNav('bnav-vereditos')">
       <span class="bnav-icon">◆</span>
       <span>Vereditos</span>
+    </button>
+    <button class="bnav-item shared-nav" id="bnav-minhas-punicoes" style="display:none;" onclick="showSection('minhas-punicoes');setActiveNav('bnav-minhas-punicoes')">
+      <span class="bnav-icon">📅</span>
+      <span>Punições</span>
     </button>
     <!-- Auxiliar -->
     <button class="bnav-item aux-nav" id="bnav-aux-usuarios" style="display:none;" onclick="showSection('aux-usuarios');setActiveNav('bnav-aux-usuarios')">
@@ -1573,6 +1625,18 @@
             <div class="sd-clear" onclick="clearSd('sd-resp-justificadas', loadJustificadas)">Limpar filtro</div>
           </div>
         </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
+        <div class="sd-wrap" id="sd-infracao-justificadas">
+          <div class="sd-trigger" id="sd-infracao-justificadas-trigger" onclick="toggleSd('sd-infracao-justificadas')">Todas as infrações</div>
+          <div class="sd-panel" id="sd-infracao-justificadas-panel">
+            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-justificadas', this.value)" />
+            <div class="sd-list" id="sd-infracao-justificadas-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-infracao-justificadas', loadJustificadas)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Data do fato:</span>
+        <input type="date" id="filter-just-data-fato" class="role-select" style="padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;" onchange="loadJustificadas(1)" />
+        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="document.getElementById('filter-just-data-fato').value='';loadJustificadas(1)" title="Limpar data">✕</button>
         <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
         <select class="role-select" id="tp-filter-justificadas" onchange="loadJustificadas(1)" style="width:auto;">
           <option value="">Todas</option>
@@ -1580,9 +1644,13 @@
       </div>
       <div class="card">
         <div class="table-wrap">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="btn-batch-veredito" style="display:none;" onclick="openBatchVeredito()">◆ Veredito em Lote (<span id="batch-sel-count">0</span>)</button>
+          </div>
           <table>
             <thead>
               <tr>
+                <th class="cb-wrap"><input type="checkbox" id="cb-all-justificadas" onclick="toggleAllJustificadas(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Data do Fato</th>
@@ -1594,7 +1662,7 @@
               </tr>
             </thead>
             <tbody id="tbody-justificadas">
-              <tr class="loading-row"><td colspan="7">CARREGANDO...</td></tr>
+              <tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1643,9 +1711,13 @@
       </div>
       <div class="card">
         <div class="table-wrap">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="btn-batch-pun-veredito" style="display:none;" onclick="openBatchPunFromVeredito()">📅 Reagendar Punições (<span id="batch-pun-veredito-count">0</span>)</button>
+          </div>
           <table>
             <thead>
               <tr>
+                <th class="cb-wrap"><input type="checkbox" id="cb-all-veredito" onclick="toggleAllVeredito(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Data do Fato</th>
@@ -1658,7 +1730,7 @@
               </tr>
             </thead>
             <tbody id="tbody-veredito">
-              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
+              <tr class="loading-row"><td colspan="10">CARREGANDO...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1727,8 +1799,21 @@
               </div>
               <div class="form-grid-1" style="margin-top:12px;">
                 <label class="form-lbl">Data do fato *</label>
-                <input type="date" class="form-ctrl" id="lanc-data-fato" style="font-family:'IBM Plex Mono',monospace;font-size:13px;"
-                  oninput="document.getElementById('resumo-data-fato').textContent = this.value ? this.value.split('-').reverse().join('/') : '—'" />
+                <div class="dp-wrap" id="dp-wrap-fato">
+                  <div class="dp-trigger" onclick="dpToggle('dp-fato', event)">
+                    <span class="dp-icon">📅</span>
+                    <span class="dp-label" id="dp-fato-label">Selecionar data</span>
+                  </div>
+                  <div class="dp-popup" id="dp-fato">
+                    <div class="dp-header">
+                      <button class="dp-nav" onclick="dpNav('dp-fato',-1,event)">‹</button>
+                      <div class="dp-month" id="dp-fato-month"></div>
+                      <button class="dp-nav" onclick="dpNav('dp-fato',1,event)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-fato-grid"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="lanc-data-fato" />
               </div>
               <div class="form-grid-1" style="margin-top:12px;">
                 <label class="form-lbl">Anexos <span style="font-size:10px;color:var(--muted);">(opcional — JPG, PNG, PDF · máx. 20 MB cada)</span></label>
@@ -2190,7 +2275,21 @@
             <div class="form-grid-2">
               <div>
                 <label class="form-lbl">Data do Evento *</label>
-                <input type="date" id="elogio-data-evento" class="form-ctrl" />
+                <div class="dp-wrap" id="dp-wrap-elogio">
+                  <div class="dp-trigger" onclick="dpToggle('dp-elogio', event)">
+                    <span class="dp-icon">📅</span>
+                    <span class="dp-label" id="dp-elogio-label">Selecionar data</span>
+                  </div>
+                  <div class="dp-popup" id="dp-elogio">
+                    <div class="dp-header">
+                      <button class="dp-nav" onclick="dpNav('dp-elogio',-1,event)">‹</button>
+                      <div class="dp-month" id="dp-elogio-month"></div>
+                      <button class="dp-nav" onclick="dpNav('dp-elogio',1,event)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-elogio-grid"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="elogio-data-evento" />
               </div>
             </div>
             <div class="form-grid-1">
@@ -2321,6 +2420,17 @@
       <div class="card" style="margin-bottom:16px;">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
           <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Cadete</label>
+            <div class="sd-wrap" id="sd-pun-cadete">
+              <div class="sd-trigger" id="sd-pun-cadete-trigger" onclick="toggleSd('sd-pun-cadete')">Todos os cadetes</div>
+              <div class="sd-panel" id="sd-pun-cadete-panel">
+                <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-pun-cadete', this.value)" />
+                <div class="sd-list" id="sd-pun-cadete-list"></div>
+                <div class="sd-clear" onclick="clearSd('sd-pun-cadete', () => { loadPunCalendario(); loadPunicoesList(); })">Limpar</div>
+              </div>
+            </div>
+          </div>
+          <div>
             <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Tipo</label>
             <select id="pun-filtro-tipo" class="role-select" style="min-width:180px;" onchange="loadPunicoesList()">
               <option value="">Todos os tipos</option>
@@ -2333,7 +2443,7 @@
             <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Data de Cumprimento</label>
             <input type="date" id="pun-filtro-data" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:160px;" oninput="loadPunicoesList()" />
           </div>
-          <button class="btn btn-ghost btn-sm" style="align-self:flex-end;" onclick="document.getElementById('pun-filtro-data').value='';document.getElementById('pun-filtro-tipo').value='';loadPunicoesList()">✕ Limpar</button>
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-end;" onclick="clearSd('sd-pun-cadete',()=>{});document.getElementById('pun-filtro-data').value='';document.getElementById('pun-filtro-tipo').value='';loadPunCalendario();loadPunicoesList()">✕ Limpar</button>
         </div>
       </div>
 
@@ -2363,6 +2473,7 @@
                 <th>Punição</th>
                 <th>Data de Cumprimento</th>
                 <th>Observação</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="tbody-punicoes">
@@ -2373,7 +2484,72 @@
       </div>
     </section>
 
+    <!-- ── MINHAS PUNIÇÕES (cadete) ── -->
+    <section class="section" id="section-minhas-punicoes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Minhas Punições</div>
+          <div class="page-title">Meu <span>Calendário de Punições</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="initMeusPunicoes()">↻ Atualizar</button>
+      </div>
+
+      <!-- Calendário -->
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" onclick="meuPunMesAnterior()">‹</button>
+          <div id="meu-pun-cal-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text);"></div>
+          <button class="btn btn-ghost btn-sm" onclick="meuPunMesProximo()">›</button>
+        </div>
+        <div id="meu-pun-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;"></div>
+      </div>
+
+      <!-- Lista do dia -->
+      <div class="card">
+        <div id="meu-pun-lista-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Clique em um dia para ver detalhes</div>
+        <div id="meu-pun-lista" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;padding:24px;">Selecione uma data no calendário</div>
+        </div>
+      </div>
+    </section>
+
   </main>
+
+  <!-- Modal: alterar datas de cumprimento -->
+  <div class="modal-overlay" id="modal-pun-edit" onclick="if(event.target===this)closePunEdit()">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <div class="modal-title">Datas de Cumprimento</div>
+        <button class="modal-close" onclick="closePunEdit()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="pun-edit-cadete" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:14px;"></div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas registradas</label>
+          <div id="pun-edit-datas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+        </div>
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Adicionar nova data</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+          <div class="dp-wrap" style="flex:1;">
+            <div class="dp-trigger" onclick="dpToggle('dp-pun-edit', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label" id="dp-pun-edit-label">Selecionar data</span>
+            </div>
+            <div class="dp-popup" id="dp-pun-edit">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-pun-edit',-1,event)">‹</button>
+                <div class="dp-month" id="dp-pun-edit-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-pun-edit',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-pun-edit-grid"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="punAddCumprimento()">+ Adicionar</button>
+        </div>
+        <div class="alert error" id="pun-edit-error"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 
@@ -2468,8 +2644,13 @@
             </div>
           </div>
           <div id="manot-veredito-cumprimento-wrap" style="display:none;margin-top:12px;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Data de Cumprimento</div>
-            <div id="manot-veredito-cumprimento" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--warn);"></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Datas de Cumprimento</div>
+            <div id="manot-veredito-cumprimento" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            <!-- Adicionar data (coordenador) -->
+            <div id="manot-add-data-wrap" style="display:none;margin-top:10px;display:flex;gap:8px;align-items:center;">
+              <input type="date" id="manot-add-data-input" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:12px;flex:1;" />
+              <button class="btn btn-ghost btn-sm" onclick="manot_addCumprimento()">+ Adicionar</button>
+            </div>
           </div>
           <div id="manot-veredito-obs-wrap" style="display:none;margin-top:12px;">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Observação</div>
@@ -2507,8 +2688,22 @@
           </div>
         </div>
         <div id="veredito-cumprimento-wrap" style="display:none;margin-bottom:12px;">
-          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Data de Cumprimento *</label>
-          <input type="date" id="veredito-data-cumprimento" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:13px;" />
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas de Cumprimento *</label>
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-cumpr', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label">Clique para selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-cumpr">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-cumpr',-1,event)">‹</button>
+                <div class="dp-month" id="dp-cumpr-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-cumpr',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-cumpr-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-cumpr-pills"></div>
         </div>
         <button class="btn btn-primary btn-full" id="btn-dar-veredito" onclick="submitVeredito()">REGISTRAR VEREDITO</button>
       </div>
@@ -2729,6 +2924,7 @@
     if (name === 'aux-vereditos')          loadAuxVereditos();
     if (name === 'exportar')               initExportar();
     if (name === 'punicoes')               initPunicoes();
+    if (name === 'minhas-punicoes')        initMeusPunicoes();
     if (name === 'elogios-pendentes')      loadElogiosPendentes();
     if (name === 'elogios-lista')          loadElogiosLista();
     if (name === 'lancar-elogio')          initLancarElogio();
@@ -2819,6 +3015,7 @@
 
   // ── INIT APP ──────────────────────────────────
   async function initApp() {
+    initDatePickers();
     try {
       const res = await fetch(`${API}/me`, {
         headers: { 'Authorization': `Bearer ${token()}` },
@@ -3300,6 +3497,19 @@
   function populateCadeteSds() {
     const sections = ['pendentes', 'justificativa', 'justificadas', 'veredito'];
     const loadFns  = [loadPendentes, loadJustificativa, loadJustificadas, loadVeredito];
+
+    // Populate punições cadete filter separately (different reload fn)
+    const punListEl = document.getElementById('sd-pun-cadete-list');
+    if (punListEl) {
+      punListEl.innerHTML = window._allUsuarios.map(u => {
+        const label = u.numero_geral ? `${u.numero_geral} ${u.username}` : u.username;
+        return `<div class="sd-option" data-value="${u.id}" data-search="${label.toLowerCase()}"
+          onclick="selectSdOption('sd-pun-cadete', ${u.id}, '${label.replace(/'/g,"\\'")}', () => { loadPunCalendario(); loadPunicoesList(); })">
+          <span class="sd-option-label">${label}</span>
+        </div>`;
+      }).join('');
+    }
+
     sections.forEach((sec, i) => {
       const listEl = document.getElementById(`sd-cadete-${sec}-list`);
       const trigEl = document.getElementById(`sd-cadete-${sec}-trigger`);
@@ -3384,10 +3594,10 @@
     }
   }
 
-  // Populate infração dropdowns for pendentes and justificativa
+  // Populate infração dropdowns for pendentes, justificativa and justificadas
   function populateInfracaoSds() {
-    const sections = ['pendentes', 'justificativa'];
-    const loadFns  = [loadPendentes, loadJustificativa];
+    const sections = ['pendentes', 'justificativa', 'justificadas'];
+    const loadFns  = [loadPendentes, loadJustificativa, loadJustificadas];
     sections.forEach((sec, i) => {
       const listEl = document.getElementById(`sd-infracao-${sec}-list`);
       const trigEl = document.getElementById(`sd-infracao-${sec}-trigger`);
@@ -3639,14 +3849,18 @@
   // ── JUSTIFICADAS ──────────────────────────────────
   async function loadJustificadas(page = 1) {
     const tbody = document.getElementById('tbody-justificadas');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>';
 
     try {
-      const cadeteIdJd = getSdValue('sd-cadete-justificadas');
-      const respIdJd   = getSdValue('sd-resp-justificadas');
+      const cadeteIdJd  = getSdValue('sd-cadete-justificadas');
+      const respIdJd    = getSdValue('sd-resp-justificadas');
+      const infracaoJd  = getSdValue('sd-infracao-justificadas');
+      const dataFatoJd  = document.getElementById('filter-just-data-fato')?.value || '';
       const paramsJd = new URLSearchParams({ justificativa: 'respondida', veredito_status: 'pendente', page, limit: LIMIT });
       if (cadeteIdJd) paramsJd.set('cadete_id', cadeteIdJd);
       if (respIdJd)   paramsJd.set('cad_resp',  respIdJd);
+      if (infracaoJd) paramsJd.set('infracao',  infracaoJd);
+      if (dataFatoJd) paramsJd.set('data_fato', dataFatoJd);
       const res = await fetch(`${API}/coordenador/anotacoes?${paramsJd}`,
         { headers: { 'Authorization': `Bearer ${token()}` } }
       );
@@ -3665,10 +3879,12 @@
         return;
       }
 
+      window._justificadasData = json.data;
       tbody.innerHTML = json.data.map(a => {
         const preview = a.justificativa ? a.justificativa.substring(0, 60) + (a.justificativa.length > 60 ? '…' : '') : '—';
         return `
-        <tr style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'justificadas')">
+        <tr id="jrow-${a.id}" style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'justificadas')">
+          <td class="cb-wrap" onclick="event.stopPropagation()"><input type="checkbox" class="cb-just" data-id="${a.id}" onchange="updateBatchJustSel()" /></td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
@@ -3723,7 +3939,8 @@
     document.getElementById('manot-infracao-editor').style.display = 'none';
     document.getElementById('veredito-resultado').value = '';
     document.getElementById('veredito-observacao').value = '';
-    document.getElementById('veredito-data-cumprimento').value = '';
+    _datasVeredito = [];
+    dpInit('dp-cumpr', { mode: 'multi', pillsId: 'dp-cumpr-pills', onChange: (dates) => { _datasVeredito = dates; } });
     document.getElementById('veredito-cumprimento-wrap').style.display = 'none';
     document.getElementById('modal-anot').classList.add('open');
 
@@ -3773,12 +3990,14 @@
         resEl.style.cssText = resultadoStyle[a.veredito] ?? '';
         document.getElementById('manot-veredito-data').textContent = fmtDate(a.veredito_decidido_em);
         const cwrap = document.getElementById('manot-veredito-cumprimento-wrap');
-        if (a.veredito_data_cumprimento) {
+        const datas = a.veredito_datas_cumprimento;
+        if (datas && datas.length) {
           cwrap.style.display = 'block';
-          document.getElementById('manot-veredito-cumprimento').textContent = fmtDateOnly(a.veredito_data_cumprimento);
-        } else {
-          cwrap.style.display = 'none';
-        }
+          document.getElementById('manot-veredito-cumprimento').innerHTML =
+            datas.map(d => `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--warn);background:rgba(224,123,42,.1);border:1px solid rgba(224,123,42,.3);padding:3px 8px;border-radius:4px;cursor:pointer;"
+              title="Clique para remover" onclick="manot_removeCumprimento(${a.id},'${d}',this)">${fmtDateOnly(d)} ✕</span>`).join('');
+          if (window._currentUser?.role === 'coordenador') document.getElementById('manot-add-data-wrap').style.display = 'flex';
+        } else { cwrap.style.display = 'none'; }
         if (a.veredito_observacao) {
           document.getElementById('manot-veredito-obs-wrap').style.display = 'block';
           document.getElementById('manot-veredito-obs').textContent = a.veredito_observacao;
@@ -3890,6 +4109,7 @@
         return;
       }
 
+      window._veredatoData = json.data;
       tbody.innerHTML = json.data.map(a => {
         const preview = a.justificativa
           ? a.justificativa.substring(0, 55) + (a.justificativa.length > 55 ? '…' : '')
@@ -3899,8 +4119,10 @@
         const obs = a.veredito_observacao
           ? a.veredito_observacao.substring(0, 50) + (a.veredito_observacao.length > 50 ? '…' : '')
           : '<span style="color:var(--muted);">—</span>';
+        const isPun = ['pernoite','recolher','licença_nao_concedida'].includes(a.veredito);
         return `
-        <tr style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'veredito')">
+        <tr style="cursor:pointer;" id="vrow-${a.id}" onclick="openAnotModal(${a.id}, 'veredito')">
+          <td class="cb-wrap" onclick="event.stopPropagation()">${isPun ? `<input type="checkbox" class="cb-veredito" data-id="${a.id}" onchange="updateBatchVereditoSel()">` : ''}</td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
@@ -3970,23 +4192,34 @@
   }
 
   // ── DAR VEREDITO NO MODAL ──────────────────────────────────
+  let _datasVeredito = []; // lista de datas adicionadas no form
+
   function toggleVeredtoCumprimento() {
     const resultado = document.getElementById('veredito-resultado').value;
     const requer = ['pernoite', 'recolher', 'licença_nao_concedida'];
     const wrap = document.getElementById('veredito-cumprimento-wrap');
     wrap.style.display = requer.includes(resultado) ? 'block' : 'none';
-    if (!requer.includes(resultado)) document.getElementById('veredito-data-cumprimento').value = '';
+    if (!requer.includes(resultado)) {
+      _datasVeredito = [];
+      dpClear('dp-cumpr');
+    } else {
+      if (!_dpState['dp-cumpr']) {
+        dpInit('dp-cumpr', { mode: 'multi', pillsId: 'dp-cumpr-pills', onChange: (dates) => { _datasVeredito = dates; } });
+      } else {
+        dpRender('dp-cumpr');
+      }
+    }
   }
 
   async function submitVeredito() {
     if (!_modalAnotId) return;
     const resultado        = document.getElementById('veredito-resultado').value;
     const observacao       = document.getElementById('veredito-observacao').value.trim();
-    const dataCumprimento  = document.getElementById('veredito-data-cumprimento').value;
     const requerData       = ['pernoite', 'recolher', 'licença_nao_concedida'];
     if (!resultado) { showAlert('manot-error', 'Selecione um resultado.'); return; }
-    if (requerData.includes(resultado) && !dataCumprimento) {
-      showAlert('manot-error', 'Informe a data de cumprimento para este resultado.'); return;
+    const _datasVeredito = dpGetSelected('dp-cumpr');
+    if (requerData.includes(resultado) && !_datasVeredito.length) {
+      showAlert('manot-error', 'Adicione ao menos uma data de cumprimento para este resultado.'); return;
     }
 
     const btn = document.getElementById('btn-dar-veredito');
@@ -3998,7 +4231,7 @@
       const res = await fetch(`${API}/anotacoes/${_modalAnotId}/veredito`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-        body: JSON.stringify({ resultado, observacao: observacao || null, data_cumprimento: dataCumprimento || null }),
+        body: JSON.stringify({ resultado, observacao: observacao || null, datas_cumprimento: _datasVeredito.length ? _datasVeredito : null }),
       });
       const data = await res.json();
       if (!res.ok) { showAlert('manot-error', data.detail || 'Erro ao registrar veredito.'); return; }
@@ -4016,12 +4249,14 @@
       resEl.style.cssText = resultadoStyle[resultado] ?? '';
       document.getElementById('manot-veredito-data').textContent = fmtDate(data.decidido_em);
       const cumprWrap = document.getElementById('manot-veredito-cumprimento-wrap');
-      if (dataCumprimento && requerData.includes(resultado)) {
+      const requerData2 = ['pernoite', 'recolher', 'licença_nao_concedida'];
+      if (_datasVeredito.length && requerData2.includes(resultado)) {
         cumprWrap.style.display = 'block';
-        document.getElementById('manot-veredito-cumprimento').textContent = fmtDateOnly(dataCumprimento);
-      } else {
-        cumprWrap.style.display = 'none';
-      }
+        document.getElementById('manot-veredito-cumprimento').innerHTML =
+          _datasVeredito.map(d => `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--warn);background:rgba(224,123,42,.1);border:1px solid rgba(224,123,42,.3);padding:3px 8px;border-radius:4px;">${fmtDateOnly(d)}</span>`).join('');
+        if (window._currentUser?.role === 'coordenador') document.getElementById('manot-add-data-wrap').style.display = 'flex';
+      } else { cumprWrap.style.display = 'none'; }
+      _datasVeredito = []; dpClear('dp-cumpr');
       if (observacao) {
         document.getElementById('manot-veredito-obs-wrap').style.display = 'block';
         document.getElementById('manot-veredito-obs').textContent = observacao;
@@ -5517,10 +5752,12 @@
             <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);">${fmtDate(a.veredito_decidido_em)}</div>
           </div>
         </div>
-        ${a.veredito_data_cumprimento ? `
+        ${a.veredito_datas_cumprimento?.length ? `
         <div style="margin-top:10px;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Data de Cumprimento</div>
-          <p style="font-size:13px;font-weight:700;color:var(--warn);font-family:'IBM Plex Mono',monospace;">${fmtDateOnly(a.veredito_data_cumprimento)}</p>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Datas de Cumprimento</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${a.veredito_datas_cumprimento.map(d => `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--warn);background:rgba(224,123,42,.1);border:1px solid rgba(224,123,42,.3);padding:3px 8px;border-radius:4px;">${fmtDateOnly(d)}</span>`).join('')}
+          </div>
         </div>` : ''}
         ${a.veredito_observacao ? `
         <div style="margin-top:10px;">
@@ -6095,8 +6332,12 @@
     const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     document.getElementById('pun-cal-titulo').textContent = `${meses[mes - 1]} ${ano}`;
 
+    const cadeteId = getSdValue('sd-pun-cadete');
+    const params = new URLSearchParams({ ano, mes });
+    if (cadeteId) params.set('cadete_id', cadeteId);
+
     try {
-      const res = await fetch(`${API}/punicoes/calendario?ano=${ano}&mes=${mes}`, {
+      const res = await fetch(`${API}/punicoes/calendario?${params}`, {
         headers: { 'Authorization': `Bearer ${token()}` }
       });
       _punState.dotData = res.ok ? await res.json() : [];
@@ -6187,6 +6428,8 @@
     try {
       const params = new URLSearchParams({ data });
       if (tipo) params.set('resultado', tipo);
+      const cadeteId = getSdValue('sd-pun-cadete');
+      if (cadeteId) params.set('cadete_id', cadeteId);
       const res  = await fetch(`${API}/punicoes/lista?${params}`, {
         headers: { 'Authorization': `Bearer ${token()}` }
       });
@@ -6207,6 +6450,7 @@
       tbody.innerHTML = json.map(r => {
         const cor = _punResultadoColor[r.resultado] || 'var(--text)';
         const label = _punResultadoLabel[r.resultado] || r.resultado;
+        const isCoord = window._currentUser?.role === 'coordenador';
         return `<tr>
           <td class="td-mono">${r.numero_geral ?? '—'}</td>
           <td class="td-name">${r.username}</td>
@@ -6215,6 +6459,7 @@
           <td><span class="pill" style="color:${cor};border-color:${cor}33;background:${cor}14;">${label}</span></td>
           <td class="td-mono">${fmtDateOnly(r.data_cumprimento)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${r.observacao || '—'}</td>
+          <td>${isCoord ? `<button class="btn btn-ghost btn-sm" onclick="openPunEdit(${r.anotacao_id},'${r.username}')">✎ Datas</button>` : ''}</td>
         </tr>`;
       }).join('');
 
@@ -6255,12 +6500,712 @@
     URL.revokeObjectURL(url);
   }
 
+  let _punEditAnotId = null;
+
+  function openPunEdit(anotacaoId, username) {
+    _punEditAnotId = anotacaoId;
+    document.getElementById('pun-edit-cadete').textContent = `CAD BM ${username}`;
+    document.getElementById('pun-edit-error').className = 'alert error';
+    dpInit('dp-pun-edit', { mode: 'single', labelId: 'dp-pun-edit-label' });
+    document.getElementById('modal-pun-edit').classList.add('open');
+    loadPunEditDatas(anotacaoId);
+  }
+
+  async function loadPunEditDatas(anotacaoId) {
+    try {
+      const res = await fetch(`${API}/vereditos/${anotacaoId}/cumprimentos`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      const list = res.ok ? await res.json() : [];
+      renderPunEditDatas(list, anotacaoId);
+    } catch { renderPunEditDatas([], anotacaoId); }
+  }
+
+  function renderPunEditDatas(list, anotacaoId) {
+    const el = document.getElementById('pun-edit-datas-list');
+    if (!el) return;
+    el.innerHTML = list.length
+      ? list.map(c => `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);padding:6px 10px;border-radius:4px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--warn);">${fmtDateOnly(c.data)}</span>
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--danger);" onclick="punRemoveCumprimento(${c.id},${anotacaoId})">✕</button>
+        </div>`).join('')
+      : `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Nenhuma data registrada</div>`;
+  }
+
+  async function punAddCumprimento() {
+    const novaData = dpGetSelected("dp-pun-edit")[0];
+    if (!novaData || !_punEditAnotId) return;
+    document.getElementById('pun-edit-error').className = 'alert error';
+    try {
+      const res = await fetch(`${API}/vereditos/${_punEditAnotId}/cumprimentos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ data: novaData }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById('pun-edit-error').textContent = data.detail || 'Erro ao adicionar.';
+        document.getElementById('pun-edit-error').className = 'alert error show'; return;
+      }
+    dpClear("dp-pun-edit");
+      await loadPunEditDatas(_punEditAnotId);
+      await loadPunCalendario(); loadPunicoesList();
+      toast('Data adicionada.');
+    } catch {
+      document.getElementById('pun-edit-error').textContent = 'Erro de conexão.';
+      document.getElementById('pun-edit-error').className = 'alert error show';
+    }
+  }
+
+  async function punRemoveCumprimento(cumprimentoId, anotacaoId) {
+    try {
+      const res = await fetch(`${API}/vereditos/cumprimentos/${cumprimentoId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token()}` },
+      });
+      if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
+      await loadPunEditDatas(anotacaoId);
+      await loadPunCalendario(); loadPunicoesList();
+      toast('Data removida.');
+    } catch { toast('Erro de conexão.', 'error'); }
+  }
+
+  function closePunEdit() {
+    document.getElementById('modal-pun-edit').classList.remove('open');
+    _punEditAnotId = null;
+  }
+
+  // Adicionar/remover cumprimentos direto do modal manot (coordenador)
+  async function manot_addCumprimento() {
+    const input = document.getElementById('manot-add-data-input');
+    const val = input.value;
+    if (!val || !_modalAnotId) return;
+    try {
+      const res = await fetch(`${API}/vereditos/${_modalAnotId}/cumprimentos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ data: val }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showAlert('manot-error', data.detail || 'Erro.'); return; }
+      input.value = '';
+      // Recarregar anotação
+      const ar = await fetch(`${API}/anotacoes/${_modalAnotId}`, { headers: { 'Authorization': `Bearer ${token()}` } });
+      const a2 = await ar.json();
+      const datas2 = a2.veredito_datas_cumprimento || [];
+      document.getElementById('manot-veredito-cumprimento').innerHTML =
+        datas2.map(d => `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--warn);background:rgba(224,123,42,.1);border:1px solid rgba(224,123,42,.3);padding:3px 8px;border-radius:4px;cursor:pointer;"
+          title="Clique para remover" onclick="manot_removeCumprimento(${_modalAnotId},'${d}',this)">${fmtDateOnly(d)} ✕</span>`).join('');
+      toast('Data adicionada.');
+    } catch { showAlert('manot-error', 'Erro de conexão.'); }
+  }
+
+  async function manot_removeCumprimento(anotacaoId, dataStr, el) {
+    // Buscar id do cumprimento pela data
+    try {
+      const res = await fetch(`${API}/vereditos/${anotacaoId}/cumprimentos`, { headers: { 'Authorization': `Bearer ${token()}` } });
+      const list = await res.json();
+      const c = list.find(x => x.data === dataStr);
+      if (!c) return;
+      const dr = await fetch(`${API}/vereditos/cumprimentos/${c.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token()}` } });
+      if (!dr.ok) { toast('Erro ao remover.', 'error'); return; }
+      el.remove();
+      toast('Data removida.');
+    } catch { toast('Erro de conexão.', 'error'); }
+  }
+
+  // ══════════════════════════════════════════════════
+  // DATE PICKER — componente reutilizável
+  // ══════════════════════════════════════════════════
+
+  const _dpState = {}; // id → { ano, mes, selected:Set, mode:'single'|'multi', onChange }
+
+  function dpInit(id, opts = {}) {
+    const now = new Date();
+    _dpState[id] = {
+      ano: opts.ano || now.getFullYear(),
+      mes: opts.mes || now.getMonth() + 1,
+      selected: new Set(opts.selected || []),
+      mode: opts.mode || 'single',
+      onChange: opts.onChange || null,
+      hiddenId: opts.hiddenId || null,
+      labelId: opts.labelId || null,
+      pillsId: opts.pillsId || null,
+    };
+    dpRender(id);
+  }
+
+  function dpToggle(id, event) {
+    if (event) event.stopPropagation();
+    const el = document.getElementById(id);
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('.dp-popup.open').forEach(p => p.classList.remove('open'));
+    if (!isOpen) {
+      el.classList.add('open');
+      dpRender(id);
+      // Position after render (rAF ensures element is visible and has dimensions)
+      requestAnimationFrame(() => {
+        const trigger = el.previousElementSibling || el.closest('.dp-wrap')?.querySelector('.dp-trigger');
+        if (!trigger) return;
+        const rect = trigger.getBoundingClientRect();
+        // If trigger has no size (hidden parent), try parent chain
+        if (rect.width === 0 && rect.height === 0) return;
+        const pw = el.offsetWidth  || 280;
+        const ph = el.offsetHeight || 300;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let top  = rect.bottom + 4;
+        let left = rect.left;
+        if (left + pw > vw - 8) left = vw - pw - 8;
+        if (left < 8) left = 8;
+        if (top + ph > vh - 8) top = rect.top - ph - 4;
+        if (top < 8) top = 8;
+        el.style.top  = top  + 'px';
+        el.style.left = left + 'px';
+      });
+    }
+  }
+
+  function dpNav(id, dir, event) {
+    if (event) event.stopPropagation();
+    const s = _dpState[id];
+    if (!s) return;
+    s.mes += dir;
+    if (s.mes > 12) { s.mes = 1; s.ano++; }
+    if (s.mes < 1)  { s.mes = 12; s.ano--; }
+    dpRender(id);
+  }
+
+  function dpRender(id) {
+    const s = _dpState[id];
+    if (!s) return;
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const monthEl = document.getElementById(`${id}-month`);
+    const gridEl  = document.getElementById(`${id}-grid`);
+    if (monthEl) monthEl.textContent = `${meses[s.mes-1]} ${s.ano}`;
+    if (!gridEl) return;
+
+    const dias = ['D','S','T','Q','Q','S','S'];
+    const primeiro = new Date(s.ano, s.mes-1, 1).getDay();
+    const total    = new Date(s.ano, s.mes, 0).getDate();
+    const hoje     = new Date().toISOString().substring(0,10);
+
+    let html = dias.map(d => `<div class="dp-dow">${d}</div>`).join('');
+    for (let i = 0; i < primeiro; i++) html += '<div class="dp-day empty"></div>';
+    for (let d = 1; d <= total; d++) {
+      const iso = `${s.ano}-${String(s.mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const sel = s.selected.has(iso);
+      const cls = [
+        'dp-day',
+        iso === hoje ? 'today' : '',
+        sel ? (s.mode === 'multi' ? 'multi-sel' : 'selected') : '',
+      ].filter(Boolean).join(' ');
+      html += `<div class="${cls}" onclick="event.stopPropagation();dpSelect('${id}','${iso}')">${d}</div>`;
+    }
+    gridEl.innerHTML = html;
+
+    // Add confirm button for multi mode
+    const confirmId = `${id}-confirm`;
+    let confirmEl = document.getElementById(confirmId);
+    if (s.mode === 'multi') {
+      if (!confirmEl) {
+        confirmEl = document.createElement('div');
+        confirmEl.id = confirmId;
+        confirmEl.style.cssText = 'margin-top:10px;border-top:1px solid var(--border);padding-top:10px;';
+        gridEl.parentElement.appendChild(confirmEl);
+      }
+      const n = s.selected.size;
+      confirmEl.innerHTML = `<button class="btn btn-primary btn-full btn-sm"
+        onclick="event.stopPropagation();document.getElementById('${id}').classList.remove('open')">
+        ✓ Confirmar${n ? ` (${n} data${n > 1 ? 's' : ''})` : ''}
+      </button>`;
+    } else if (confirmEl) {
+      confirmEl.remove();
+    }
+
+    dpUpdatePills(id);
+  }
+
+  function dpSelect(id, iso) {
+    const s = _dpState[id];
+    if (!s) return;
+    if (s.mode === 'single') {
+      s.selected.clear();
+      s.selected.add(iso);
+      // Update hidden input and label
+      if (s.hiddenId) document.getElementById(s.hiddenId).value = iso;
+      if (s.labelId)  document.getElementById(s.labelId).textContent = fmtDateOnly(iso);
+      // Close popup
+      document.getElementById(id).classList.remove('open');
+    } else {
+      if (s.selected.has(iso)) s.selected.delete(iso);
+      else s.selected.add(iso);
+    }
+    dpRender(id);
+    if (s.onChange) s.onChange([...s.selected].sort());
+  }
+
+  function dpUpdatePills(id) {
+    const s = _dpState[id];
+    if (!s || !s.pillsId) return;
+    const el = document.getElementById(s.pillsId);
+    if (!el) return;
+    const sorted = [...s.selected].sort();
+    el.innerHTML = sorted.map(d =>
+      `<span class="dp-pill">${fmtDateOnly(d)}<button onclick="dpRemove('${id}','${d}')">✕</button></span>`
+    ).join('');
+  }
+
+  function dpRemove(id, iso) {
+    const s = _dpState[id];
+    if (!s) return;
+    s.selected.delete(iso);
+    dpRender(id);
+    if (s.onChange) s.onChange([...s.selected].sort());
+  }
+
+  function dpGetSelected(id) {
+    return _dpState[id] ? [..._dpState[id].selected].sort() : [];
+  }
+
+  function dpClear(id) {
+    const s = _dpState[id];
+    if (!s) return;
+    s.selected.clear();
+    if (s.hiddenId) document.getElementById(s.hiddenId).value = '';
+    if (s.labelId)  document.getElementById(s.labelId).textContent = 'Selecionar data';
+    dpRender(id);
+  }
+
+  // Init pickers on page load
+  function initDatePickers() {
+    // Data do fato (single)
+    dpInit('dp-fato', {
+      mode: 'single', hiddenId: 'lanc-data-fato', labelId: 'dp-fato-label',
+      onChange: (dates) => {
+        document.getElementById('resumo-data-fato').textContent = dates[0] ? fmtDateOnly(dates[0]) : '—';
+      }
+    });
+    // Data do evento elogio (single)
+    dpInit('dp-elogio', { mode: 'single', hiddenId: 'elogio-data-evento', labelId: 'dp-elogio-label' });
+    // Datas de cumprimento veredito (multi)
+    dpInit('dp-cumpr', {
+      mode: 'multi', pillsId: 'dp-cumpr-pills',
+      onChange: (dates) => { _datasVeredito = dates; }
+    });
+    // Batch modals
+    dpInit('dp-batch-cumpr', { mode: 'multi', pillsId: 'dp-batch-cumpr-pills' });
+    dpInit('dp-batch-pun',   { mode: 'multi', pillsId: 'dp-batch-pun-pills'   });
+  }
+
+  // Close pickers on outside click — but not when clicking inside a modal or dp-wrap/dp-popup
+  document.addEventListener('click', e => {
+    if (e.target.closest('.dp-wrap') || e.target.closest('.dp-popup')) return;
+    document.querySelectorAll('.dp-popup.open').forEach(p => p.classList.remove('open'));
+  }, true); // capture phase so modal stopPropagation doesn't interfere
+
+  // Reset dp-cumpr when toggling cumprimento wrap
+  const _origToggle = toggleVeredtoCumprimento;
+
+  // ══════════════════════════════════════════════════
+  // BATCH — justificadas helpers
+  // ══════════════════════════════════════════════════
+
+  function toggleAllJustificadas(cb) {
+    document.querySelectorAll('.cb-just').forEach(c => c.checked = cb.checked);
+    updateBatchJustSel();
+  }
+
+  function updateBatchJustSel() {
+    const checked = [...document.querySelectorAll('.cb-just:checked')];
+    const n = checked.length;
+    const selCount = document.getElementById('batch-sel-count');
+    if (selCount) selCount.textContent = n;
+    const btnVeredito = document.getElementById('btn-batch-veredito');
+    if (btnVeredito) btnVeredito.style.display = n >= 1 ? 'inline-flex' : 'none';
+  }
+
+  function getSelectedJustIds() {
+    return [...document.querySelectorAll('.cb-just:checked')].map(c => Number(c.dataset.id));
+  }
+
+  // ── Batch Veredito ──
+
+  function openBatchVeredito() {
+    const ids = getSelectedJustIds();
+    if (!ids.length) return;
+    const data = window._justificadasData || [];
+    const sel  = data.filter(a => ids.includes(a.id));
+    document.getElementById('batch-veredito-cadetes').innerHTML =
+      sel.map(a => `<div>#${a.id} — ${resolveUser(a.cad_anot)}</div>`).join('');
+    document.getElementById('batch-resultado').value = '';
+    document.getElementById('batch-observacao').value = '';
+    document.getElementById('batch-cumpr-wrap').style.display = 'none';
+    document.getElementById('batch-veredito-error').className = 'alert error';
+    document.getElementById('batch-veredito-success').className = 'alert success';
+    document.getElementById('batch-veredito-log').style.display = 'none';
+    document.getElementById('batch-veredito-log').innerHTML = '';
+    dpClear('dp-batch-cumpr');
+    document.getElementById('modal-batch-veredito').classList.add('open');
+  }
+
+  function closeBatchVeredito() {
+    document.getElementById('modal-batch-veredito').classList.remove('open');
+  }
+
+  function toggleBatchCumpr() {
+    const r = document.getElementById('batch-resultado').value;
+    const requer = ['pernoite','recolher','licença_nao_concedida'];
+    const show = requer.includes(r);
+    document.getElementById('batch-cumpr-wrap').style.display = show ? 'block' : 'none';
+    if (show) {
+      // Re-init to ensure state is fresh and rendered
+      dpInit('dp-batch-cumpr', { mode: 'multi', pillsId: 'dp-batch-cumpr-pills' });
+    } else {
+      dpClear('dp-batch-cumpr');
+    }
+  }
+
+  async function submitBatchVeredito() {
+    const ids       = getSelectedJustIds();
+    const resultado = document.getElementById('batch-resultado').value;
+    const observacao = document.getElementById('batch-observacao').value.trim();
+    const requer    = ['pernoite','recolher','licença_nao_concedida'];
+    const datas     = dpGetSelected('dp-batch-cumpr');
+
+    if (!resultado) { showAlert('batch-veredito-error', 'Selecione um resultado.'); return; }
+    if (requer.includes(resultado) && !datas.length) {
+      showAlert('batch-veredito-error', 'Adicione ao menos uma data de cumprimento.'); return;
+    }
+
+    const btn = document.getElementById('btn-batch-veredito-submit');
+    btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...';
+    document.getElementById('batch-veredito-error').className = 'alert error';
+    const log = document.getElementById('batch-veredito-log');
+    log.style.display = 'block'; log.innerHTML = '';
+
+    let ok = 0, err = 0;
+    for (const anotId of ids) {
+      try {
+        const res = await fetch(`${API}/anotacoes/${anotId}/veredito`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+          body: JSON.stringify({ resultado, observacao: observacao || null, datas_cumprimento: datas.length ? datas : null }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          log.innerHTML += `<div style="color:var(--success);">✓ #${anotId}</div>`;
+          ok++;
+        } else {
+          log.innerHTML += `<div style="color:var(--danger);">✗ #${anotId} — ${data.detail}</div>`;
+          err++;
+        }
+      } catch {
+        log.innerHTML += `<div style="color:var(--danger);">✗ #${anotId} — falha</div>`;
+        err++;
+      }
+    }
+
+    btn.classList.remove('btn-loading'); btn.textContent = 'REGISTRAR VEREDITO EM LOTE';
+    if (err === 0) {
+      showAlert('batch-veredito-success', `${ok} veredito(s) registrado(s) com sucesso.`, 'success');
+      setTimeout(() => { closeBatchVeredito(); loadJustificadas(); }, 1500);
+    } else {
+      showAlert('batch-veredito-error', `${ok} OK, ${err} com erro. Veja o log acima.`);
+      loadJustificadas();
+    }
+  }
+
+  // ── Batch Punição ──
+
+  function toggleAllVeredito(cb) {
+    document.querySelectorAll('.cb-veredito').forEach(c => c.checked = cb.checked);
+    updateBatchVereditoSel();
+  }
+
+  function updateBatchVereditoSel() {
+    const n = document.querySelectorAll('.cb-veredito:checked').length;
+    document.getElementById('batch-pun-veredito-count').textContent = n;
+    document.getElementById('btn-batch-pun-veredito').style.display = n >= 1 ? 'inline-flex' : 'none';
+  }
+
+  function openBatchPunFromVeredito() {
+    const ids  = [...document.querySelectorAll('.cb-veredito:checked')].map(c => Number(c.dataset.id));
+    if (!ids.length) return;
+    const data = window._veredatoData || [];
+    const sel  = data.filter(a => ids.includes(a.id));
+    document.getElementById('batch-pun-cadetes').innerHTML =
+      sel.map(a => `<div>#${a.id} — ${resolveUser(a.cad_anot)} · <span style="color:var(--warn);">${a.veredito}</span></div>`).join('');
+    document.getElementById('batch-pun-error').className = 'alert error';
+    document.getElementById('batch-pun-success').className = 'alert success';
+    dpInit('dp-batch-pun', { mode: 'multi', pillsId: 'dp-batch-pun-pills' });
+    // Store ids for submit
+    window._batchPunIds = ids;
+    document.getElementById('modal-batch-pun').classList.add('open');
+  }
+
+  function openBatchPun() {
+    const ids = getSelectedJustIds();
+    if (!ids.length) return;
+    window._batchPunIds = null;
+    const data = window._justificadasData || [];
+    const sel  = data.filter(a => ids.includes(a.id));
+    document.getElementById('batch-pun-cadetes').innerHTML =
+      sel.map(a => `<div>#${a.id} — ${resolveUser(a.cad_anot)}</div>`).join('');
+    document.getElementById('batch-pun-error').className = 'alert error';
+    document.getElementById('batch-pun-success').className = 'alert success';
+    dpInit('dp-batch-pun', { mode: 'multi', pillsId: 'dp-batch-pun-pills' });
+    document.getElementById('modal-batch-pun').classList.add('open');
+  }
+
+  function closeBatchPun() {
+    document.getElementById('modal-batch-pun').classList.remove('open');
+    window._batchPunIds = null;
+  }
+
+  async function submitBatchPun() {
+    const ids   = window._batchPunIds || getSelectedJustIds();
+    const datas = dpGetSelected('dp-batch-pun');
+    if (!datas.length) { showAlert('batch-pun-error', 'Selecione ao menos uma data.'); return; }
+
+    const btn = document.getElementById('btn-batch-pun-submit');
+    btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...';
+    document.getElementById('batch-pun-error').className = 'alert error';
+
+    let ok = 0, err = 0;
+    for (const anotId of ids) {
+      // Add each date as cumprimento
+      for (const d of datas) {
+        try {
+          const res = await fetch(`${API}/vereditos/${anotId}/cumprimentos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+            body: JSON.stringify({ data: d }),
+          });
+          if (res.ok) ok++; else err++;
+        } catch { err++; }
+      }
+    }
+
+    btn.classList.remove('btn-loading'); btn.textContent = 'REAGENDAR';
+    if (err === 0) {
+      showAlert('batch-pun-success', `${ok} data(s) adicionada(s) com sucesso.`, 'success');
+      setTimeout(() => {
+        closeBatchPun();
+        loadPunCalendario(); loadPunicoesList();
+        if (window._batchPunIds) loadVeredito(); else loadJustificadas();
+      }, 1200);
+    } else {
+      showAlert('batch-pun-error', `${ok} OK, ${err} com erro.`);
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  // MINHAS PUNIÇÕES — calendário do cadete
+  // ══════════════════════════════════════════════════
+
+  const _meuPunState = { ano: new Date().getFullYear(), mes: new Date().getMonth() + 1, dotData: [] };
+
+  async function initMeusPunicoes() {
+    await loadMeuPunCalendario();
+  }
+
+  async function loadMeuPunCalendario() {
+    const { ano, mes } = _meuPunState;
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    document.getElementById('meu-pun-cal-titulo').textContent = `${meses[mes - 1]} ${ano}`;
+
+    try {
+      const res = await fetch(`${API}/cadete/punicoes/calendario?ano=${ano}&mes=${mes}`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      _meuPunState.dotData = res.ok ? await res.json() : [];
+    } catch { _meuPunState.dotData = []; }
+
+    renderMeuPunCalendario();
+  }
+
+  function renderMeuPunCalendario() {
+    const { ano, mes, dotData } = _meuPunState;
+    const cal = document.getElementById('meu-pun-calendario');
+
+    const dotMap = {};
+    dotData.forEach(d => {
+      const k = typeof d.data_cumprimento === 'string'
+        ? d.data_cumprimento.substring(0, 10)
+        : new Date(d.data_cumprimento).toISOString().substring(0, 10);
+      if (!dotMap[k]) dotMap[k] = [];
+      dotMap[k].push(d.resultado);
+    });
+
+    const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const primeiroDia = new Date(ano, mes - 1, 1).getDay();
+    const totalDias   = new Date(ano, mes, 0).getDate();
+    const hoje        = new Date().toISOString().substring(0, 10);
+
+    let html = dias.map(d =>
+      `<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);padding:4px 0;">${d}</div>`
+    ).join('');
+
+    for (let i = 0; i < primeiroDia; i++) html += '<div></div>';
+
+    for (let d = 1; d <= totalDias; d++) {
+      const iso  = `${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dots = dotMap[iso] || [];
+      const isHoje  = iso === hoje;
+      const hasPun  = dots.length > 0;
+      html += `
+        <div onclick="meuPunSelecionarData('${iso}')" style="cursor:pointer;padding:6px 2px;border-radius:4px;position:relative;
+          background:${hasPun ? 'rgba(200,168,75,.08)' : 'transparent'};
+          border:1px solid ${isHoje ? 'var(--accent)' : hasPun ? 'var(--border)' : 'transparent'};
+          transition:background .15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${hasPun ? 'rgba(200,168,75,.08)' : 'transparent'}'">
+          <div style="font-size:12px;${isHoje ? 'color:var(--accent);font-weight:700;' : 'color:var(--text);'}">${d}</div>
+          ${hasPun ? `<div style="display:flex;justify-content:center;gap:2px;margin-top:3px;flex-wrap:wrap;">
+            ${dots.slice(0,3).map(r => `<span style="width:6px;height:6px;border-radius:50%;background:${_punResultadoColor[r]||'var(--accent)'};display:inline-block;"></span>`).join('')}
+          </div>` : ''}
+        </div>`;
+    }
+    cal.innerHTML = html;
+  }
+
+  function meuPunMesAnterior() {
+    if (_meuPunState.mes === 1) { _meuPunState.mes = 12; _meuPunState.ano--; }
+    else _meuPunState.mes--;
+    loadMeuPunCalendario();
+  }
+
+  function meuPunMesProximo() {
+    if (_meuPunState.mes === 12) { _meuPunState.mes = 1; _meuPunState.ano++; }
+    else _meuPunState.mes++;
+    loadMeuPunCalendario();
+  }
+
+  async function meuPunSelecionarData(iso) {
+    document.getElementById('meu-pun-lista-titulo').textContent = fmtDateOnly(iso);
+    const lista = document.getElementById('meu-pun-lista');
+    lista.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;padding:16px;">CARREGANDO...</div>`;
+
+    try {
+      const res = await fetch(`${API}/cadete/punicoes/lista?data=${iso}`, {
+        headers: { 'Authorization': `Bearer ${token()}` }
+      });
+      const json = res.ok ? await res.json() : [];
+
+      if (!json.length) {
+        lista.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;padding:16px;">Nenhuma punição nesta data</div>`;
+        return;
+      }
+
+      lista.innerHTML = json.map(r => {
+        const cor   = _punResultadoColor[r.resultado] || 'var(--text)';
+        const label = _punResultadoLabel[r.resultado] || r.resultado;
+        return `
+        <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid ${cor};padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span class="pill" style="color:${cor};border-color:${cor}33;background:${cor}14;">${label}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${fmtDateOnly(r.data_cumprimento)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);">${resolveInfracao(r.infracao)}</div>
+          ${r.observacao ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;">${r.observacao}</div>` : ''}
+        </div>`;
+      }).join('');
+
+    } catch {
+      lista.innerHTML = `<div style="color:var(--danger);font-family:monospace;font-size:11px;text-align:center;padding:16px;">ERRO AO CARREGAR</div>`;
+    }
+  }
+
   (async () => {
     if (token()) {
       await initApp();
     }
   })();
 </script>
+
+  <!-- Modal: Veredito em Lote -->
+  <div class="modal-overlay" id="modal-batch-veredito" onclick="if(event.target===this)closeBatchVeredito()">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Veredito em Lote</div>
+        <button class="modal-close" onclick="closeBatchVeredito()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="batch-veredito-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:100px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Resultado *</label>
+            <select id="batch-resultado" class="role-select" style="width:100%;padding:9px 10px;font-size:12px;" onchange="toggleBatchCumpr()">
+              <option value="">— Selecione —</option>
+              <option value="justificada">Justificada</option>
+              <option value="perda_de_ponto">Perda de Ponto</option>
+              <option value="pernoite">Pernoite</option>
+              <option value="licença_nao_concedida">Licença Não Concedida</option>
+              <option value="recolher">Recolher</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação</label>
+            <input type="text" id="batch-observacao" placeholder="Opcional..." style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-family:inherit;font-size:12px;outline:none;" />
+          </div>
+        </div>
+        <div id="batch-cumpr-wrap" style="display:none;margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas de Cumprimento *</label>
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-batch-cumpr', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label">Selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-batch-cumpr">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-batch-cumpr',-1,event)">‹</button>
+                <div class="dp-month" id="dp-batch-cumpr-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-batch-cumpr',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-batch-cumpr-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-batch-cumpr-pills"></div>
+        </div>
+        <div class="alert error"   id="batch-veredito-error"   style="margin-bottom:10px;"></div>
+        <div class="alert success" id="batch-veredito-success" style="margin-bottom:10px;"></div>
+        <div id="batch-veredito-log" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);max-height:120px;overflow-y:auto;margin-bottom:10px;display:none;"></div>
+        <button class="btn btn-primary btn-full" id="btn-batch-veredito-submit" onclick="submitBatchVeredito()">REGISTRAR VEREDITO EM LOTE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Reagendar Punições em Lote -->
+  <div class="modal-overlay" id="modal-batch-pun" onclick="if(event.target===this)closeBatchPun()">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <div class="modal-title">Reagendar Punições em Lote</div>
+        <button class="modal-close" onclick="closeBatchPun()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="batch-pun-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:100px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Nova(s) Data(s) de Cumprimento *</label>
+        <div class="dp-wrap">
+          <div class="dp-trigger" onclick="dpToggle('dp-batch-pun', event)">
+            <span class="dp-icon">📅</span>
+            <span class="dp-label">Selecionar datas</span>
+          </div>
+          <div class="dp-popup" id="dp-batch-pun">
+            <div class="dp-header">
+              <button class="dp-nav" onclick="dpNav('dp-batch-pun',-1,event)">‹</button>
+              <div class="dp-month" id="dp-batch-pun-month"></div>
+              <button class="dp-nav" onclick="dpNav('dp-batch-pun',1,event)">›</button>
+            </div>
+            <div class="dp-grid" id="dp-batch-pun-grid"></div>
+          </div>
+        </div>
+        <div class="dp-pills" id="dp-batch-pun-pills"></div>
+        <div class="alert error"   id="batch-pun-error"   style="margin-top:12px;margin-bottom:10px;"></div>
+        <div class="alert success" id="batch-pun-success" style="margin-bottom:10px;"></div>
+        <button class="btn btn-primary btn-full" id="btn-batch-pun-submit" style="margin-top:12px;" onclick="submitBatchPun()">REAGENDAR</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
