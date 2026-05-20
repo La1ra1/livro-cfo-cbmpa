@@ -1806,9 +1806,9 @@
                   </div>
                   <div class="dp-popup" id="dp-fato">
                     <div class="dp-header">
-                      <button class="dp-nav" onclick="dpNav('dp-fato',-1,event)">‹</button>
+                      <button class="dp-nav" onclick=\"dpNav('dp-fato',-1,event)\">‹</button>
                       <div class="dp-month" id="dp-fato-month"></div>
-                      <button class="dp-nav" onclick="dpNav('dp-fato',1,event)">›</button>
+                      <button class="dp-nav" onclick=\"dpNav('dp-fato',1,event)\">›</button>
                     </div>
                     <div class="dp-grid" id="dp-fato-grid"></div>
                   </div>
@@ -2282,9 +2282,9 @@
                   </div>
                   <div class="dp-popup" id="dp-elogio">
                     <div class="dp-header">
-                      <button class="dp-nav" onclick="dpNav('dp-elogio',-1,event)">‹</button>
+                      <button class="dp-nav" onclick=\"dpNav('dp-elogio',-1,event)\">‹</button>
                       <div class="dp-month" id="dp-elogio-month"></div>
-                      <button class="dp-nav" onclick="dpNav('dp-elogio',1,event)">›</button>
+                      <button class="dp-nav" onclick=\"dpNav('dp-elogio',1,event)\">›</button>
                     </div>
                     <div class="dp-grid" id="dp-elogio-grid"></div>
                   </div>
@@ -2528,24 +2528,25 @@
           <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas registradas</label>
           <div id="pun-edit-datas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
         </div>
-        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Adicionar nova data</label>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
-          <div class="dp-wrap" style="flex:1;">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Adicionar novas datas</label>
+        <div style="margin-bottom:10px;">
+          <div class="dp-wrap">
             <div class="dp-trigger" onclick="dpToggle('dp-pun-edit', event)">
               <span class="dp-icon">📅</span>
-              <span class="dp-label" id="dp-pun-edit-label">Selecionar data</span>
+              <span class="dp-label" id="dp-pun-edit-label">Selecionar datas</span>
             </div>
             <div class="dp-popup" id="dp-pun-edit">
               <div class="dp-header">
-                <button class="dp-nav" onclick="dpNav('dp-pun-edit',-1,event)">‹</button>
+                <button class="dp-nav" onclick=\"dpNav('dp-pun-edit',-1,event)\">‹</button>
                 <div class="dp-month" id="dp-pun-edit-month"></div>
-                <button class="dp-nav" onclick="dpNav('dp-pun-edit',1,event)">›</button>
+                <button class="dp-nav" onclick=\"dpNav('dp-pun-edit',1,event)\">›</button>
               </div>
               <div class="dp-grid" id="dp-pun-edit-grid"></div>
             </div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="punAddCumprimento()">+ Adicionar</button>
+          <div class="dp-pills" id="dp-pun-edit-pills" style="margin-top:6px;"></div>
         </div>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-bottom:14px;" onclick="punAddCumprimento()">+ Adicionar Datas Selecionadas</button>
         <div class="alert error" id="pun-edit-error"></div>
       </div>
     </div>
@@ -6506,7 +6507,7 @@
     _punEditAnotId = anotacaoId;
     document.getElementById('pun-edit-cadete').textContent = `CAD BM ${username}`;
     document.getElementById('pun-edit-error').className = 'alert error';
-    dpInit('dp-pun-edit', { mode: 'single', labelId: 'dp-pun-edit-label' });
+    dpInit('dp-pun-edit', { mode: 'multi', pillsId: 'dp-pun-edit-pills' });
     document.getElementById('modal-pun-edit').classList.add('open');
     loadPunEditDatas(anotacaoId);
   }
@@ -6534,24 +6535,27 @@
   }
 
   async function punAddCumprimento() {
-    const novaData = dpGetSelected("dp-pun-edit")[0];
-    if (!novaData || !_punEditAnotId) return;
+    const datas = dpGetSelected("dp-pun-edit");
+    if (!datas.length || !_punEditAnotId) return;
     document.getElementById('pun-edit-error').className = 'alert error';
     try {
-      const res = await fetch(`${API}/vereditos/${_punEditAnotId}/cumprimentos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-        body: JSON.stringify({ data: novaData }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        document.getElementById('pun-edit-error').textContent = data.detail || 'Erro ao adicionar.';
+      const results = await Promise.all(datas.map(data =>
+        fetch(`${API}/vereditos/${_punEditAnotId}/cumprimentos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+          body: JSON.stringify({ data }),
+        })
+      ));
+      const failed = results.filter(r => !r.ok);
+      if (failed.length) {
+        const err = await failed[0].json().catch(() => ({}));
+        document.getElementById('pun-edit-error').textContent = err.detail || 'Erro ao adicionar.';
         document.getElementById('pun-edit-error').className = 'alert error show'; return;
       }
-    dpClear("dp-pun-edit");
+      dpInit('dp-pun-edit', { mode: 'multi', pillsId: 'dp-pun-edit-pills' });
       await loadPunEditDatas(_punEditAnotId);
       await loadPunCalendario(); loadPunicoesList();
-      toast('Data adicionada.');
+      toast(datas.length > 1 ? `${datas.length} datas adicionadas.` : 'Data adicionada.');
     } catch {
       document.getElementById('pun-edit-error').textContent = 'Erro de conexão.';
       document.getElementById('pun-edit-error').className = 'alert error show';
@@ -7158,9 +7162,9 @@
             </div>
             <div class="dp-popup" id="dp-batch-cumpr">
               <div class="dp-header">
-                <button class="dp-nav" onclick="dpNav('dp-batch-cumpr',-1,event)">‹</button>
+                <button class="dp-nav" onclick=\"dpNav('dp-batch-cumpr',-1,event)\">‹</button>
                 <div class="dp-month" id="dp-batch-cumpr-month"></div>
-                <button class="dp-nav" onclick="dpNav('dp-batch-cumpr',1,event)">›</button>
+                <button class="dp-nav" onclick=\"dpNav('dp-batch-cumpr',1,event)\">›</button>
               </div>
               <div class="dp-grid" id="dp-batch-cumpr-grid"></div>
             </div>
@@ -7192,9 +7196,9 @@
           </div>
           <div class="dp-popup" id="dp-batch-pun">
             <div class="dp-header">
-              <button class="dp-nav" onclick="dpNav('dp-batch-pun',-1,event)">‹</button>
+              <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',-1,event)\">‹</button>
               <div class="dp-month" id="dp-batch-pun-month"></div>
-              <button class="dp-nav" onclick="dpNav('dp-batch-pun',1,event)">›</button>
+              <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',1,event)\">›</button>
             </div>
             <div class="dp-grid" id="dp-batch-pun-grid"></div>
           </div>
