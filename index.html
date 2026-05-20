@@ -1650,7 +1650,7 @@
           <table>
             <thead>
               <tr>
-                <th class="cb-wrap"><input type="checkbox" id="cb-all-justificadas" onclick="toggleAllJustificadas(this)" /></th>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-justificadas" onclick="toggleAllJustificadas(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Data do Fato</th>
@@ -1717,7 +1717,7 @@
           <table>
             <thead>
               <tr>
-                <th class="cb-wrap"><input type="checkbox" id="cb-all-veredito" onclick="toggleAllVeredito(this)" /></th>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-veredito" onclick="toggleAllVeredito(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Data do Fato</th>
@@ -3885,7 +3885,7 @@
         const preview = a.justificativa ? a.justificativa.substring(0, 60) + (a.justificativa.length > 60 ? '…' : '') : '—';
         return `
         <tr id="jrow-${a.id}" style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'justificadas')">
-          <td class="cb-wrap" onclick="event.stopPropagation()"><input type="checkbox" class="cb-just" data-id="${a.id}" onchange="updateBatchJustSel()" /></td>
+          <td class="cb-wrap" onclick="event.stopPropagation()"><input type="checkbox" class="cb-row cb-just" data-id="${a.id}" onchange="updateBatchJustSel()" /></td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
@@ -4123,7 +4123,7 @@
         const isPun = ['pernoite','recolher','licença_nao_concedida'].includes(a.veredito);
         return `
         <tr style="cursor:pointer;" id="vrow-${a.id}" onclick="openAnotModal(${a.id}, 'veredito')">
-          <td class="cb-wrap" onclick="event.stopPropagation()">${isPun ? `<input type="checkbox" class="cb-veredito" data-id="${a.id}" onchange="updateBatchVereditoSel()">` : ''}</td>
+          <td class="cb-wrap" onclick="event.stopPropagation()">${isPun ? `<input type="checkbox" class="cb-row cb-veredito" data-id="${a.id}" onchange="updateBatchVereditoSel()">` : ''}</td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
