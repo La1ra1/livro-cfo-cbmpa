@@ -6502,17 +6502,19 @@
 
     const dataFmt = data ? data.split('-').reverse().join('/') : '—';
 
-    // Converter ABM.png para base64 para funcionar no blob
-    let abmBase64 = '';
-    try {
-      const imgRes = await fetch('ABM.png');
-      const imgBlob = await imgRes.blob();
-      abmBase64 = await new Promise(res => {
-        const r = new FileReader();
-        r.onload = () => res(r.result);
-        r.readAsDataURL(imgBlob);
-      });
-    } catch { abmBase64 = ''; }
+    // Converter imagens para base64 para funcionar no blob
+    const toBase64 = async (src) => {
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        return await new Promise(res => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.readAsDataURL(blob);
+        });
+      } catch { return ''; }
+    };
+    const [abmBase64, cbmpaBase64] = await Promise.all([toBase64('ABM.png'), toBase64('CBMPA.png')]);
 
     // Agrupar por tipo de punição
     const grupos = {};
@@ -6573,8 +6575,9 @@
 <body>
 
   <!-- Cabeçalho institucional -->
-  <div style="position:relative;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;">
-    <div style="text-align:center;">
+  <div style="position:relative;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;min-height:80px;">
+    ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="position:absolute;top:0;left:8px;width:72px;height:72px;object-fit:contain;" />` : ''}
+    <div style="text-align:center;padding:0 90px;">
       <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.9;">
         Corpo de Bombeiros Militar do Pará<br>
         Coordenadoria Estadual de Proteção e Defesa Civil<br>
@@ -6582,7 +6585,7 @@
         Academia Bombeiro Militar
       </div>
     </div>
-    ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="position:absolute;top:0;right:8px;height:72px;width:auto;" />` : ''}
+    ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="position:absolute;top:0;right:8px;width:72px;height:72px;object-fit:contain;" />` : ''}
   </div>
 
   <!-- Corpo do documento -->
