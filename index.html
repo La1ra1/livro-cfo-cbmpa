@@ -1704,6 +1704,18 @@
             <div class="sd-clear" onclick="clearSd('sd-cadete-veredito', loadVeredito)">Limpar filtro</div>
           </div>
         </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
+        <div class="sd-wrap" id="sd-infracao-veredito">
+          <div class="sd-trigger" id="sd-infracao-veredito-trigger" onclick="toggleSd('sd-infracao-veredito')">Todas as infrações</div>
+          <div class="sd-panel" id="sd-infracao-veredito-panel">
+            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-veredito', this.value)" />
+            <div class="sd-list" id="sd-infracao-veredito-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-infracao-veredito', loadVeredito)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Data do fato:</span>
+        <input type="date" id="filter-verd-data-fato" class="role-select" style="padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;" onchange="loadVeredito(1)" />
+        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="document.getElementById('filter-verd-data-fato').value='';loadVeredito(1)" title="Limpar data">✕</button>
         <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
         <select class="role-select" id="tp-filter-veredito" onchange="loadVeredito(1)" style="width:auto;">
           <option value="">Todas</option>
@@ -2551,7 +2563,6 @@
       </div>
     </div>
   </div>
-</div>
 
 
 <!-- ══ MODAL EDITAR INFRAÇÃO ══ -->
@@ -3597,8 +3608,8 @@
 
   // Populate infração dropdowns for pendentes, justificativa and justificadas
   function populateInfracaoSds() {
-    const sections = ['pendentes', 'justificativa', 'justificadas'];
-    const loadFns  = [loadPendentes, loadJustificativa, loadJustificadas];
+    const sections = ['pendentes', 'justificativa', 'justificadas', 'veredito'];
+    const loadFns  = [loadPendentes, loadJustificativa, loadJustificadas, loadVeredito];
     sections.forEach((sec, i) => {
       const listEl = document.getElementById(`sd-infracao-${sec}-list`);
       const trigEl = document.getElementById(`sd-infracao-${sec}-trigger`);
@@ -4070,11 +4081,15 @@
     if (!tbody) return;
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
-    const resultado = document.getElementById('filter-veredito-resultado')?.value ?? '';
-    const cadeteIdV = getSdValue('sd-cadete-veredito');
+    const resultado  = document.getElementById('filter-veredito-resultado')?.value ?? '';
+    const cadeteIdV  = getSdValue('sd-cadete-veredito');
+    const infracaoV  = getSdValue('sd-infracao-veredito');
+    const dataFatoV  = document.getElementById('filter-verd-data-fato')?.value || '';
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
-    if (resultado) params.set('resultado', resultado);
-    if (cadeteIdV) params.set('cadete_id', cadeteIdV);
+    if (resultado)  params.set('resultado',  resultado);
+    if (cadeteIdV)  params.set('cadete_id',  cadeteIdV);
+    if (infracaoV)  params.set('infracao',   infracaoV);
+    if (dataFatoV)  params.set('data_fato',  dataFatoV);
 
     try {
       const res = await fetch(`${API}/coordenador/anotacoes?${params}`, {
