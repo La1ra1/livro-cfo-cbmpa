@@ -6573,7 +6573,7 @@
 <body>
 
   <!-- Cabeçalho institucional -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:20px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;">
+  <div style="position:relative;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;">
     <div style="text-align:center;">
       <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.9;">
         Corpo de Bombeiros Militar do Pará<br>
@@ -6582,9 +6582,7 @@
         Academia Bombeiro Militar
       </div>
     </div>
-    <div style="flex-shrink:0;">
-      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:80px;width:auto;display:block;" />` : ''}
-    </div>
+    ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="position:absolute;top:0;right:8px;height:72px;width:auto;" />` : ''}
   </div>
 
   <!-- Corpo do documento -->
