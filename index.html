@@ -6494,13 +6494,25 @@
     }
   }
 
-  function exportarPunicoesLista() {
+  async function exportarPunicoesLista() {
     const data  = document.getElementById('pun-filtro-data').value;
     const tipo  = document.getElementById('pun-filtro-tipo').value;
     const lista = window._punListaData || [];
     if (!lista.length) return;
 
     const dataFmt = data ? data.split('-').reverse().join('/') : '—';
+
+    // Converter ABM.png para base64 para funcionar no blob
+    let abmBase64 = '';
+    try {
+      const imgRes = await fetch('ABM.png');
+      const imgBlob = await imgRes.blob();
+      abmBase64 = await new Promise(res => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.readAsDataURL(imgBlob);
+      });
+    } catch { abmBase64 = ''; }
 
     // Agrupar por tipo de punição
     const grupos = {};
@@ -6522,7 +6534,7 @@
               <th style="text-align:left;padding:6px 8px;border:1px solid #bbb;">Nome de Guerra</th>
               <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:50px;">Pel</th>
               <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:65px;">Turma</th>
-              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:160px;">Assinatura do Cadete</th>
+              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:180px;">Assinatura do Cadete</th>
             </tr>
           </thead>
           <tbody>
@@ -6532,7 +6544,7 @@
                 <td style="padding:10px 8px;border:1px solid #bbb;font-weight:600;">${r.username}</td>
                 <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.pel ?? '—'}</td>
                 <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.turma ?? '—'}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;"></td>
+                <td style="padding:0;border:1px solid #bbb;height:40px;"></td>
               </tr>`).join('')}
           </tbody>
         </table>
@@ -6561,17 +6573,17 @@
 <body>
 
   <!-- Cabeçalho institucional -->
-  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;">
-    <div style="flex:1;">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.7;">
+  <div style="display:flex;align-items:center;justify-content:center;gap:20px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;">
+    <div style="text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.9;">
         Corpo de Bombeiros Militar do Pará<br>
         Coordenadoria Estadual de Proteção e Defesa Civil<br>
         Departamento-Geral de Cultura, Educação e Pesquisa<br>
         Academia Bombeiro Militar
       </div>
     </div>
-    <div style="flex-shrink:0;margin-left:20px;">
-      <img src="ABM.png" alt="ABM" style="height:72px;width:auto;display:block;" onerror="this.style.display='none'" />
+    <div style="flex-shrink:0;">
+      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:80px;width:auto;display:block;" />` : ''}
     </div>
   </div>
 
@@ -6579,7 +6591,7 @@
   ${gruposHtml}
 
   <div style="margin-top:32px;border-top:1px solid #ccc;padding-top:10px;font-size:9px;color:#aaa;">
-    Gerado em ${new Date().toLocaleString('pt-BR')} · CFO Sistema de Anotações
+    Gerado em ${new Date().toLocaleString('pt-BR')} · Sistema de Controle do Corpo de Alunos
   </div>
 
   <div class="no-print" style="margin-top:28px;text-align:center;">
