@@ -6500,10 +6500,9 @@
     const lista = window._punListaData || [];
     if (!lista.length) return;
 
-    const tipoLabel  = tipo ? (_punResultadoLabel[tipo] || tipo) : 'Todas as punições';
-    const dataFmt    = data ? data.split('-').reverse().join('/') : '—';
+    const dataFmt = data ? data.split('-').reverse().join('/') : '—';
 
-    // Agrupar por tipo de punição para facilitar a organização
+    // Agrupar por tipo de punição
     const grupos = {};
     lista.forEach(r => {
       const g = _punResultadoLabel[r.resultado] || r.resultado;
@@ -6512,31 +6511,36 @@
     });
 
     const gruposHtml = Object.entries(grupos).map(([grp, cadetes]) => `
-      <div style="margin-bottom:24px;">
-        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#666;border-bottom:1px solid #ccc;padding-bottom:4px;margin-bottom:10px;">${grp} — ${cadetes.length} cadete(s)</div>
+      <div style="margin-bottom:32px;page-break-inside:avoid;">
+        <h2 style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid #111;">
+          Lista de ${grp} — ${dataFmt} &nbsp;·&nbsp; ${cadetes.length} cadete(s)
+        </h2>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead>
-            <tr style="background:#f0f0f0;">
-              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;width:40px;">Nº</th>
-              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;">Nome de Guerra</th>
-              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;width:60px;">Pel</th>
-              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;width:70px;">Turma</th>
-              <th style="text-align:left;padding:5px 8px;border:1px solid #ddd;">Observação</th>
-              <th style="text-align:center;padding:5px 8px;border:1px solid #ddd;width:60px;">✓</th>
+            <tr style="background:#e8e8e8;">
+              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:36px;">Nº</th>
+              <th style="text-align:left;padding:6px 8px;border:1px solid #bbb;">Nome de Guerra</th>
+              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:50px;">Pel</th>
+              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:65px;">Turma</th>
+              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:160px;">Assinatura do Cadete</th>
             </tr>
           </thead>
           <tbody>
             ${cadetes.map((r, i) => `
-              <tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'};">
-                <td style="padding:6px 8px;border:1px solid #ddd;font-family:monospace;">${r.numero_geral ?? '—'}</td>
-                <td style="padding:6px 8px;border:1px solid #ddd;font-weight:600;">${r.username}</td>
-                <td style="padding:6px 8px;border:1px solid #ddd;font-family:monospace;">${r.pel ?? '—'}</td>
-                <td style="padding:6px 8px;border:1px solid #ddd;font-family:monospace;">${r.turma ?? '—'}</td>
-                <td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;color:#555;">${r.observacao || '—'}</td>
-                <td style="padding:6px 8px;border:1px solid #ddd;text-align:center;"></td>
+              <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
+                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.numero_geral ?? '—'}</td>
+                <td style="padding:10px 8px;border:1px solid #bbb;font-weight:600;">${r.username}</td>
+                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.pel ?? '—'}</td>
+                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.turma ?? '—'}</td>
+                <td style="padding:10px 8px;border:1px solid #bbb;"></td>
               </tr>`).join('')}
           </tbody>
         </table>
+        <div style="margin-top:36px;display:flex;justify-content:flex-end;">
+          <div style="text-align:center;width:280px;">
+            <div style="border-top:1px solid #111;padding-top:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;">Assinatura do Coordenador</div>
+          </div>
+        </div>
       </div>`).join('');
 
     const html = `<!DOCTYPE html>
@@ -6546,31 +6550,42 @@
   <title>Lista de Punições — ${dataFmt}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
+    body { font-family: Arial, sans-serif; padding: 28px 36px; color: #111; font-size: 12px; }
     @media print {
-      body { padding: 16px; }
-      .no-print { display: none; }
+      body { padding: 16px 20px; }
+      .no-print { display: none !important; }
+      @page { margin: 15mm; }
     }
   </style>
 </head>
 <body>
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #111;padding-bottom:16px;">
-    <div>
-      <div style="font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Lista de Punições</div>
-      <div style="font-size:13px;color:#555;margin-top:4px;">${tipoLabel}</div>
+
+  <!-- Cabeçalho institucional -->
+  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;">
+    <div style="flex:1;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.7;">
+        Corpo de Bombeiros Militar do Pará<br>
+        Coordenadoria Estadual de Proteção e Defesa Civil<br>
+        Departamento-Geral de Cultura, Educação e Pesquisa<br>
+        Academia Bombeiro Militar
+      </div>
     </div>
-    <div style="text-align:right;">
-      <div style="font-size:20px;font-weight:700;font-family:monospace;">${dataFmt}</div>
-      <div style="font-size:11px;color:#777;margin-top:2px;">Total: ${lista.length} cadete(s)</div>
+    <div style="flex-shrink:0;margin-left:20px;">
+      <img src="ABM.png" alt="ABM" style="height:72px;width:auto;display:block;" onerror="this.style.display='none'" />
     </div>
   </div>
+
+  <!-- Corpo do documento -->
   ${gruposHtml}
-  <div style="margin-top:40px;border-top:1px solid #ccc;padding-top:16px;font-size:10px;color:#999;">
+
+  <div style="margin-top:32px;border-top:1px solid #ccc;padding-top:10px;font-size:9px;color:#aaa;">
     Gerado em ${new Date().toLocaleString('pt-BR')} · CFO Sistema de Anotações
   </div>
-  <div class="no-print" style="margin-top:24px;text-align:center;">
-    <button onclick="window.print()" style="padding:10px 28px;font-size:13px;cursor:pointer;background:#222;color:#fff;border:none;border-radius:4px;letter-spacing:1px;">IMPRIMIR / SALVAR PDF</button>
+
+  <div class="no-print" style="margin-top:28px;text-align:center;">
+    <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
   </div>
+
 </body>
 </html>`;
 
