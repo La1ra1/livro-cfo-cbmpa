@@ -1307,6 +1307,9 @@
     <div class="sidebar-section" id="nav-shared" style="display:none;">
       <div class="sidebar-divider"></div>
       <div class="sidebar-label">Minhas Anotações</div>
+      <div class="nav-item nav-fo-plus" data-section="lancar-elogio" onclick="showSection('lancar-elogio')" style="display:none;">
+        <span class="nav-icon">★</span> Lançar Elogio FO+
+      </div>
       <div class="nav-item" data-section="justificar" onclick="showSection('justificar')">
         <span class="nav-icon">✍</span> Justificar
         <span class="nav-badge" id="badge-justificar" style="display:none;background:var(--warn);">0</span>
@@ -3753,9 +3756,11 @@
       const diaCfoIdP   = getSdValue('sd-diacfo-pendentes');
       const tpPRaw = document.getElementById('tp-filter-pendentes')?.value ?? '';
       const [tpPTurma, tpPPel] = tpPRaw ? tpPRaw.split('-') : ['', ''];
+      const infracaoP = getSdValue('sd-infracao-pendentes');
       const params_p = new URLSearchParams({ status: 'pendente', page, limit: LIMIT });
       if (cadeteIdP)  params_p.set('cadete_id', cadeteIdP);
       if (diaCfoIdP)  params_p.set('cad_resp',  diaCfoIdP);
+      if (infracaoP)  params_p.set('infracao',  infracaoP);
       if (tpPTurma)   params_p.set('turma',     tpPTurma);
       if (tpPPel)     params_p.set('pel',        tpPPel);
       const urlP = `${API}/coordenador/anotacoes?${params_p}`;
@@ -3822,8 +3827,10 @@
       const cadeteIdJ = getSdValue('sd-cadete-justificativa');
       const tpJRaw = document.getElementById('tp-filter-justificativa')?.value ?? '';
       const [tpJTurma, tpJPel] = tpJRaw ? tpJRaw.split('-') : ['', ''];
+      const infracaoJ = getSdValue('sd-infracao-justificativa');
       const paramsJ = new URLSearchParams({ status: 'aprovada', justificativa: 'nao_respondida', page, limit: LIMIT });
       if (cadeteIdJ)  paramsJ.set('cadete_id', cadeteIdJ);
+      if (infracaoJ)  paramsJ.set('infracao',  infracaoJ);
       if (tpJTurma)   paramsJ.set('turma',     tpJTurma);
       if (tpJPel)     paramsJ.set('pel',        tpJPel);
       const res = await fetch(`${API}/coordenador/anotacoes?${paramsJ}`,
@@ -5477,6 +5484,7 @@
       document.querySelectorAll('.coord-nav').forEach(el => el.style.display = 'flex');
     }
     if (role === 'dia_cfo' || role === 'xerife') {
+      document.querySelectorAll('.nav-fo-plus').forEach(el => el.style.display = '');
       document.querySelectorAll('.diacfo-nav, .shared-nav').forEach(el => el.style.display = 'flex');
     }
     if (role === 'cadete') {
@@ -6030,15 +6038,24 @@
         }).join('');
     }
 
-    // Populate tipo dropdown
+    // Populate tipo dropdown — dia_cfo e xerife só veem FO+
     const tipList = document.getElementById('sd-tipo-elogio-list');
+    const _role = window._currentUser?.role;
+    const isRestrictedRole = _role === 'dia_cfo' || _role === 'xerife';
     if (tipList) {
-      tipList.innerHTML = Object.entries(window._elogioTypesMap).map(([id, t]) => `
+      const entries = Object.entries(window._elogioTypesMap)
+        .filter(([, t]) => !isRestrictedRole || t.description === 'FO+');
+      tipList.innerHTML = entries.map(([id, t]) => `
         <div class="sd-option" data-value="${id}" data-search="${t.description.toLowerCase()}"
           onclick="selectElogioTipo(${id}, '${t.description.replace(/'/g, String.fromCharCode(39))}', ${t.pontos})">
           <span class="sd-option-label" style="flex:1;">${t.description}</span>
           <span style="font-size:10px;color:var(--success);font-weight:700;">+${t.pontos}</span>
         </div>`).join('');
+      // Auto-selecionar FO+ se for role restrito e houver apenas um tipo
+      if (isRestrictedRole && entries.length === 1) {
+        const [id, t] = entries[0];
+        selectElogioTipo(Number(id), t.description, t.pontos);
+      }
     }
 
     // Set today as default date
