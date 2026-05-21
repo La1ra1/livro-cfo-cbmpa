@@ -3761,7 +3761,14 @@
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      ANOT_STATE.pendentes = { page, total: json.total, data: json.data };
+      const tpValP = document.getElementById('tp-filter-pendentes')?.value ?? '';
+      const filteredP = tpValP ? json.data.filter(a => {
+        const u = window._usersMap?.[a.cad_anot];
+        if (!u) return false;
+        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
+        return key === tpValP;
+      }) : json.data;
+      ANOT_STATE.pendentes = { page, total: tpValP ? filteredP.length : json.total, data: filteredP };
 
       // Atualizar badge na sidebar
       const badge = document.getElementById('badge-pendentes');
@@ -3824,7 +3831,14 @@
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      ANOT_STATE.justificativa = { page, total: json.total, data: json.data };
+      const tpValJ = document.getElementById('tp-filter-justificativa')?.value ?? '';
+      const filteredJ = tpValJ ? json.data.filter(a => {
+        const u = window._usersMap?.[a.cad_anot];
+        if (!u) return false;
+        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
+        return key === tpValJ;
+      }) : json.data;
+      ANOT_STATE.justificativa = { page, total: tpValJ ? filteredJ.length : json.total, data: filteredJ };
 
       const badgeJustAux = document.getElementById('badge-justificativa-aux');
       const badge = document.getElementById('badge-justificativa');
@@ -3900,7 +3914,14 @@
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      ANOT_STATE.justificadas = { page, total: json.total, data: json.data };
+      const tpValJd = document.getElementById('tp-filter-justificadas')?.value ?? '';
+      const filteredJd = tpValJd ? json.data.filter(a => {
+        const u = window._usersMap?.[a.cad_anot];
+        if (!u) return false;
+        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
+        return key === tpValJd;
+      }) : json.data;
+      ANOT_STATE.justificadas = { page, total: tpValJd ? filteredJd.length : json.total, data: filteredJd };
 
       document.getElementById('meta-justificadas').textContent =
         `${json.total} anotação(ões) com justificativa enviada — aguardando veredito`;
@@ -4119,7 +4140,14 @@
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      ANOT_STATE.veredito = { page, total: json.total, data: json.data };
+      const tpValV = document.getElementById('tp-filter-veredito')?.value ?? '';
+      const filteredV = tpValV ? json.data.filter(a => {
+        const u = window._usersMap?.[a.cad_anot];
+        if (!u) return false;
+        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
+        return key === tpValV;
+      }) : json.data;
+      ANOT_STATE.veredito = { page, total: tpValV ? filteredV.length : json.total, data: filteredV };
 
       document.getElementById('meta-veredito').textContent =
         `${json.total} anotação(ões) com veredito registrado`;
@@ -5251,7 +5279,14 @@
       });
       if (!res.ok) throw new Error();
       const json = await res.json();
-      Object.assign(AUX_VER_STATE, { page, total: json.total, data: json.data });
+      const tpValAV = document.getElementById('tp-filter-aux-veredito')?.value ?? '';
+      const filteredAV = tpValAV ? json.data.filter(a => {
+        const u = window._usersMap?.[a.cad_anot];
+        if (!u) return false;
+        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
+        return key === tpValAV;
+      }) : json.data;
+      Object.assign(AUX_VER_STATE, { page, total: tpValAV ? filteredAV.length : json.total, data: filteredAV });
 
       document.getElementById('aux-meta-veredito').textContent =
         `${json.total} anotação(ões) com veredito registrado`;
