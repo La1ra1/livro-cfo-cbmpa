@@ -3575,6 +3575,9 @@
             const u2 = window._allUsuarios.find(u => u.id === wrap._value);
             const k2 = u2 ? `${u2.turma}${u2.pel ? '-'+u2.pel : ''}` : '';
             if (val && k2 !== val) clearSd(`sd-cadete-${sec}`, loadFns[i]);
+            else loadFns[i](1);
+          } else {
+            loadFns[i](1);
           }
         });
       }
@@ -3748,27 +3751,21 @@
     try {
       const cadeteIdP  = getSdValue('sd-cadete-pendentes');
       const diaCfoIdP   = getSdValue('sd-diacfo-pendentes');
-      const params_p = new URLSearchParams({ page, limit: LIMIT });
+      const tpPRaw = document.getElementById('tp-filter-pendentes')?.value ?? '';
+      const [tpPTurma, tpPPel] = tpPRaw ? tpPRaw.split('-') : ['', ''];
+      const params_p = new URLSearchParams({ status: 'pendente', page, limit: LIMIT });
       if (cadeteIdP)  params_p.set('cadete_id', cadeteIdP);
       if (diaCfoIdP)  params_p.set('cad_resp',  diaCfoIdP);
-      // Use coordenador/anotacoes when any filter is active (supports more params)
-      const urlP = (cadeteIdP || diaCfoIdP)
-        ? `${API}/coordenador/anotacoes?status=pendente&${params_p}`
-        : `${API}/coordenador/anotacoes/pendentes?page=${page}&limit=${LIMIT}`;
+      if (tpPTurma)   params_p.set('turma',     tpPTurma);
+      if (tpPPel)     params_p.set('pel',        tpPPel);
+      const urlP = `${API}/coordenador/anotacoes?${params_p}`;
       const res = await fetch(urlP, {
         headers: { 'Authorization': `Bearer ${token()}` },
       });
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      const tpValP = document.getElementById('tp-filter-pendentes')?.value ?? '';
-      const filteredP = tpValP ? json.data.filter(a => {
-        const u = window._usersMap?.[a.cad_anot];
-        if (!u) return false;
-        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
-        return key === tpValP;
-      }) : json.data;
-      ANOT_STATE.pendentes = { page, total: tpValP ? filteredP.length : json.total, data: filteredP };
+      ANOT_STATE.pendentes = { page, total: json.total, data: json.data };
 
       // Atualizar badge na sidebar
       const badge = document.getElementById('badge-pendentes');
@@ -3823,22 +3820,19 @@
 
     try {
       const cadeteIdJ = getSdValue('sd-cadete-justificativa');
+      const tpJRaw = document.getElementById('tp-filter-justificativa')?.value ?? '';
+      const [tpJTurma, tpJPel] = tpJRaw ? tpJRaw.split('-') : ['', ''];
       const paramsJ = new URLSearchParams({ status: 'aprovada', justificativa: 'nao_respondida', page, limit: LIMIT });
-      if (cadeteIdJ) paramsJ.set('cadete_id', cadeteIdJ);
+      if (cadeteIdJ)  paramsJ.set('cadete_id', cadeteIdJ);
+      if (tpJTurma)   paramsJ.set('turma',     tpJTurma);
+      if (tpJPel)     paramsJ.set('pel',        tpJPel);
       const res = await fetch(`${API}/coordenador/anotacoes?${paramsJ}`,
         { headers: { 'Authorization': `Bearer ${token()}` } }
       );
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      const tpValJ = document.getElementById('tp-filter-justificativa')?.value ?? '';
-      const filteredJ = tpValJ ? json.data.filter(a => {
-        const u = window._usersMap?.[a.cad_anot];
-        if (!u) return false;
-        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
-        return key === tpValJ;
-      }) : json.data;
-      ANOT_STATE.justificativa = { page, total: tpValJ ? filteredJ.length : json.total, data: filteredJ };
+      ANOT_STATE.justificativa = { page, total: json.total, data: json.data };
 
       const badgeJustAux = document.getElementById('badge-justificativa-aux');
       const badge = document.getElementById('badge-justificativa');
@@ -3903,25 +3897,22 @@
       const respIdJd    = getSdValue('sd-resp-justificadas');
       const infracaoJd  = getSdValue('sd-infracao-justificadas');
       const dataFatoJd  = document.getElementById('filter-just-data-fato')?.value || '';
+      const tpJdRaw = document.getElementById('tp-filter-justificadas')?.value ?? '';
+      const [tpJdTurma, tpJdPel] = tpJdRaw ? tpJdRaw.split('-') : ['', ''];
       const paramsJd = new URLSearchParams({ justificativa: 'respondida', veredito_status: 'pendente', page, limit: LIMIT });
       if (cadeteIdJd) paramsJd.set('cadete_id', cadeteIdJd);
       if (respIdJd)   paramsJd.set('cad_resp',  respIdJd);
       if (infracaoJd) paramsJd.set('infracao',  infracaoJd);
       if (dataFatoJd) paramsJd.set('data_fato', dataFatoJd);
+      if (tpJdTurma)  paramsJd.set('turma',     tpJdTurma);
+      if (tpJdPel)    paramsJd.set('pel',        tpJdPel);
       const res = await fetch(`${API}/coordenador/anotacoes?${paramsJd}`,
         { headers: { 'Authorization': `Bearer ${token()}` } }
       );
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      const tpValJd = document.getElementById('tp-filter-justificadas')?.value ?? '';
-      const filteredJd = tpValJd ? json.data.filter(a => {
-        const u = window._usersMap?.[a.cad_anot];
-        if (!u) return false;
-        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
-        return key === tpValJd;
-      }) : json.data;
-      ANOT_STATE.justificadas = { page, total: tpValJd ? filteredJd.length : json.total, data: filteredJd };
+      ANOT_STATE.justificadas = { page, total: json.total, data: json.data };
 
       document.getElementById('meta-justificadas').textContent =
         `${json.total} anotação(ões) com justificativa enviada — aguardando veredito`;
@@ -4127,11 +4118,15 @@
     const cadeteIdV  = getSdValue('sd-cadete-veredito');
     const infracaoV  = getSdValue('sd-infracao-veredito');
     const dataFatoV  = document.getElementById('filter-verd-data-fato')?.value || '';
+    const tpVRaw = document.getElementById('tp-filter-veredito')?.value ?? '';
+    const [tpVTurma, tpVPel] = tpVRaw ? tpVRaw.split('-') : ['', ''];
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
     if (resultado)  params.set('resultado',  resultado);
     if (cadeteIdV)  params.set('cadete_id',  cadeteIdV);
     if (infracaoV)  params.set('infracao',   infracaoV);
     if (dataFatoV)  params.set('data_fato',  dataFatoV);
+    if (tpVTurma)   params.set('turma',      tpVTurma);
+    if (tpVPel)     params.set('pel',        tpVPel);
 
     try {
       const res = await fetch(`${API}/coordenador/anotacoes?${params}`, {
@@ -4140,14 +4135,7 @@
       if (!res.ok) throw new Error();
       const json = await res.json();
 
-      const tpValV = document.getElementById('tp-filter-veredito')?.value ?? '';
-      const filteredV = tpValV ? json.data.filter(a => {
-        const u = window._usersMap?.[a.cad_anot];
-        if (!u) return false;
-        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
-        return key === tpValV;
-      }) : json.data;
-      ANOT_STATE.veredito = { page, total: tpValV ? filteredV.length : json.total, data: filteredV };
+      ANOT_STATE.veredito = { page, total: json.total, data: json.data };
 
       document.getElementById('meta-veredito').textContent =
         `${json.total} anotação(ões) com veredito registrado`;
@@ -5247,6 +5235,7 @@
         listEl.querySelectorAll('.sd-option').forEach(o => {
           o.style.display = !val || o.dataset.tp === val ? '' : 'none';
         });
+        loadAuxVereditos(1);
       });
     }
   }
@@ -5260,9 +5249,13 @@
 
     const resultado  = document.getElementById('aux-filter-resultado')?.value ?? '';
     const cadeteId   = getSdValue('sd-cadete-aux-veredito');
+    const tpAVRaw = document.getElementById('tp-filter-aux-veredito')?.value ?? '';
+    const [tpAVTurma, tpAVPel] = tpAVRaw ? tpAVRaw.split('-') : ['', ''];
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
-    if (resultado) params.set('resultado', resultado);
-    if (cadeteId)  params.set('cadete_id', cadeteId);
+    if (resultado)  params.set('resultado', resultado);
+    if (cadeteId)   params.set('cadete_id', cadeteId);
+    if (tpAVTurma)  params.set('turma',     tpAVTurma);
+    if (tpAVPel)    params.set('pel',       tpAVPel);
 
     const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
@@ -5279,14 +5272,7 @@
       });
       if (!res.ok) throw new Error();
       const json = await res.json();
-      const tpValAV = document.getElementById('tp-filter-aux-veredito')?.value ?? '';
-      const filteredAV = tpValAV ? json.data.filter(a => {
-        const u = window._usersMap?.[a.cad_anot];
-        if (!u) return false;
-        const key = u.turma != null ? `${u.turma}${u.pel ? '-' + u.pel : ''}` : '';
-        return key === tpValAV;
-      }) : json.data;
-      Object.assign(AUX_VER_STATE, { page, total: tpValAV ? filteredAV.length : json.total, data: filteredAV });
+      Object.assign(AUX_VER_STATE, { page, total: json.total, data: json.data });
 
       document.getElementById('aux-meta-veredito').textContent =
         `${json.total} anotação(ões) com veredito registrado`;
