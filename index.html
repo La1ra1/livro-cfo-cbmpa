@@ -4599,10 +4599,18 @@
 
     if (err === 0) {
       showAlert('lanc-success', `${ok} anotação(ões) lançada(s) com sucesso.`, 'success');
+      // Reset completo — tudo foi lançado
+      setTimeout(() => resetLancamento(), 1200);
     } else if (ok === 0) {
       showAlert('lanc-error', `Todas as ${err} anotação(ões) falharam.`);
     } else {
-      showAlert('lanc-success', `${ok} lançada(s) com sucesso, ${err} com erro.`, 'success');
+      // Sucesso parcial — remove só os cadetes que foram lançados com sucesso
+      _lancCadetes = _lancCadetes.filter(c => {
+        const el = document.getElementById(`lote-${c.id}`);
+        return el && el.className.includes('err');
+      });
+      renderCadetesLancamento();
+      showAlert('lanc-success', `${ok} lançada(s) com sucesso, ${err} com erro. Corrija e tente novamente.`, 'success');
     }
   }
 
