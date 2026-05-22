@@ -1869,6 +1869,13 @@
                   <div class="sd-list" id="sd-cadetes-lancamento-list"></div>
                 </div>
               </div>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+                <label class="form-lbl" style="margin:0;white-space:nowrap;">Adicionar pelotão:</label>
+                <select id="sel-pel-lancamento" class="role-select" style="flex:1;min-width:140px;">
+                  <option value="">— Selecionar —</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="adicionarPelotao()" style="white-space:nowrap;">+ Pelotão</button>
+              </div>
               <div class="cadetes-lista" id="lanc-cadetes-lista">
                 <div class="cadetes-vazio">Nenhum cadete adicionado</div>
               </div>
@@ -3251,6 +3258,7 @@
         window._allUsuarios = users;
         window._usersMap = {};
         users.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
+        populatePelLancamento();
       }
       if (resTrans.ok) {
         const trans = await resTrans.json();
@@ -3289,6 +3297,7 @@
       window._allUsuarios = await res.json();
       window._usersMap = {};
       window._allUsuarios.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
+      populatePelLancamento();
       renderUsuarios();
 
     } catch {
@@ -4017,10 +4026,12 @@
       document.getElementById('manot-data-fato').textContent = fmtDateOnly(a.data_do_fato);
       document.getElementById('manot-descricao').textContent = a.descricao ?? '—';
 
-      // Botão de editar infração: pendente ou aprovada (não descartada)
-      if (a.status !== 'descartada' && !a.veredito) {
-        document.getElementById('btn-modal-edit-infracao').style.display = 'inline-flex';
-      }
+      // Botão de editar infração
+      const _roleEdit = window._currentUser?.role;
+      const _canEditInfracao = _roleEdit === 'coordenador'
+        ? (a.status !== 'descartada' && !a.veredito)
+        : (['xerife', 'dia_cfo'].includes(_roleEdit) && a.status === 'pendente');
+      document.getElementById('btn-modal-edit-infracao').style.display = _canEditInfracao ? 'inline-flex' : 'none';
 
       // Justificativa
       if (a.justificativa) {
@@ -4364,6 +4375,7 @@
           window._usersMap = {};
           users.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
           populateCadetesLancamento();
+          populatePelLancamento();
         }
       } catch {}
     } catch {}
@@ -4456,6 +4468,44 @@
     }
     _lancCadetes.push({ id, label });
     renderCadetesLancamento();
+  }
+
+  function adicionarPelotao() {
+    const val = document.getElementById('sel-pel-lancamento')?.value;
+    if (!val) { toast('Selecione um pelotão.', 'error'); return; }
+    const [turma, pel] = val.split('-');
+    const cadetes = (window._allUsuarios || []).filter(u =>
+      String(u.turma) === turma && u.pel === pel &&
+      ['cadete', 'dia_cfo', 'xerife'].includes(u.role)
+    );
+    if (!cadetes.length) { toast('Nenhum cadete encontrado neste pelotão.', 'error'); return; }
+    let adicionados = 0;
+    cadetes.forEach(u => {
+      if (!_lancCadetes.find(c => c.id === u.id)) {
+        _lancCadetes.push({ id: u.id, label: u.username });
+        adicionados++;
+      }
+    });
+    renderCadetesLancamento();
+    toast(adicionados > 0 ? `${adicionados} cadete(s) do pelotão adicionados.` : 'Todos os cadetes do pelotão já estão na lista.');
+  }
+
+  function populatePelLancamento() {
+    const sel = document.getElementById('sel-pel-lancamento');
+    if (!sel) return;
+    const grupos = {};
+    (window._allUsuarios || []).forEach(u => {
+      if (!['cadete', 'dia_cfo', 'xerife'].includes(u.role)) return;
+      if (u.turma == null || !u.pel) return;
+      const key = `${u.turma}-${u.pel}`;
+      grupos[key] = true;
+    });
+    const keys = Object.keys(grupos).sort();
+    sel.innerHTML = '<option value="">— Selecionar —</option>' +
+      keys.map(k => {
+        const [t, p] = k.split('-');
+        return `<option value="${k}">Turma ${t} · Pel ${p}</option>`;
+      }).join('');
   }
 
   function removerCadete(id) {
