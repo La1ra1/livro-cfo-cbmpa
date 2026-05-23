@@ -5978,7 +5978,7 @@
           : '—';
         const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
         return `
-        <tr id="elogio-row-${e.id}">
+        <tr id="elogio-row-${e.id}" style="cursor:pointer;" onclick="openElogioModal(${e.id})">
           <td class="cb-wrap" onclick="event.stopPropagation()">
             <input type="checkbox" class="cb-row cb-elogio" value="${e.id}" onchange="onElogioCheckChange()" />
           </td>
@@ -6224,7 +6224,7 @@
         const motivoPreview = e.descricao_motivo ? e.descricao_motivo.substring(0,50)+(e.descricao_motivo.length>50?'…':'') : '—';
         const turmaPel = e.turma != null ? `${e.turma}${e.pel ?? ''}` : '—';
         return `
-        <tr>
+        <tr style="cursor:pointer;" onclick="openElogioModal(${e.id})">
           <td class="td-mono">#${e.id}</td>
           <td class="td-mono">${fmtDate(e.created_at)}</td>
           <td class="td-mono">${dataEvento}</td>
@@ -6314,7 +6314,7 @@
         const motivoPreview = e.descricao_motivo
           ? e.descricao_motivo.substring(0, 60) + (e.descricao_motivo.length > 60 ? '\u2026' : '') : '—';
         return `
-        <tr>
+        <tr style="cursor:pointer;" onclick="openElogioModal(${e.id})">
           <td class="td-mono">#${e.id}</td>
           <td class="td-mono">${dataEvento}</td>
           <td class="td-mono">${fmtDate(e.approved_at)}</td>
@@ -6333,7 +6333,124 @@
   }
 
 
-  // ── ELOGIOS — seleção em lote ──────────────────────────────────
+  // ── ELOGIOS — Context Menu ──────────────────────────────────────
+
+  let _elogioModalData = null;
+
+  async function openElogioModal(id) {
+    document.getElementById('modal-elogio').classList.add('open');
+    document.getElementById('elogio-modal-body').innerHTML =
+      '<div style="text-align:center;padding:24px;font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Carregando...</div>';
+    document.getElementById('elogio-modal-actions').innerHTML = '';
+    document.getElementById('elogio-modal-error').className = 'alert error';
+
+    // Buscar do cache local primeiro
+    const cached = [
+      ...(ELOGIO_STATE?.data || []),
+      ...(ELOGIOS_LISTA_STATE?.data || []),
+    ].find(e => e.id === id);
+
+    if (cached) {
+      _elogioModalData = cached;
+      renderElogioModal(cached);
+    } else {
+      // Para meus elogios (cadete), buscar da lista local
+      const cadeteCache = document.querySelectorAll(`#tbody-meus-elogios tr`);
+      // Fallback: tentar endpoint geral
+      try {
+        const res = await fetch(`${API}/coordenador/elogios?page=1&limit=200`, {
+          headers: { 'Authorization': `Bearer ${token()}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const found = json.data.find(e => e.id === id);
+          if (found) { _elogioModalData = found; renderElogioModal(found); return; }
+        }
+      } catch {}
+      document.getElementById('elogio-modal-body').innerHTML =
+        '<div style="text-align:center;padding:24px;color:var(--danger);font-family:IBM Plex Mono,monospace;font-size:11px;">Elogio não encontrado.</div>';
+    }
+  }
+
+  function renderElogioModal(e) {
+    const role = window._currentUser?.role;
+    const isCoordAux = role === 'coordenador' || role === 'auxiliar';
+    const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
+    const statusStyle = {
+      pendente:  'color:var(--warn);',
+      aprovado:  'color:var(--success);',
+      rejeitado: 'color:var(--danger);',
+    };
+    const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
+    const dataCriado = e.created_at  ? fmtDate(e.created_at) : '—';
+    const dataAprov  = e.approved_at ? fmtDate(e.approved_at) : '—';
+
+    const row = (label, val) => `
+      <div style="display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--border);padding-bottom:10px;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);width:110px;flex-shrink:0;">${label}</span>
+        <span style="font-size:13px;color:var(--text-dim);">${val}</span>
+      </div>`;
+
+    document.getElementById('elogio-modal-body').innerHTML = `
+      ${row('ID', `<span style="font-family:'IBM Plex Mono',monospace;">#${e.id}</span>`)}
+      ${row('Cadete', `<strong>${resolveUser(e.cadete_elogiado_id)}</strong>`)}
+      ${row('Tipo', `<span style="color:var(--success);font-weight:700;">${e.tipo_elogio} &nbsp;+${e.pontos} pts</span>`)}
+      ${row('Data do Evento', dataEvento)}
+      ${row('Lançado em', dataCriado)}
+      ${row('Status', `<span style="${statusStyle[e.status]||''};font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;">${statusLabel[e.status]||e.status}</span>`)}
+      ${e.approved_at ? row('Decidido em', dataAprov) : ''}
+      ${e.descricao_motivo ? `
+      <div style="border-bottom:1px solid var(--border);padding-bottom:10px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Motivo</div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.7;white-space:pre-wrap;">${e.descricao_motivo}</div>
+      </div>` : ''}
+    `;
+
+    // Ações por role e status
+    const acts = document.getElementById('elogio-modal-actions');
+    acts.innerHTML = '';
+
+    if (isCoordAux && e.status === 'pendente') {
+      acts.innerHTML = `
+        <button class="btn btn-primary" style="flex:1;" onclick="elogioAcao(${e.id},'aprovado')">✓ Aprovar</button>
+        <button class="btn btn-danger" style="flex:1;" onclick="elogioAcao(${e.id},'rejeitado')">✕ Rejeitar</button>`;
+    } else if (isCoordAux && e.status !== 'pendente') {
+      acts.innerHTML = `
+        <button class="btn btn-ghost btn-sm" onclick="elogioAcao(${e.id},'pendente')">↺ Devolver para Pendente</button>`;
+    }
+  }
+
+  async function elogioAcao(id, novoStatus) {
+    const errEl = document.getElementById('elogio-modal-error');
+    errEl.className = 'alert error';
+    try {
+      const res = await fetch(`${API}/elogios/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ status: novoStatus }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(()=>({}));
+        errEl.textContent = d.detail || 'Erro ao alterar status.';
+        errEl.className = 'alert error show'; return;
+      }
+      closeElogioModal();
+      toast(`Elogio ${novoStatus === 'aprovado' ? 'aprovado' : novoStatus === 'rejeitado' ? 'rejeitado' : 'devolvido'}.`);
+      // Recarregar a seção ativa
+      const active = document.querySelector('.section.active')?.id || '';
+      if (active.includes('elogios-pendentes')) loadElogiosPendentes(ELOGIO_STATE.page);
+      else if (active.includes('elogios-lista'))  loadElogiosLista(ELOGIOS_LISTA_STATE.page);
+    } catch {
+      errEl.textContent = 'Erro de conexão.'; errEl.className = 'alert error show';
+    }
+  }
+
+  function closeElogioModal() {
+    document.getElementById('modal-elogio').classList.remove('open');
+    _elogioModalData = null;
+  }
+
+  // ── ELOGIOS — seleção em lote ──────────────────────────────────────
   function getCheckedElogios() {
     return [...document.querySelectorAll('.cb-elogio:checked')].map(cb => Number(cb.value));
   }
@@ -6659,6 +6776,23 @@
 
   <div class="no-print" style="margin-top:28px;text-align:center;">
     <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
+  </div>
+
+  <!-- Modal: Detalhes do Elogio -->
+  <div class="modal-overlay" id="modal-elogio" onclick="if(event.target===this)closeElogioModal()">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Detalhes do Elogio</div>
+        <button class="modal-close" onclick="closeElogioModal()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="elogio-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div style="text-align:center;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
+        </div>
+        <div class="alert error" id="elogio-modal-error" style="margin-top:12px;"></div>
+        <div id="elogio-modal-actions" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
   </div>
 
 </body>
