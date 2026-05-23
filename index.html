@@ -1290,6 +1290,10 @@
       <div class="nav-item" data-section="lancar-elogio" onclick="showSection('lancar-elogio')">
         <span class="nav-icon">★</span> Lançar Elogio
       </div>
+      <div class="nav-item" data-section="elogios-pendentes" onclick="showSection('elogios-pendentes')">
+        <span class="nav-icon">★</span> Elogios Pendentes
+        <span class="nav-badge" id="badge-elogios-pend-aux" style="display:none;">0</span>
+      </div>
       <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
         <span class="nav-icon">☆</span> Ver Elogios
       </div>
@@ -5960,6 +5964,8 @@
 
       const badge = document.getElementById('badge-elogios-pend');
       if (badge) { badge.textContent = json.total; badge.style.display = json.total > 0 ? 'inline-block' : 'none'; }
+      const badgeAux = document.getElementById('badge-elogios-pend-aux');
+      if (badgeAux) { badgeAux.textContent = json.total; badgeAux.style.display = json.total > 0 ? 'inline-block' : 'none'; }
 
       document.getElementById('meta-elogios-pend').textContent =
         `${json.total} elogio(s) aguardando aprovação`;
