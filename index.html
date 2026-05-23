@@ -2303,9 +2303,7 @@
           </select>
           <select class="role-select" id="el-filter-ano" onchange="loadElogiosLista(1)" style="width:auto;"></select>
           <select class="role-select" id="el-filter-status" onchange="loadElogiosLista(1)" style="width:auto;">
-            <option value="">Todos os status</option>
-            <option value="pendente">Pendente</option>
-            <option value="aprovado">Aprovado</option>
+            <option value="aprovado" selected>Aprovado</option>
             <option value="rejeitado">Rejeitado</option>
           </select>
           <select class="role-select" id="el-filter-turma" onchange="loadElogiosLista(1)" style="width:auto;">
@@ -6150,6 +6148,7 @@
   // ELOGIOS — LISTA (coord + aux)
   // ══════════════════════════════════════════════════
   const ELOGIOS_LISTA_STATE = { page: 1, total: 0, data: [] };
+  const MEUS_ELOGIOS_STATE  = { page: 1, total: 0, data: [] };
   let _elogiosListaInit = false;
 
   async function loadElogiosLista(page = 1) {
@@ -6191,7 +6190,8 @@
     const params = new URLSearchParams({ page, limit: LIMIT });
     if (mes)    params.set('mes',    mes);
     if (ano)    params.set('ano',    ano);
-    if (status) params.set('status', status);
+    // Nunca mostrar pendentes na aba Ver Elogios — default aprovado
+    params.set('status', status || 'aprovado');
     if (turma)  params.set('turma',  turma);
 
     const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
@@ -6308,6 +6308,8 @@
         return;
       }
 
+      Object.assign(MEUS_ELOGIOS_STATE, { page, total: json.total, data: json.data });
+
       tbody.innerHTML = json.data.map(e => {
         const dataEvento = e.data_evento
           ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
@@ -6344,21 +6346,24 @@
     document.getElementById('elogio-modal-actions').innerHTML = '';
     document.getElementById('elogio-modal-error').className = 'alert error';
 
-    // Buscar do cache local primeiro
+    // Buscar em todos os caches disponíveis
     const cached = [
-      ...(ELOGIO_STATE?.data || []),
-      ...(ELOGIOS_LISTA_STATE?.data || []),
+      ...(ELOGIO_STATE?.data          || []),
+      ...(ELOGIOS_LISTA_STATE?.data   || []),
+      ...(MEUS_ELOGIOS_STATE?.data    || []),
     ].find(e => e.id === id);
 
     if (cached) {
       _elogioModalData = cached;
       renderElogioModal(cached);
-    } else {
-      // Para meus elogios (cadete), buscar da lista local
-      const cadeteCache = document.querySelectorAll(`#tbody-meus-elogios tr`);
-      // Fallback: tentar endpoint geral
+      return;
+    }
+
+    // Fallback: buscar da API (coordenador/auxiliar)
+    const role = window._currentUser?.role;
+    if (role === 'coordenador' || role === 'auxiliar') {
       try {
-        const res = await fetch(`${API}/coordenador/elogios?page=1&limit=200`, {
+        const res = await fetch(`${API}/coordenador/elogios?page=1&limit=9999`, {
           headers: { 'Authorization': `Bearer ${token()}` }
         });
         if (res.ok) {
@@ -6367,14 +6372,14 @@
           if (found) { _elogioModalData = found; renderElogioModal(found); return; }
         }
       } catch {}
-      document.getElementById('elogio-modal-body').innerHTML =
-        '<div style="text-align:center;padding:24px;color:var(--danger);font-family:IBM Plex Mono,monospace;font-size:11px;">Elogio não encontrado.</div>';
     }
+    document.getElementById('elogio-modal-body').innerHTML =
+      '<div style="text-align:center;padding:24px;color:var(--danger);font-family:IBM Plex Mono,monospace;font-size:11px;">Elogio não encontrado.</div>';
   }
 
   function renderElogioModal(e) {
     const role = window._currentUser?.role;
-    const isCoordAux = role === 'coordenador' || role === 'auxiliar';
+    const isCoordAux = role === 'coordenador';
     const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
     const statusStyle = {
       pendente:  'color:var(--warn);',
