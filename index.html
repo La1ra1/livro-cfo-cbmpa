@@ -629,7 +629,15 @@
       .main { margin-left: 200px; padding: 20px; }
     }
 
-    /* ══════════════════════════════
+    /* ── LANÇAMENTO GRID ── */
+    .lancamento-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      align-items: start;
+    }
+
+        /* ══════════════════════════════
        MOBILE LAYOUT (≤ 640px)
     ══════════════════════════════ */
     @media (max-width: 640px) {
@@ -673,40 +681,10 @@
       .main {
         margin-left: 0;
         padding: 14px;
-        padding-bottom: 72px; /* espaço para bottom nav */
+        padding-bottom: 24px;
       }
 
-      /* FAB Ordens */
-      #fab-ordens { display: none; }
 
-      /* Bottom nav */
-      #bottom-nav {
-        display: flex;
-        position: fixed; bottom: 0; left: 0; right: 0;
-        height: 58px;
-        background: var(--surface);
-        border-top: 1px solid var(--border);
-        z-index: 200;
-      }
-      .bnav-item {
-        flex: 1; display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        gap: 3px; cursor: pointer;
-        color: var(--muted); font-size: 9px;
-        font-family: 'IBM Plex Mono', monospace;
-        letter-spacing: 1px; text-transform: uppercase;
-        transition: color .15s;
-        border: none; background: none; padding: 0;
-      }
-      .bnav-item.active { color: var(--accent); }
-      .bnav-item svg, .bnav-item .bnav-icon { font-size: 18px; line-height: 1; }
-      .bnav-badge {
-        position: absolute; top: 6px;
-        background: var(--danger); color: #fff;
-        font-size: 9px; font-weight: 700;
-        padding: 1px 4px; border-radius: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-      }
 
       /* Page header simplificado */
       .page-header {
@@ -745,7 +723,11 @@
       /* Cards de lançamento */
       .lancamento-body { padding: 14px; }
       /* Grid de lançamento vira coluna única */
-      #section-lancamento > div[style*='grid-template-columns'] { display: block !important; }
+      .lancamento-grid { grid-template-columns: 1fr !important; }
+      /* Painel de resumo/lançar fica colado abaixo */
+      .lancamento-grid > div:last-child { position: static !important; }
+      /* Botão lançar full width e mais gordo */
+      #btn-lancar { width: 100%; padding: 14px; font-size: 16px; justify-content: center; margin-top: 8px; }
 
       /* Filter bar compacta */
       .filter-bar { padding: 8px 12px; gap: 6px; }
@@ -762,10 +744,9 @@
       .profile-name { font-size: 20px; }
     }
 
-    /* Hambúrguer e bottom nav — só no desktop */
+    /* Desktop: sem hamburger nem overlay */
     @media (min-width: 641px) {
       #btn-hamburger { display: none; }
-      #bottom-nav { display: none; }
       #sidebar-overlay { display: none !important; }
     }
 
@@ -1341,79 +1322,16 @@
     <div class="sidebar-spacer"></div>
     <div class="sidebar-section">
       <div class="sidebar-divider"></div>
+      <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;color:inherit;">
+        <span class="nav-icon">📋</span> Ordens em Vigor
+      </a>
       <div class="nav-item" onclick="handleLogout()">
         <span class="nav-icon">↩</span> Sair
       </div>
     </div>
   </aside>
 
-  <!-- BOTTOM NAV (mobile) -->
-  <nav id="bottom-nav">
-    <button class="bnav-item active" id="bnav-perfil" onclick="showSection('perfil');setActiveNav('bnav-perfil')">
-      <span class="bnav-icon">◎</span>
-      <span>Perfil</span>
-    </button>
-    <!-- Itens coordenador -->
-    <button class="bnav-item coord-nav" id="bnav-pendentes" style="display:none;" onclick="showSection('anot-pendentes');setActiveNav('bnav-pendentes')">
-      <span class="bnav-icon" style="position:relative;">◧<span class="bnav-badge" id="bnav-badge-pend" style="display:none;"></span></span>
-      <span>Pendentes</span>
-    </button>
-    <button class="bnav-item coord-nav" id="bnav-justificadas" style="display:none;" onclick="showSection('anot-justificadas');setActiveNav('bnav-justificadas')">
-      <span class="bnav-icon">▣</span>
-      <span>Justif.</span>
-    </button>
-    <button class="bnav-item coord-nav" id="bnav-usuarios" style="display:none;" onclick="showSection('usuarios');setActiveNav('bnav-usuarios')">
-      <span class="bnav-icon">◈</span>
-      <span>Usuários</span>
-    </button>
-    <button class="bnav-item coord-nav" id="bnav-punicoes" style="display:none;" onclick="showSection('punicoes');setActiveNav('bnav-punicoes')">
-      <span class="bnav-icon">📅</span>
-      <span>Punições</span>
-    </button>
-    <!-- Itens dia_cfo -->
-    <button class="bnav-item diacfo-nav" id="bnav-lancamento" style="display:none;" onclick="showSection('lancamento');setActiveNav('bnav-lancamento')">
-      <span class="bnav-icon">✚</span>
-      <span>Lançar</span>
-    </button>
-    <button class="bnav-item diacfo-nav" id="bnav-minhas" style="display:none;" onclick="showSection('minhas-anotacoes');setActiveNav('bnav-minhas')">
-      <span class="bnav-icon">◧</span>
-      <span>Lançadas</span>
-    </button>
-    <!-- Itens compartilhados (dia_cfo + cadete) -->
-    <button class="bnav-item shared-nav" id="bnav-justificar" style="display:none;" onclick="showSection('justificar');setActiveNav('bnav-justificar')">
-      <span class="bnav-icon">✍</span>
-      <span>Justificar</span>
-    </button>
-    <button class="bnav-item shared-nav" id="bnav-vereditos" style="display:none;" onclick="showSection('meus-vereditos');setActiveNav('bnav-vereditos')">
-      <span class="bnav-icon">◆</span>
-      <span>Vereditos</span>
-    </button>
-    <button class="bnav-item shared-nav" id="bnav-minhas-punicoes" style="display:none;" onclick="showSection('minhas-punicoes');setActiveNav('bnav-minhas-punicoes')">
-      <span class="bnav-icon">📅</span>
-      <span>Punições</span>
-    </button>
-    <!-- Auxiliar -->
-    <button class="bnav-item aux-nav" id="bnav-aux-usuarios" style="display:none;" onclick="showSection('aux-usuarios');setActiveNav('bnav-aux-usuarios')">
-      <span class="bnav-icon">◈</span>
-      <span>Usuários</span>
-    </button>
-    <button class="bnav-item aux-nav" id="bnav-aux-vereditos" style="display:none;" onclick="showSection('aux-vereditos');setActiveNav('bnav-aux-vereditos')">
-      <span class="bnav-icon">◆</span>
-      <span>Vereditos</span>
-    </button>
-    <button class="bnav-item aux-nav" id="bnav-aux-punicoes" style="display:none;" onclick="showSection('punicoes');setActiveNav('bnav-aux-punicoes')">
-      <span class="bnav-icon">📅</span>
-      <span>Punições</span>
-    </button>
-  </nav>
 
-  <!-- Botão flutuante Ordens em Vigor (mobile) -->
-  <a href="ordens_em_vigor.html" id="fab-ordens"
-    style="display:none;position:fixed;bottom:68px;right:16px;z-index:300;
-           width:48px;height:48px;background:var(--surface);border:1px solid var(--accent2);
-           border-radius:50%;align-items:center;justify-content:center;
-           box-shadow:0 4px 16px rgba(0,0,0,.4);text-decoration:none;font-size:22px;"
-    title="Ordens em Vigor">📋</a>
 
   <!-- MAIN -->
   <main class="main">
@@ -1797,7 +1715,7 @@
         <button class="btn btn-ghost btn-sm" onclick="resetLancamento()">↺ Limpar</button>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;">
+      <div class="lancamento-grid">
 
         <!-- Formulário -->
         <div>

@@ -323,7 +323,10 @@
     @media (max-width: 640px) {
       .ordens-grid { grid-template-columns: 1fr; }
       .topbar-sub { display: none; }
+      .topbar-role { display: none; }
+      .topbar-name { font-size: 11px; }
       #topbar-page-nav { display: none; }
+      #btn-voltar { display: flex !important; }
       .page-wrap { padding: 62px 14px 32px; }
       .modal-overlay { padding: 0; align-items: flex-end; }
       .modal-box { max-width: 100% !important; border-radius: 0;
@@ -352,6 +355,8 @@
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-brand">
+      <!-- Botão voltar — só mobile -->
+      <a href="index.html" id="btn-voltar" style="display:none;align-items:center;justify-content:center;width:36px;height:36px;color:var(--accent);font-size:20px;text-decoration:none;flex-shrink:0;margin-right:4px;">‹</a>
       <img src="ABM.png" alt="ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
       <div class="topbar-sub">Academia Bombeiro Militar</div>
     </div>
