@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="ABM.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ordens em Vigor — Academia Bombeiro Militar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:          #0a0c0f;
+      --surface:     #111318;
+      --surface2:    #181c22;
+      --border:      #1e2229;
+      --border2:     #2a3040;
+      --accent:      #c8a84b;
+      --accent2:     #8b6f2e;
+      --accent-dim:  rgba(200,168,75,.08);
+      --danger:      #c0392b;
+      --danger-dim:  rgba(192,57,43,.12);
+      --text:        #e8e4d9;
+      --text-dim:    #c8cdd8;
+      --muted:       #7a8394;
+      --success:     #2ecc71;
+      --success-dim: rgba(46,204,113,.1);
+      --blue:        #3498db;
+      --warn:        #e07b2a;
+      --warn-dim:    rgba(224,123,42,.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 48px;
+      background: rgba(17,19,24,.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--accent2);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 200;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .topbar-user { display: flex; align-items: center; gap: 12px; }
+    .topbar-name { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: 1px; }
+    .topbar-role { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .topbar-avatar {
+      width: 32px; height: 32px;
+      background: var(--accent-dim); border: 1px solid var(--accent2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent);
+    }
+
+    /* ── MAIN ── */
+    #app { display: none; }
+    #app.visible { display: block; }
+
+    .page-wrap {
+      position: relative; z-index: 1;
+      padding: 72px 28px 40px;
+      max-width: 1100px; margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+    }
+    .page-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 26px; font-weight: 700;
+      letter-spacing: 4px; color: var(--text);
+      text-transform: uppercase; line-height: 1;
+    }
+    .page-title span { color: var(--accent); }
+    .page-breadcrumb {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+    }
+
+    /* ── FILTROS ── */
+    .filter-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 12px 16px; margin-bottom: 24px;
+    }
+    .filter-bar select {
+      background: var(--bg); border: 1px solid var(--border2);
+      color: var(--text); padding: 6px 10px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      outline: none; cursor: pointer;
+    }
+    .filter-bar select option { background: var(--surface2); }
+    .filter-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+    }
+
+    /* ── ORDENS GRID ── */
+    .ordens-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── CARD DE ORDEM ── */
+    .ordem-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      position: relative; overflow: hidden;
+      transition: border-color .2s, transform .15s;
+      display: flex; flex-direction: column;
+    }
+    .ordem-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .ordem-card.revogada {
+      border-left-color: var(--muted);
+      opacity: .55;
+    }
+    .ordem-card.revogada:hover { opacity: .75; }
+
+    .ordem-corner {
+      position: absolute; top: 0; right: 0;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 0 32px 32px 0;
+      border-color: transparent var(--accent2) transparent transparent;
+    }
+    .ordem-card.revogada .ordem-corner { border-color: transparent var(--border2) transparent transparent; }
+
+    .ordem-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+
+    .ordem-escopo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent); line-height: 1.3;
+      flex: 1;
+    }
+    .ordem-card.revogada .ordem-escopo { color: var(--muted); }
+
+    .ordem-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 8px; flex-shrink: 0;
+    }
+    .badge-vigor {
+      background: rgba(200,168,75,.12);
+      border: 1px solid rgba(200,168,75,.3);
+      color: var(--accent);
+    }
+    .badge-revogada {
+      background: rgba(122,131,148,.1);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+    }
+
+    .ordem-body {
+      padding: 14px 16px;
+      flex: 1;
+    }
+
+    .ordem-texto {
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 14px; line-height: 1.85;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+    }
+
+    .ordem-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .ordem-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
+
+    .ordem-actions { display: flex; gap: 6px; }
+
+    /* ── BOTÕES ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border: none; cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      transition: all .15s;
+    }
+    .btn-sm { padding: 4px 10px; font-size: 10px; letter-spacing: 1px; }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn-primary { background: var(--accent); color: var(--bg); border-left: 3px solid var(--accent2); }
+    .btn-primary:hover { background: #d4b45a; }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(192,57,43,.3); }
+    .btn-danger:hover { background: rgba(192,57,43,.22); }
+    .btn-warn { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(224,123,42,.3); }
+    .btn-warn:hover { background: rgba(224,123,42,.2); }
+    .btn-loading { opacity: .55; pointer-events: none; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 64px 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      border: 1px dashed var(--border2);
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: .4; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px);
+      z-index: 400; display: none;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      width: 100%; max-width: 520px;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .modal-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px; font-weight: 700;
+      letter-spacing: 3px; color: var(--accent);
+      text-transform: uppercase;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer; padding: 0 4px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .form-field { margin-bottom: 16px; }
+    .form-lbl {
+      display: block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .form-ctrl {
+      width: 100%;
+      background: var(--bg); border: 1px solid var(--border2);
+      border-bottom: 2px solid var(--border2);
+      color: var(--text); padding: 9px 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; outline: none;
+      transition: border-color .2s;
+    }
+    .form-ctrl:focus { border-color: var(--accent); border-bottom-color: var(--accent); }
+    .form-ctrl::placeholder { color: var(--muted); }
+
+    .alert {
+      padding: 10px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; display: none;
+    }
+    .alert.show { display: block; }
+    .alert.error { background: rgba(192,57,43,.12); border: 1px solid rgba(192,57,43,.25); color: #e74c3c; }
+    .alert.success { background: var(--success-dim); border: 1px solid rgba(46,204,113,.25); color: var(--success); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--surface); border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
+      padding: 10px 20px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; color: var(--text); z-index: 600;
+      transition: transform .25s ease; white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── LOGIN REDIRECT ── */
+    #screen-redirect {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; flex-direction: column; gap: 16px;
+    }
+    #screen-redirect.hidden { display: none; }
+
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+    @media (max-width: 640px) {
+      .ordens-grid { grid-template-columns: 1fr; }
+      .topbar-sub { display: none; }
+      .page-wrap { padding: 62px 14px 32px; }
+      nav a span.nav-label { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Redirect se não logado -->
+<div id="screen-redirect">
+  <img src="ABM.png" style="width:60px;opacity:.5;" />
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;">VERIFICANDO SESSÃO...</div>
+</div>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <img src="ABM.png" alt="ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
+      <div class="topbar-sub">Academia Bombeiro Militar</div>
+    </div>
+    <nav style="display:flex;gap:0;align-items:stretch;margin:0 auto;">
+      <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
+      <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Ordens em Vigor</a>
+    </nav>
+    <div class="topbar-user">
+      <div style="text-align:right;">
+        <div class="topbar-name" id="top-name">—</div>
+        <div class="topbar-role" id="top-role">—</div>
+      </div>
+      <div class="topbar-avatar" id="top-avatar">?</div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO -->
+  <div class="page-wrap">
+
+    <div class="page-header">
+      <div>
+        <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
+        <div class="page-title">Ordens <span>em Vigor</span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="loadOrdens()">↻ Atualizar</button>
+        <button class="btn btn-primary btn-sm" id="btn-nova-ordem" style="display:none;" onclick="openModal()">✚ Nova Ordem</button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-bar">
+      <span class="filter-label">Status:</span>
+      <select id="filter-status" onchange="renderOrdens()">
+        <option value="">Todas</option>
+        <option value="EM VIGOR" selected>Em Vigor</option>
+        <option value="REVOGADA">Revogadas</option>
+      </select>
+      <span class="filter-label" style="margin-left:8px;">Buscar:</span>
+      <input id="filter-busca" type="text" placeholder="Escopo ou texto..." oninput="renderOrdens()"
+        style="background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;outline:none;width:220px;transition:border-color .2s;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border2)'" />
+      <span id="ordens-count" style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
+    </div>
+
+    <!-- Grade de ordens -->
+    <div class="ordens-grid" id="ordens-grid">
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">📋</div>
+        <div>Carregando ordens...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Nova / Editar Ordem -->
+<div class="modal-overlay" id="modal-ordem" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-ordem-title">Nova Ordem</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div style="padding:20px;">
+      <div class="form-field">
+        <label class="form-lbl">Escopo / Título *</label>
+        <input class="form-ctrl" id="ordem-escopo" type="text" placeholder="Ex: Uso do fardamento, Horários de recolher..." />
+      </div>
+      <div class="form-field">
+        <label class="form-lbl">Data de Publicação *</label>
+        <input class="form-ctrl" id="ordem-data" type="date" />
+      </div>
+      <div class="form-field">
+        <label class="form-lbl">Texto da Ordem *</label>
+        <textarea class="form-ctrl" id="ordem-texto" rows="7" placeholder="Redija o texto completo da ordem..."></textarea>
+      </div>
+      <div class="alert error" id="modal-error"></div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2;" id="btn-modal-submit" onclick="submitOrdem()">PUBLICAR ORDEM</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  const API = 'https://gerenciamentodisciplinarabm-production.up.railway.app';
+  const token = () => localStorage.getItem('token');
+
+  const ROLE_LABELS = {
+    coordenador: 'Coordenador', auxiliar: 'Auxiliar',
+    dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete',
+  };
+
+  let _ordens = [];
+  let _editId = null;
+  let _userRole = null;
+  let _canManage = false;
+  let _isCoord = false;
+
+  // ── Auth ──
+  async function init() {
+    const t = token();
+    if (!t) { redirect(); return; }
+
+    try {
+      const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${t}` } });
+      if (!res.ok) { redirect(); return; }
+      const me = await res.json();
+      _userRole = me.role;
+      _canManage  = ['coordenador', 'auxiliar'].includes(_userRole);
+      _isCoord    = _userRole === 'coordenador';
+
+      document.getElementById('top-name').textContent = me.username || '—';
+      document.getElementById('top-role').textContent = ROLE_LABELS[_userRole] || _userRole;
+      document.getElementById('top-avatar').textContent = (me.username || '?')[0].toUpperCase();
+
+      if (_canManage) document.getElementById('btn-nova-ordem').style.display = 'inline-flex';
+      // Cadetes não veem opção de filtrar revogadas
+      if (!_canManage) {
+        const optRev = document.querySelector('#filter-status option[value="REVOGADA"]');
+        if (optRev) optRev.style.display = 'none';
+      }
+
+      document.getElementById('screen-redirect').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
+
+      await loadOrdens();
+    } catch {
+      redirect();
+    }
+  }
+
+  function redirect() {
+    window.location.href = 'index.html';
+  }
+
+  // ── Carregar ordens ──
+  async function loadOrdens() {
+    try {
+      const res = await fetch(`${API}/ordens-em-vigor`, {
+        headers: { Authorization: `Bearer ${token()}` }
+      });
+      if (!res.ok) throw new Error();
+      _ordens = await res.json();
+      renderOrdens();
+    } catch {
+      document.getElementById('ordens-grid').innerHTML =
+        '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">⚠</div><div>Erro ao carregar ordens</div></div>';
+    }
+  }
+
+  // ── Renderizar ──
+  function renderOrdens() {
+    const filterStatus = document.getElementById('filter-status').value;
+    const busca = document.getElementById('filter-busca').value.toLowerCase();
+
+    const filtradas = _ordens.filter(o => {
+      if (filterStatus && o.status !== filterStatus) return false;
+      if (busca && !o.escopo.toLowerCase().includes(busca) && !o.texto.toLowerCase().includes(busca)) return false;
+      return true;
+    });
+
+    document.getElementById('ordens-count').textContent =
+      `${filtradas.length} ordem(ns) exibida(s)`;
+
+    if (!filtradas.length) {
+      document.getElementById('ordens-grid').innerHTML =
+        `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📋</div><div>${
+          filterStatus === 'EM VIGOR' ? 'Nenhuma ordem em vigor' : 'Nenhuma ordem encontrada'
+        }</div></div>`;
+      return;
+    }
+
+    document.getElementById('ordens-grid').innerHTML = filtradas.map(o => {
+      const isVigor = o.status === 'EM VIGOR';
+      const dataFmt = o.data_publicacao
+        ? new Date(o.data_publicacao + 'T00:00:00').toLocaleDateString('pt-BR')
+        : '—';
+      const acoes = _canManage ? `
+        <div class="ordem-actions">
+          <button class="btn btn-ghost btn-sm" onclick="editOrdem(${o.id})" title="Editar">✎</button>
+          ${_isCoord
+            ? (isVigor
+                ? `<button class="btn btn-warn btn-sm" onclick="toggleStatus(${o.id},'REVOGADA')" title="Revogar">✕ Revogar</button>`
+                : `<button class="btn btn-ghost btn-sm" onclick="toggleStatus(${o.id},'EM VIGOR')" title="Reativar">↺ Reativar</button>`)
+            : ''}
+          <button class="btn btn-danger btn-sm" onclick="deletarOrdem(${o.id})" title="Deletar">🗑</button>
+        </div>` : '';
+
+      return `
+        <div class="ordem-card${isVigor ? '' : ' revogada'}" id="ordem-${o.id}">
+          <div class="ordem-corner"></div>
+          <div class="ordem-header">
+            <div class="ordem-escopo">${escapeHtml(o.escopo)}</div>
+            <span class="ordem-badge ${isVigor ? 'badge-vigor' : 'badge-revogada'}">${o.status}</span>
+          </div>
+          <div class="ordem-body">
+            <div class="ordem-texto">${escapeHtml(o.texto)}</div>
+          </div>
+          <div class="ordem-footer">
+            <div class="ordem-meta">📅 ${dataFmt} &nbsp;·&nbsp; <span style="opacity:.6;">#${o.id}</span></div>
+            ${acoes}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Modal Nova / Editar ──
+  function openModal(id) {
+    _editId = id || null;
+    document.getElementById('modal-ordem-title').textContent = _editId ? 'Editar Ordem' : 'Nova Ordem';
+    document.getElementById('btn-modal-submit').textContent = _editId ? 'SALVAR ALTERAÇÕES' : 'PUBLICAR ORDEM';
+    document.getElementById('modal-error').className = 'alert error';
+
+    if (_editId) {
+      const o = _ordens.find(x => x.id === _editId);
+      document.getElementById('ordem-escopo').value = o.escopo;
+      document.getElementById('ordem-texto').value = o.texto;
+      document.getElementById('ordem-data').value = o.data_publicacao || '';
+    } else {
+      document.getElementById('ordem-escopo').value = '';
+      document.getElementById('ordem-texto').value = '';
+      document.getElementById('ordem-data').value = new Date().toISOString().split('T')[0];
+    }
+    document.getElementById('modal-ordem').classList.add('open');
+    setTimeout(() => document.getElementById('ordem-escopo').focus(), 100);
+  }
+
+  function editOrdem(id) { openModal(id); }
+
+  function closeModal() {
+    document.getElementById('modal-ordem').classList.remove('open');
+    _editId = null;
+  }
+
+  async function submitOrdem() {
+    const escopo = document.getElementById('ordem-escopo').value.trim();
+    const texto  = document.getElementById('ordem-texto').value.trim();
+    const data   = document.getElementById('ordem-data').value;
+    const errEl  = document.getElementById('modal-error');
+    errEl.className = 'alert error';
+
+    if (!escopo) { errEl.textContent = 'Informe o escopo.'; errEl.className = 'alert error show'; return; }
+    if (!texto)  { errEl.textContent = 'Informe o texto da ordem.'; errEl.className = 'alert error show'; return; }
+    if (!data)   { errEl.textContent = 'Informe a data de publicação.'; errEl.className = 'alert error show'; return; }
+
+    const btn = document.getElementById('btn-modal-submit');
+    btn.classList.add('btn-loading');
+
+    try {
+      let res;
+      if (_editId) {
+        res = await fetch(`${API}/ordens-em-vigor/${_editId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+          body: JSON.stringify({ escopo, texto, data_publicacao: data })
+        });
+      } else {
+        res = await fetch(`${API}/ordens-em-vigor`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+          body: JSON.stringify({ escopo, texto, data_publicacao: data })
+        });
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Erro ao salvar');
+      }
+      closeModal();
+      toast(_editId ? 'Ordem atualizada.' : 'Ordem publicada.');
+      await loadOrdens();
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.className = 'alert error show';
+    } finally {
+      btn.classList.remove('btn-loading');
+    }
+  }
+
+  // ── Alternar status ──
+  async function toggleStatus(id, novoStatus) {
+    const label = novoStatus === 'REVOGADA' ? 'revogar' : 'reativar';
+    if (!confirm(`Deseja ${label} esta ordem?`)) return;
+    try {
+      const res = await fetch(`${API}/ordens-em-vigor/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+        body: JSON.stringify({ status: novoStatus })
+      });
+      if (!res.ok) throw new Error();
+      toast(`Ordem ${novoStatus === 'REVOGADA' ? 'revogada' : 'reativada'}.`);
+      await loadOrdens();
+    } catch {
+      toast('Erro ao alterar status.', 'error');
+    }
+  }
+
+  // ── Deletar ──
+  async function deletarOrdem(id) {
+    if (!confirm('Deletar esta ordem permanentemente?')) return;
+    try {
+      const res = await fetch(`${API}/ordens-em-vigor/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token()}` }
+      });
+      if (!res.ok) throw new Error();
+      toast('Ordem deletada.');
+      await loadOrdens();
+    } catch {
+      toast('Erro ao deletar.', 'error');
+    }
+  }
+
+  // ── Helpers ──
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  let _toastTimer;
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.borderLeftColor = type === 'error' ? 'var(--danger)' : 'var(--accent)';
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // Fechar modal com ESC
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  init();
+</script>
+</body>
+</html>
