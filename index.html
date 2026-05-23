@@ -2305,6 +2305,7 @@
           <select class="role-select" id="el-filter-status" onchange="loadElogiosLista(1)" style="width:auto;">
             <option value="aprovado" selected>Aprovado</option>
             <option value="rejeitado">Rejeitado</option>
+            <option value="pendente" id="opt-elogio-pendente" style="display:none;">Pendente</option>
           </select>
           <select class="role-select" id="el-filter-turma" onchange="loadElogiosLista(1)" style="width:auto;">
             <option value="">Todas as turmas</option>
@@ -5491,6 +5492,8 @@
       document.querySelectorAll('.shared-nav').forEach(el => el.style.display = 'flex');
     }
     if (role === 'auxiliar') {
+      const optPend = document.getElementById('opt-elogio-pendente');
+      if (optPend) optPend.style.display = '';
       document.querySelectorAll('.aux-nav').forEach(el => el.style.display = 'flex');
     }
   }
@@ -6340,6 +6343,7 @@
   let _elogioModalData = null;
 
   async function openElogioModal(id) {
+    id = Number(id);
     document.getElementById('modal-elogio').classList.add('open');
     document.getElementById('elogio-modal-body').innerHTML =
       '<div style="text-align:center;padding:24px;font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Carregando...</div>';
@@ -6348,10 +6352,10 @@
 
     // Buscar em todos os caches disponíveis
     const cached = [
-      ...(ELOGIO_STATE?.data          || []),
-      ...(ELOGIOS_LISTA_STATE?.data   || []),
-      ...(MEUS_ELOGIOS_STATE?.data    || []),
-    ].find(e => e.id === id);
+      ...(ELOGIO_STATE?.data        || []),
+      ...(ELOGIOS_LISTA_STATE?.data || []),
+      ...(MEUS_ELOGIOS_STATE?.data  || []),
+    ].find(e => Number(e.id) === id);
 
     if (cached) {
       _elogioModalData = cached;
@@ -6359,20 +6363,20 @@
       return;
     }
 
-    // Fallback: buscar da API (coordenador/auxiliar)
+    // Fallback: buscar da API
     const role = window._currentUser?.role;
-    if (role === 'coordenador' || role === 'auxiliar') {
-      try {
-        const res = await fetch(`${API}/coordenador/elogios?page=1&limit=9999`, {
-          headers: { 'Authorization': `Bearer ${token()}` }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const found = json.data.find(e => e.id === id);
-          if (found) { _elogioModalData = found; renderElogioModal(found); return; }
-        }
-      } catch {}
-    }
+    try {
+      const endpoint = (role === 'coordenador' || role === 'auxiliar')
+        ? `${API}/coordenador/elogios?page=1&limit=9999`
+        : `${API}/cadete/elogios?page=1&limit=9999`;
+      const res = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token()}` } });
+      if (res.ok) {
+        const json = await res.json();
+        const found = (json.data || []).find(e => Number(e.id) === id);
+        if (found) { _elogioModalData = found; renderElogioModal(found); return; }
+      }
+    } catch {}
+
     document.getElementById('elogio-modal-body').innerHTML =
       '<div style="text-align:center;padding:24px;color:var(--danger);font-family:IBM Plex Mono,monospace;font-size:11px;">Elogio não encontrado.</div>';
   }
@@ -6783,24 +6787,6 @@
     <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
   </div>
 
-  <!-- Modal: Detalhes do Elogio -->
-  <div class="modal-overlay" id="modal-elogio" onclick="if(event.target===this)closeElogioModal()">
-    <div class="modal-box" style="max-width:480px;">
-      <div class="modal-header">
-        <div class="modal-title">Detalhes do Elogio</div>
-        <button class="modal-close" onclick="closeElogioModal()">✕</button>
-      </div>
-      <div style="padding:20px;">
-        <div id="elogio-modal-body" style="display:flex;flex-direction:column;gap:14px;">
-          <div style="text-align:center;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
-        </div>
-        <div class="alert error" id="elogio-modal-error" style="margin-top:12px;"></div>
-        <div id="elogio-modal-actions" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
-      </div>
-    </div>
-  </div>
-
-</body>
 </html>`;
 
     const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
@@ -7644,6 +7630,24 @@
         </div>
         <div class="alert error"   id="batch-pun-error"   style="margin-top:10px;margin-bottom:6px;"></div>
         <div class="alert success" id="batch-pun-success" style="margin-bottom:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal: Detalhes do Elogio -->
+  <div class="modal-overlay" id="modal-elogio" onclick="if(event.target===this)closeElogioModal()">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Detalhes do Elogio</div>
+        <button class="modal-close" onclick="closeElogioModal()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="elogio-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div style="text-align:center;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
+        </div>
+        <div class="alert error" id="elogio-modal-error" style="margin-top:12px;"></div>
+        <div id="elogio-modal-actions" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
       </div>
     </div>
   </div>
