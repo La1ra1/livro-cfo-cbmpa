@@ -386,17 +386,79 @@
 
     @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
-    /* ── RESPONSIVE ── */
-    @media (min-width: 641px) {
-      #topbar-page-nav { display: flex; }
-      #btn-voltar { display: none !important; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed; top: 48px; left: 0; bottom: 0;
+      width: 210px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto; z-index: 100;
+      display: flex; flex-direction: column;
     }
+    .sidebar-section { padding: 20px 0 8px; }
+    .sidebar-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); padding: 0 14px 10px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 14px;
+      font-size: 13px; font-weight: 500;
+      color: rgba(232,228,217,.55);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+      user-select: none;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: rgba(200,168,75,.05); color: var(--text); border-left-color: rgba(200,168,75,.3); }
+    .nav-item.active { background: rgba(200,168,75,.1); color: var(--accent); border-left-color: var(--accent); }
+    .nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+    .sidebar-divider { height: 1px; background: var(--border); margin: 6px 14px; }
+    .sidebar-spacer { flex: 1; }
+
+    /* ── MAIN COM SIDEBAR ── */
+    .page-wrap { margin-left: 210px; }
+
+    /* ── MOBILE SIDEBAR DRAWER ── */
+    @media (max-width: 640px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        width: 80vw; max-width: 280px;
+        z-index: 250;
+        box-shadow: 4px 0 24px rgba(0,0,0,.5);
+      }
+      .sidebar.open { transform: translateX(0); }
+      #sidebar-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,.6);
+        z-index: 240;
+      }
+      #sidebar-overlay.show { display: block; }
+      #btn-hamburger {
+        display: flex !important; align-items: center; justify-content: center;
+        width: 36px; height: 36px;
+        background: none; border: none; cursor: pointer;
+        color: var(--accent); font-size: 18px; flex-shrink: 0;
+        margin-right: 4px;
+      }
+      .page-wrap { margin-left: 0; padding: 62px 14px 32px; }
+    }
+    @media (min-width: 641px) {
+      #btn-hamburger { display: none !important; }
+      #sidebar-overlay { display: none !important; }
+      #btn-voltar { display: none !important; }
+      #topbar-page-nav { display: flex; }
+    }
+    /* ── RESPONSIVE ── */
     @media (max-width: 640px) {
       .topbar-sub, .topbar-role { display: none; }
       .topbar-name { font-size: 11px; }
       #topbar-page-nav { display: none; }
-      #btn-voltar { display: flex !important; }
-      .page-wrap { padding: 62px 14px 32px; }
       .modal-overlay { padding: 0; align-items: flex-end; }
       .modal-box { max-width: 100% !important; border-radius: 0;
         border-left: none; border-right: none; border-bottom: none;
@@ -415,12 +477,39 @@
   <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;">VERIFICANDO SESSÃO...</div>
 </div>
 
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
 <div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Requerimentos</div>
+      <div class="nav-item active" id="nav-lista" onclick="switchTab('lista'); closeSidebar();">
+        <span class="nav-icon">📋</span> Lista
+      </div>
+      <div class="nav-item" id="nav-novo" onclick="switchTab('novo'); closeSidebar();" style="display:none;">
+        <span class="nav-icon">✦</span> Novo Requerimento
+      </div>
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-divider"></div>
+      <a href="index.html" class="nav-item" style="color:inherit;">
+        <span class="nav-icon">↩</span> Fatos Observados
+      </a>
+      <a href="requerimentos.html" class="nav-item" style="color:inherit;">
+        <span class="nav-icon">📄</span> Requerimentos
+      </a>
+      <a href="ordens_em_vigor.html" class="nav-item" style="color:inherit;">
+        <span class="nav-icon">📋</span> Ordens em Vigor
+      </a>
+    </div>
+  </aside>
 
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-brand">
-      <a href="index.html" id="btn-voltar" style="display:none;align-items:center;justify-content:center;width:36px;height:36px;color:var(--accent);font-size:20px;text-decoration:none;flex-shrink:0;margin-right:4px;">‹</a>
+      <button id="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu" style="display:none;">☰</button>
       <img src="ABM.png" alt="ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
       <div class="topbar-sub">Academia Bombeiro Militar</div>
     </div>
@@ -463,6 +552,31 @@
     <!-- TAB: LISTA (coordenação/auxiliar) / MEUS (cadete) -->
     <div class="tab-panel active" id="tab-lista">
 
+      <!-- Filtros mês/ano — cadete -->
+      <div class="filter-bar" id="filter-bar-cadete" style="display:none;">
+        <span class="filter-label">Mês</span>
+        <select id="fc-mes" onchange="loadLista(1)">
+          <option value="">Todos</option>
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+        <span class="filter-label">Ano</span>
+        <select id="fc-ano" onchange="loadLista(1)">
+          <option value="">Todos</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="clearFiltersCadete()">✕ Limpar</button>
+      </div>
+
       <!-- Filtros — só coordenação/auxiliar -->
       <div class="filter-bar" id="filter-bar" style="display:none;">
         <span class="filter-label">Status</span>
@@ -476,6 +590,30 @@
         <span class="filter-label">Categoria</span>
         <select id="f-categoria" onchange="loadLista(1)">
           <option value="">Todas</option>
+        </select>
+        <span class="filter-label">Mês</span>
+        <select id="f-mes" onchange="loadLista(1)">
+          <option value="">Todos</option>
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+        <span class="filter-label">Ano</span>
+        <select id="f-ano" onchange="loadLista(1)">
+          <option value="">Todos</option>
+        </select>
+        <span class="filter-label">Cadete</span>
+        <select id="f-cadete" onchange="loadLista(1)">
+          <option value="">Todos</option>
         </select>
         <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Limpar</button>
       </div>
@@ -674,16 +812,50 @@
 
   // ── Setup UI por role ────────────────────────────────────────────
   function setupUI() {
+    // Populate ano selects (current year ± 2)
+    const thisYear = new Date().getFullYear();
+    ['f-ano', 'fc-ano'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      for (let y = thisYear + 1; y >= thisYear - 2; y--) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        if (y === thisYear) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    });
+
     if (_canManage) {
       document.getElementById('filter-bar').style.display  = 'flex';
       document.getElementById('th-cadete').style.display   = '';
       document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
+      loadCadeteSelect();
     } else {
+      document.getElementById('filter-bar-cadete').style.display = 'flex';
       // Cadete: mostra botão e tab de novo requerimento
       document.getElementById('btn-novo-req').style.display  = 'inline-flex';
       document.getElementById('tab-btn-novo').style.display  = '';
+      const navNovo = document.getElementById('nav-novo');
+      if (navNovo) navNovo.style.display = '';
       document.getElementById('page-meta').textContent       = 'Meus requerimentos';
     }
+  }
+
+  async function loadCadeteSelect() {
+    try {
+      const res = await fetch(`${API}/usuarios/cadetes`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) return;
+      const cadetes = await res.json();
+      const sel = document.getElementById('f-cadete');
+      cadetes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.numero_geral != null ? c.numero_geral + ' ' : ''}${c.username}`;
+        sel.appendChild(opt);
+      });
+    } catch {}
   }
 
   // ── Categorias ──────────────────────────────────────────────────
@@ -708,9 +880,10 @@
   // ── Tab switch ──────────────────────────────────────────────────
   function switchTab(name) {
     ['lista','novo'].forEach(t => {
-      document.getElementById(`tab-panel-${t}`) // fallback
       document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
       document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === name);
+      const navEl = document.getElementById(`nav-${t}`);
+      if (navEl) navEl.classList.toggle('active', t === name);
     });
   }
 
@@ -728,12 +901,22 @@
       if (_canManage) {
         const status   = document.getElementById('f-status').value;
         const catId    = document.getElementById('f-categoria').value;
+        const mes      = document.getElementById('f-mes').value;
+        const ano      = document.getElementById('f-ano').value;
+        const cadeteId = document.getElementById('f-cadete').value;
         const params   = new URLSearchParams({ page, limit: LIMIT });
-        if (status) params.set('status', status);
-        if (catId)  params.set('categoria_id', catId);
+        if (status)   params.set('status', status);
+        if (catId)    params.set('categoria_id', catId);
+        if (mes)      params.set('mes', mes);
+        if (ano)      params.set('ano', ano);
+        if (cadeteId) params.set('cadete_id', cadeteId);
         res  = await fetch(`${API}/coordenador/requerimentos?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
       } else {
+        const mes    = document.getElementById('fc-mes').value;
+        const ano    = document.getElementById('fc-ano').value;
         const params = new URLSearchParams({ page, limit: LIMIT });
+        if (mes) params.set('mes', mes);
+        if (ano) params.set('ano', ano);
         res = await fetch(`${API}/requerimentos/meus?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
       }
 
@@ -788,6 +971,15 @@
   function clearFilters() {
     document.getElementById('f-status').value    = '';
     document.getElementById('f-categoria').value = '';
+    document.getElementById('f-mes').value       = '';
+    document.getElementById('f-ano').value       = '';
+    document.getElementById('f-cadete').value    = '';
+    loadLista(1);
+  }
+
+  function clearFiltersCadete() {
+    document.getElementById('fc-mes').value = '';
+    document.getElementById('fc-ano').value = '';
     loadLista(1);
   }
 
@@ -1056,6 +1248,18 @@
   document.querySelectorAll('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
+
+  // ── Sidebar ─────────────────────────────────────────────────────
+  function toggleSidebar() {
+    const s = document.getElementById('sidebar');
+    const o = document.getElementById('sidebar-overlay');
+    s.classList.toggle('open');
+    o.classList.toggle('show');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  }
 
   window.addEventListener('load', init);
 </script>
