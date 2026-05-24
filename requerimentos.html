@@ -460,6 +460,113 @@
       #btn-voltar { display: none !important; }
       #topbar-page-nav { display: flex; }
     }
+
+    /* ── CALENDÁRIO ── */
+    .cal-wrap { user-select: none; }
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .cal-month-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent);
+    }
+    .cal-nav-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--text-dim); width: 32px; height: 32px;
+      cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-dow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); text-align: center; padding: 6px 2px;
+    }
+    .cal-cell {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      min-height: 72px; padding: 5px 6px;
+      position: relative; vertical-align: top;
+      transition: border-color .15s;
+      cursor: default;
+    }
+    .cal-cell.other-month { opacity: .3; }
+    .cal-cell.today { border-color: var(--accent2); }
+    .cal-cell.has-ausencias { border-color: rgba(224,123,42,.4); cursor: pointer; }
+    .cal-cell.has-ausencias:hover { border-color: var(--warn); background: rgba(224,123,42,.04); }
+    .cal-day-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; color: var(--muted); margin-bottom: 4px;
+    }
+    .cal-cell.today .cal-day-num { color: var(--accent); font-weight: 700; }
+    .cal-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; padding: 1px 5px;
+      background: var(--warn-dim);
+      border: 1px solid rgba(224,123,42,.3);
+      color: var(--warn);
+      margin-bottom: 2px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%; display: block;
+    }
+    .cal-more {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── DETALHE DO DIA ── */
+    .cal-detail {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      display: none;
+    }
+    .cal-detail.show { display: block; }
+    .cal-detail-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .cal-detail-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--warn);
+    }
+    .cal-detail-count {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+    }
+    .cal-req-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--warn);
+      padding: 12px 16px; margin-bottom: 8px;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .cal-req-card:hover { border-color: var(--warn); background: rgba(224,123,42,.04); }
+    .cal-req-card-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px; font-weight: 700;
+      letter-spacing: 1px; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .cal-req-card-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      display: flex; gap: 16px; flex-wrap: wrap;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 640px) {
       .topbar-sub, .topbar-role { display: none; }
@@ -492,6 +599,9 @@
       <div class="sidebar-label">Requerimentos</div>
       <div class="nav-item active" id="nav-lista" onclick="switchTab('lista'); closeSidebar();">
         <span class="nav-icon">📋</span> Lista
+      </div>
+      <div class="nav-item" id="nav-calendario" onclick="switchTab('calendario'); closeSidebar();" style="display:none;">
+        <span class="nav-icon">📅</span> Calendário
       </div>
       <div class="nav-item" id="nav-novo" onclick="switchTab('novo'); closeSidebar();" style="display:none;">
         <span class="nav-icon">✦</span> Novo Requerimento
@@ -552,6 +662,7 @@
     <div class="tabs" id="tabs-wrap">
       <!-- Coordenação/Auxiliar vê ambas as abas; cadete vê só as suas -->
       <button class="tab-btn active" id="tab-btn-lista" onclick="switchTab('lista')">Lista</button>
+      <button class="tab-btn" id="tab-btn-calendario" onclick="switchTab('calendario')" style="display:none;">Calendário de Dispensas</button>
       <button class="tab-btn" id="tab-btn-novo" onclick="switchTab('novo')" style="display:none;">Novo Requerimento</button>
     </div>
 
@@ -645,6 +756,40 @@
       <div class="pag-bar">
         <span class="pag-info" id="pag-info">—</span>
         <div class="pag-btns" id="pag-btns"></div>
+      </div>
+    </div>
+
+    <!-- TAB: CALENDÁRIO (coordenador) -->
+    <div class="tab-panel" id="tab-calendario">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">
+          Cadetes com dispensa <span style="color:var(--warn);">deferida</span> por dia
+        </div>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+          <div class="cal-month-label" id="cal-month-label">—</div>
+          <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-grid">
+          <div class="cal-dow">Dom</div>
+          <div class="cal-dow">Seg</div>
+          <div class="cal-dow">Ter</div>
+          <div class="cal-dow">Qua</div>
+          <div class="cal-dow">Qui</div>
+          <div class="cal-dow">Sex</div>
+          <div class="cal-dow">Sáb</div>
+        </div>
+      </div>
+    </div>
+      <!-- Detalhe do dia clicado -->
+      <div class="cal-detail" id="cal-detail">
+        <div class="cal-detail-header">
+          <div class="cal-detail-title" id="cal-detail-title">—</div>
+          <div class="cal-detail-count" id="cal-detail-count"></div>
+        </div>
+        <div id="cal-detail-list"></div>
       </div>
     </div>
 
@@ -836,6 +981,11 @@
       document.getElementById('th-cadete').style.display   = '';
       document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
       loadCadeteSelect();
+      if (_isCoord) {
+        document.getElementById('tab-btn-calendario').style.display = '';
+        const navCal = document.getElementById('nav-calendario');
+        if (navCal) navCal.style.display = '';
+      }
     } else {
       document.getElementById('filter-bar-cadete').style.display = 'flex';
       // Cadete: mostra botão e tab de novo requerimento
@@ -885,12 +1035,15 @@
 
   // ── Tab switch ──────────────────────────────────────────────────
   function switchTab(name) {
-    ['lista','novo'].forEach(t => {
-      document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
-      document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === name);
+    ['lista','calendario','novo'].forEach(t => {
+      const panel = document.getElementById(`tab-${t}`);
+      if (panel) panel.classList.toggle('active', t === name);
+      const btn = document.getElementById(`tab-btn-${t}`);
+      if (btn) btn.classList.toggle('active', t === name);
       const navEl = document.getElementById(`nav-${t}`);
       if (navEl) navEl.classList.toggle('active', t === name);
     });
+    if (name === 'calendario') renderCalendario();
   }
 
   function openNovoModal() { switchTab('novo'); }
@@ -1288,6 +1441,179 @@
   document.querySelectorAll('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
+
+
+  // ── Calendário de Dispensas ──────────────────────────────────────
+  let _calYear  = new Date().getFullYear();
+  let _calMonth = new Date().getMonth(); // 0-based
+  let _calData  = []; // dispensas deferidas carregadas
+
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                 'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  async function loadCalendario() {
+    // Busca todas as dispensas deferidas do mês atual (sem paginação agressiva)
+    try {
+      const params = new URLSearchParams({
+        status: 'deferido',
+        categoria_id: '', // será filtrado no frontend pela categoria dispensa
+        mes: _calMonth + 1,
+        ano: _calYear,
+        limit: 200,
+        page: 1,
+      });
+      const res = await fetch(`${API}/coordenador/requerimentos?${params}`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      // Filtra só dispensas com datas de afastamento
+      _calData = (json.data || []).filter(r =>
+        r.categoria === 'dispensa' &&
+        r.data_afastamento_inicio &&
+        r.data_afastamento_fim
+      );
+    } catch { _calData = []; }
+  }
+
+  async function renderCalendario() {
+    await loadCalendario();
+    buildCalGrid();
+  }
+
+  function calNav(dir) {
+    _calMonth += dir;
+    if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+    if (_calMonth < 0)  { _calMonth = 11; _calYear--; }
+    renderCalendario();
+  }
+
+  function buildCalGrid() {
+    // Reset detail panel on month change
+    const det = document.getElementById('cal-detail');
+    if (det) det.classList.remove('show');
+    document.getElementById('cal-month-label').textContent =
+      `${MESES[_calMonth]} ${_calYear}`;
+
+    const grid   = document.getElementById('cal-grid');
+    // Remove old cells (keep the 7 DOW headers)
+    const headers = Array.from(grid.children).slice(0, 7);
+    grid.innerHTML = '';
+    headers.forEach(h => grid.appendChild(h));
+
+    const firstDay = new Date(_calYear, _calMonth, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+    const daysInPrev  = new Date(_calYear, _calMonth, 0).getDate();
+    const today = new Date();
+
+    // Build a map: "YYYY-MM-DD" -> [req, ...]
+    _calAusMap = {};
+    _calData.forEach(r => {
+      let cur = new Date(r.data_afastamento_inicio + 'T00:00:00');
+      const end = new Date(r.data_afastamento_fim + 'T00:00:00');
+      while (cur <= end) {
+        const key = cur.toISOString().slice(0, 10);
+        if (!_calAusMap[key]) _calAusMap[key] = [];
+        _calAusMap[key].push(r);
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    const ausMap = _calAusMap; // alias for cell rendering
+    // Convert to simple display objects for makeCell pills
+    const ausDisplayMap = {};
+    Object.entries(ausMap).forEach(([k, reqs]) => {
+      ausDisplayMap[k] = reqs.map(r => ({ num: r.cadete_numero_geral, name: r.cadete_username }));
+    });
+
+    // Prev month padding
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const cell = makeCell(daysInPrev - i, false, null, null);
+      cell.classList.add('other-month');
+      grid.appendChild(cell);
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = (today.getFullYear() === _calYear &&
+                       today.getMonth()    === _calMonth &&
+                       today.getDate()     === d);
+      const ausencias = ausDisplayMap[dateKey] || [];
+      const cell = makeCell(d, isToday, dateKey, ausencias);
+      grid.appendChild(cell);
+    }
+
+    // Next month padding
+    const total = firstDay + daysInMonth;
+    const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let d = 1; d <= trailing; d++) {
+      const cell = makeCell(d, false, null, null);
+      cell.classList.add('other-month');
+      grid.appendChild(cell);
+    }
+  }
+
+  let _calAusMap = {}; // dateKey -> [{req}]
+
+  function makeCell(day, isToday, dateKey, ausencias) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isToday ? ' today' : '');
+    const num = document.createElement('div');
+    num.className = 'cal-day-num';
+    num.textContent = day;
+    cell.appendChild(num);
+
+    if (ausencias && ausencias.length) {
+      cell.classList.add('has-ausencias');
+      const show = ausencias.slice(0, 2);
+      show.forEach(a => {
+        const pill = document.createElement('div');
+        pill.className = 'cal-pill';
+        pill.textContent = (a.num != null ? a.num + ' ' : '') + a.name;
+        cell.appendChild(pill);
+      });
+      if (ausencias.length > 2) {
+        const more = document.createElement('div');
+        more.className = 'cal-more';
+        more.textContent = `+${ausencias.length - 2} mais`;
+        cell.appendChild(more);
+      }
+      cell.addEventListener('click', () => showDayDetail(dateKey));
+    }
+    return cell;
+  }
+
+  function showDayDetail(dateKey) {
+    const reqs = _calAusMap[dateKey] || [];
+    const [y, m, d] = dateKey.split('-');
+    const label = `${parseInt(d)} de ${MESES[parseInt(m)-1]} de ${y}`;
+
+    document.getElementById('cal-detail-title').textContent = label;
+    document.getElementById('cal-detail-count').textContent =
+      `${reqs.length} cadete(s) ausente(s)`;
+
+    document.getElementById('cal-detail-list').innerHTML = reqs.map(r => `
+      <div class="cal-req-card" onclick="openDetalhe(${r.id})">
+        <div class="cal-req-card-name">
+          ${r.cadete_numero_geral != null ? r.cadete_numero_geral + ' · ' : ''}${r.cadete_username}
+        </div>
+        <div class="cal-req-card-meta">
+          <span>📋 Req #${r.id}</span>
+          <span>📅 ${fmtDateOnly(r.data_afastamento_inicio)} → ${fmtDateOnly(r.data_afastamento_fim)}</span>
+          <span style="color:var(--text-dim);">${r.titulo}</span>
+        </div>
+      </div>`).join('');
+
+    const detail = document.getElementById('cal-detail');
+    detail.classList.add('show');
+    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function fmtDateOnly(s) {
+    if (!s) return '—';
+    const [y,m,d] = s.slice(0,10).split('-');
+    return `${d}/${m}/${y}`;
+  }
 
   // ── Sidebar ─────────────────────────────────────────────────────
   function toggleSidebar() {
