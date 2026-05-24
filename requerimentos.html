@@ -350,6 +350,12 @@
       margin-bottom: 6px; background: var(--bg);
     }
     .anexo-nome { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); }
+    .anexo-btn-del {
+      background: none; border: 1px solid rgba(192,57,43,.3);
+      color: var(--danger); font-size: 10px; cursor: pointer;
+      padding: 2px 7px; transition: background .15s; font-family: monospace;
+    }
+    .anexo-btn-del:hover { background: var(--danger-dim); }
     .anexo-btn-ver {
       font-family: 'IBM Plex Mono', monospace; font-size: 10px;
       color: var(--accent); text-decoration: none; padding: 2px 8px;
@@ -1043,7 +1049,7 @@
       }
 
       // Anexos
-      await loadAnexos(id);
+      await loadAnexos(id, r.status, r.decidido_em);
 
       // Upload: cadete dono pode adicionar a qualquer momento
       const isCadeteDono = !_canManage && String(r.cadete_id) === String(_userId);
@@ -1061,7 +1067,7 @@
   }
 
   // ── Anexos ──────────────────────────────────────────────────────
-  async function loadAnexos(id) {
+  async function loadAnexos(id, reqStatus, decididoEm) {
     const lista  = document.getElementById('mdet-anexos-lista');
     const count  = document.getElementById('mdet-anexos-count');
     lista.innerHTML = '<div class="anexo-empty">carregando...</div>';
@@ -1075,15 +1081,49 @@
       if (!anexos.length) {
         lista.innerHTML = '<div class="anexo-empty">Nenhum anexo</div>';
       } else {
-        lista.innerHTML = anexos.map(a => `
-          <div class="anexo-item">
+        lista.innerHTML = anexos.map(a => {
+          const isUploader = String(a.user_id) === String(_userId);
+          const anexoCriado = new Date(a.criado_em);
+          const decidido    = decididoEm ? new Date(decididoEm) : null;
+          const podeDeletar = isUploader && (
+            reqStatus === 'pendente' || (decidido && anexoCriado > decidido)
+          );
+          return `
+          <div class="anexo-item" id="anexo-${a.id}">
             <span class="anexo-nome">📎 ${a.descricao}</span>
-            <a class="anexo-btn-ver" href="${a.url}" target="_blank" rel="noopener">Ver</a>
-          </div>`).join('');
+            <div style="display:flex;gap:6px;align-items:center;">
+              <a class="anexo-btn-ver" href="${a.url}" target="_blank" rel="noopener">Ver</a>
+              ${podeDeletar ? `<button class="anexo-btn-del" onclick="deletarAnexo(${a.id})" title="Remover">✕</button>` : ''}
+            </div>
+          </div>`;
+        }).join('');
       }
     } catch {
       lista.innerHTML = '<div class="anexo-empty" style="color:var(--danger);">Erro ao carregar</div>';
     }
+  }
+
+  async function deletarAnexo(anexoId) {
+    if (!confirm('Remover este anexo?')) return;
+    try {
+      const res = await fetch(`${API}/requerimentos/${_currentReqId}/anexos/${anexoId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast(err.detail || 'Erro ao remover anexo.', 'error');
+        return;
+      }
+      document.getElementById(`anexo-${anexoId}`)?.remove();
+      const count = document.getElementById('mdet-anexos-count');
+      const atual = parseInt(count.textContent) || 1;
+      count.textContent = `${atual - 1} arquivo(s)`;
+      if (atual - 1 === 0) {
+        document.getElementById('mdet-anexos-lista').innerHTML = '<div class="anexo-empty">Nenhum anexo</div>';
+      }
+      toast('Anexo removido.');
+    } catch { toast('Erro de conexão.', 'error'); }
   }
 
   async function uploadAnexo(event) {
