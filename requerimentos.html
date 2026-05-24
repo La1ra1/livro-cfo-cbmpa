@@ -989,7 +989,7 @@
       document.getElementById('th-cadete').style.display   = '';
       document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
       loadCadeteSelect();
-      if (_isCoord) {
+      if (_canManage) {
         document.getElementById('tab-btn-calendario').style.display = '';
         const navCal = document.getElementById('nav-calendario');
         if (navCal) navCal.style.display = '';
