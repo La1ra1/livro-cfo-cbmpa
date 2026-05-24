@@ -629,15 +629,7 @@
       .main { margin-left: 200px; padding: 20px; }
     }
 
-    /* ── LANÇAMENTO GRID ── */
-    .lancamento-grid {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 20px;
-      align-items: start;
-    }
-
-        /* ══════════════════════════════
+    /* ══════════════════════════════
        MOBILE LAYOUT (≤ 640px)
     ══════════════════════════════ */
     @media (max-width: 640px) {
@@ -666,7 +658,6 @@
       .topbar-sub { display: none; }
       .topbar-name { font-size: 11px; }
       .topbar-role { display: none; }
-      #topbar-page-nav { display: none; }
 
       /* Botão hambúrguer */
       #btn-hamburger {
@@ -681,10 +672,37 @@
       .main {
         margin-left: 0;
         padding: 14px;
-        padding-bottom: 24px;
+        padding-bottom: 72px; /* espaço para bottom nav */
       }
 
-
+      /* Bottom nav */
+      #bottom-nav {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: 58px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        z-index: 200;
+      }
+      .bnav-item {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 3px; cursor: pointer;
+        color: var(--muted); font-size: 9px;
+        font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 1px; text-transform: uppercase;
+        transition: color .15s;
+        border: none; background: none; padding: 0;
+      }
+      .bnav-item.active { color: var(--accent); }
+      .bnav-item svg, .bnav-item .bnav-icon { font-size: 18px; line-height: 1; }
+      .bnav-badge {
+        position: absolute; top: 6px;
+        background: var(--danger); color: #fff;
+        font-size: 9px; font-weight: 700;
+        padding: 1px 4px; border-radius: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+      }
 
       /* Page header simplificado */
       .page-header {
@@ -701,9 +719,6 @@
         border-top: 3px solid var(--accent);
       }
       .modal { max-width: 100%; border-radius: 0; }
-      .modal-box { max-width: 100% !important; width: 100%; }
-      .modal-overlay { padding: 0; align-items: flex-end; }
-      .modal-box { border-radius: 0; border-left: none; border-right: none; border-bottom: none; border-top: 2px solid var(--accent); max-height: 92vh; overflow-y: auto; }
 
       /* Tabelas com scroll horizontal */
       .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -722,12 +737,6 @@
 
       /* Cards de lançamento */
       .lancamento-body { padding: 14px; }
-      /* Grid de lançamento vira coluna única */
-      .lancamento-grid { grid-template-columns: 1fr !important; }
-      /* Painel de resumo/lançar fica colado abaixo */
-      .lancamento-grid > div:last-child { position: static !important; }
-      /* Botão lançar full width e mais gordo */
-      #btn-lancar { width: 100%; padding: 14px; font-size: 16px; justify-content: center; margin-top: 8px; }
 
       /* Filter bar compacta */
       .filter-bar { padding: 8px 12px; gap: 6px; }
@@ -744,11 +753,11 @@
       .profile-name { font-size: 20px; }
     }
 
-    /* Desktop: sem hamburger nem overlay */
+    /* Hambúrguer e bottom nav — só no desktop */
     @media (min-width: 641px) {
       #btn-hamburger { display: none; }
+      #bottom-nav { display: none; }
       #sidebar-overlay { display: none !important; }
-      #topbar-page-nav { display: flex; }
     }
 
 
@@ -1192,10 +1201,6 @@
       <img src="ABM.png" alt="Brasão ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
       <div class="topbar-sub">Academia Bombeiro Militar</div>
     </div>
-    <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;">
-      <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Fatos Observados</a>
-      <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
-    </nav>
     <div class="topbar-user">
       <div style="text-align:right;">
         <div class="topbar-name" id="top-name">—</div>
@@ -1261,9 +1266,6 @@
       <div class="nav-item" data-section="lancamento" onclick="showSection('lancamento')">
         <span class="nav-icon">✚</span> Lançar Anotações
       </div>
-      <div class="nav-item nav-fo-plus" data-section="lancar-elogio" onclick="showSection('lancar-elogio')" style="display:none;">
-        <span class="nav-icon">★</span> Lançar Elogio FO+
-      </div>
       <div class="nav-item" data-section="minhas-anotacoes" onclick="showSection('minhas-anotacoes')">
         <span class="nav-icon">◧</span> Anotações Lançadas
       </div>
@@ -1276,23 +1278,11 @@
       <div class="nav-item" data-section="aux-usuarios" onclick="showSection('aux-usuarios')">
         <span class="nav-icon">◈</span> Usuários
       </div>
-      <div class="nav-item" data-section="anot-pendentes" onclick="showSection('anot-pendentes')">
-        <span class="nav-icon">⏳</span> Pendentes de Aprovação
-        <span class="nav-badge" id="badge-pendentes-aux" style="display:none;background:var(--warn);">0</span>
-      </div>
-      <div class="nav-item" data-section="anot-justificativa" onclick="showSection('anot-justificativa')">
-        <span class="nav-icon">✉</span> Aguardando Justificativa
-        <span class="nav-badge" id="badge-justificativa-aux" style="display:none;background:var(--blue);">0</span>
-      </div>
       <div class="nav-item" data-section="aux-vereditos" onclick="showSection('aux-vereditos')">
         <span class="nav-icon">◆</span> Com Veredito
       </div>
       <div class="nav-item" data-section="lancar-elogio" onclick="showSection('lancar-elogio')">
         <span class="nav-icon">★</span> Lançar Elogio
-      </div>
-      <div class="nav-item" data-section="elogios-pendentes" onclick="showSection('elogios-pendentes')">
-        <span class="nav-icon">★</span> Elogios Pendentes
-        <span class="nav-badge" id="badge-elogios-pend-aux" style="display:none;">0</span>
       </div>
       <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
         <span class="nav-icon">☆</span> Ver Elogios
@@ -1327,16 +1317,71 @@
     <div class="sidebar-spacer"></div>
     <div class="sidebar-section">
       <div class="sidebar-divider"></div>
-      <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;color:inherit;">
-        <span class="nav-icon">📋</span> Ordens em Vigor
-      </a>
       <div class="nav-item" onclick="handleLogout()">
         <span class="nav-icon">↩</span> Sair
       </div>
     </div>
   </aside>
 
-
+  <!-- BOTTOM NAV (mobile) -->
+  <nav id="bottom-nav">
+    <button class="bnav-item active" id="bnav-perfil" onclick="showSection('perfil');setActiveNav('bnav-perfil')">
+      <span class="bnav-icon">◎</span>
+      <span>Perfil</span>
+    </button>
+    <!-- Itens coordenador -->
+    <button class="bnav-item coord-nav" id="bnav-pendentes" style="display:none;" onclick="showSection('anot-pendentes');setActiveNav('bnav-pendentes')">
+      <span class="bnav-icon" style="position:relative;">◧<span class="bnav-badge" id="bnav-badge-pend" style="display:none;"></span></span>
+      <span>Pendentes</span>
+    </button>
+    <button class="bnav-item coord-nav" id="bnav-justificadas" style="display:none;" onclick="showSection('anot-justificadas');setActiveNav('bnav-justificadas')">
+      <span class="bnav-icon">▣</span>
+      <span>Justif.</span>
+    </button>
+    <button class="bnav-item coord-nav" id="bnav-usuarios" style="display:none;" onclick="showSection('usuarios');setActiveNav('bnav-usuarios')">
+      <span class="bnav-icon">◈</span>
+      <span>Usuários</span>
+    </button>
+    <button class="bnav-item coord-nav" id="bnav-punicoes" style="display:none;" onclick="showSection('punicoes');setActiveNav('bnav-punicoes')">
+      <span class="bnav-icon">📅</span>
+      <span>Punições</span>
+    </button>
+    <!-- Itens dia_cfo -->
+    <button class="bnav-item diacfo-nav" id="bnav-lancamento" style="display:none;" onclick="showSection('lancamento');setActiveNav('bnav-lancamento')">
+      <span class="bnav-icon">✚</span>
+      <span>Lançar</span>
+    </button>
+    <button class="bnav-item diacfo-nav" id="bnav-minhas" style="display:none;" onclick="showSection('minhas-anotacoes');setActiveNav('bnav-minhas')">
+      <span class="bnav-icon">◧</span>
+      <span>Lançadas</span>
+    </button>
+    <!-- Itens compartilhados (dia_cfo + cadete) -->
+    <button class="bnav-item shared-nav" id="bnav-justificar" style="display:none;" onclick="showSection('justificar');setActiveNav('bnav-justificar')">
+      <span class="bnav-icon">✍</span>
+      <span>Justificar</span>
+    </button>
+    <button class="bnav-item shared-nav" id="bnav-vereditos" style="display:none;" onclick="showSection('meus-vereditos');setActiveNav('bnav-vereditos')">
+      <span class="bnav-icon">◆</span>
+      <span>Vereditos</span>
+    </button>
+    <button class="bnav-item shared-nav" id="bnav-minhas-punicoes" style="display:none;" onclick="showSection('minhas-punicoes');setActiveNav('bnav-minhas-punicoes')">
+      <span class="bnav-icon">📅</span>
+      <span>Punições</span>
+    </button>
+    <!-- Auxiliar -->
+    <button class="bnav-item aux-nav" id="bnav-aux-usuarios" style="display:none;" onclick="showSection('aux-usuarios');setActiveNav('bnav-aux-usuarios')">
+      <span class="bnav-icon">◈</span>
+      <span>Usuários</span>
+    </button>
+    <button class="bnav-item aux-nav" id="bnav-aux-vereditos" style="display:none;" onclick="showSection('aux-vereditos');setActiveNav('bnav-aux-vereditos')">
+      <span class="bnav-icon">◆</span>
+      <span>Vereditos</span>
+    </button>
+    <button class="bnav-item aux-nav" id="bnav-aux-punicoes" style="display:none;" onclick="showSection('punicoes');setActiveNav('bnav-aux-punicoes')">
+      <span class="bnav-icon">📅</span>
+      <span>Punições</span>
+    </button>
+  </nav>
 
   <!-- MAIN -->
   <main class="main">
@@ -1605,7 +1650,7 @@
           <table>
             <thead>
               <tr>
-                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-justificadas" onclick="toggleAllJustificadas(this)" /></th>
+                <th class="cb-wrap"><input type="checkbox" id="cb-all-justificadas" onclick="toggleAllJustificadas(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Data do Fato</th>
@@ -1659,18 +1704,6 @@
             <div class="sd-clear" onclick="clearSd('sd-cadete-veredito', loadVeredito)">Limpar filtro</div>
           </div>
         </div>
-        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
-        <div class="sd-wrap" id="sd-infracao-veredito">
-          <div class="sd-trigger" id="sd-infracao-veredito-trigger" onclick="toggleSd('sd-infracao-veredito')">Todas as infrações</div>
-          <div class="sd-panel" id="sd-infracao-veredito-panel">
-            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-veredito', this.value)" />
-            <div class="sd-list" id="sd-infracao-veredito-list"></div>
-            <div class="sd-clear" onclick="clearSd('sd-infracao-veredito', loadVeredito)">Limpar filtro</div>
-          </div>
-        </div>
-        <span class="anot-filter-label" style="margin-left:8px;">Data do fato:</span>
-        <input type="date" id="filter-verd-data-fato" class="role-select" style="padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;" onchange="loadVeredito(1)" />
-        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="document.getElementById('filter-verd-data-fato').value='';loadVeredito(1)" title="Limpar data">✕</button>
         <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
         <select class="role-select" id="tp-filter-veredito" onchange="loadVeredito(1)" style="width:auto;">
           <option value="">Todas</option>
@@ -1684,7 +1717,7 @@
           <table>
             <thead>
               <tr>
-                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-veredito" onclick="toggleAllVeredito(this)" /></th>
+                <th class="cb-wrap"><input type="checkbox" id="cb-all-veredito" onclick="toggleAllVeredito(this)" /></th>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Data do Fato</th>
@@ -1720,7 +1753,7 @@
         <button class="btn btn-ghost btn-sm" onclick="resetLancamento()">↺ Limpar</button>
       </div>
 
-      <div class="lancamento-grid">
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;">
 
         <!-- Formulário -->
         <div>
@@ -1812,13 +1845,6 @@
                   <input class="sd-search" placeholder="Nome de guerra ou número..." oninput="filterSd('sd-cadetes-lancamento', this.value)" />
                   <div class="sd-list" id="sd-cadetes-lancamento-list"></div>
                 </div>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
-                <label class="form-lbl" style="margin:0;white-space:nowrap;">Adicionar pelotão:</label>
-                <select id="sel-pel-lancamento" class="role-select" style="flex:1;min-width:140px;">
-                  <option value="">— Selecionar —</option>
-                </select>
-                <button class="btn btn-ghost btn-sm" onclick="adicionarPelotao()" style="white-space:nowrap;">+ Pelotão</button>
               </div>
               <div class="cadetes-lista" id="lanc-cadetes-lista">
                 <div class="cadetes-vazio">Nenhum cadete adicionado</div>
@@ -2049,7 +2075,7 @@
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Data</th><th>Data do Fato</th><th>Cadete Anotado</th>
+                <th>ID</th><th>Data</th><th>Cadete Anotado</th>
                 <th>Infração / Pontos</th><th>Justificativa (prévia)</th>
                 <th>Decidido em</th><th>Resultado</th><th>Observação</th>
               </tr>
@@ -2160,7 +2186,7 @@
         <button class="btn btn-sm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
           onclick="bulkElogio('aprovado')">✓ Aprovar Selecionados</button>
         <button class="btn btn-sm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-          onclick="bulkElogio('rejeitado')">✕ Descartar Selecionados</button>
+          onclick="bulkElogio('rejeitado')">✕ Rejeitar Selecionados</button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelectionElogios()">Limpar seleção</button>
       </div>
       <div class="card">
@@ -2173,14 +2199,13 @@
                 <th>Data Lançamento</th>
                 <th>Data Evento</th>
                 <th>Cadete Elogiado</th>
-                <th>Lançado por</th>
                 <th>Tipo de Elogio</th>
                 <th>Pontos</th>
                 <th>Motivo</th>
               </tr>
             </thead>
             <tbody id="tbody-elogios-pend">
-              <tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>
+              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
             </tbody>
           </table>
         </div>
@@ -2308,9 +2333,10 @@
           </select>
           <select class="role-select" id="el-filter-ano" onchange="loadElogiosLista(1)" style="width:auto;"></select>
           <select class="role-select" id="el-filter-status" onchange="loadElogiosLista(1)" style="width:auto;">
-            <option value="aprovado" selected>Aprovado</option>
-            <option value="rejeitado">Descartado</option>
-            <option value="pendente" id="opt-elogio-pendente" style="display:none;">Pendente</option>
+            <option value="">Todos os status</option>
+            <option value="pendente">Pendente</option>
+            <option value="aprovado">Aprovado</option>
+            <option value="rejeitado">Rejeitado</option>
           </select>
           <select class="role-select" id="el-filter-turma" onchange="loadElogiosLista(1)" style="width:auto;">
             <option value="">Todas as turmas</option>
@@ -2325,7 +2351,6 @@
                 <th>Data Evento</th>
                 <th>Cadete</th>
                 <th>Turma</th>
-                <th>Lançado por</th>
                 <th>Tipo de Elogio</th>
                 <th>Pontos</th>
                 <th>Motivo</th>
@@ -2334,7 +2359,7 @@
               </tr>
             </thead>
             <tbody id="tbody-elogios-lista">
-              <tr class="loading-row"><td colspan="11">CARREGANDO...</td></tr>
+              <tr class="loading-row"><td colspan="10">CARREGANDO...</td></tr>
             </tbody>
           </table>
         </div>
@@ -2388,10 +2413,7 @@
           <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
           <div class="page-title">Calendário de <span>Punições</span></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="btn btn-ghost btn-sm" id="btn-pun-export-lista" style="display:none;" onclick="exportarPunicoesLista()">↓ Lista do Dia</button>
-          <button class="btn btn-ghost btn-sm" id="btn-pun-export-csv" style="display:none;" onclick="exportarPunicoesCsv()">↓ Exportar CSV</button>
-        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-pun-export-csv" style="display:none;" onclick="exportarPunicoesCsv()">↓ Exportar CSV</button>
       </div>
 
       <!-- Filtros -->
@@ -2506,12 +2528,12 @@
           <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas registradas</label>
           <div id="pun-edit-datas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
         </div>
-        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Adicionar novas datas</label>
-        <div style="margin-bottom:10px;">
-          <div class="dp-wrap">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Adicionar nova data</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+          <div class="dp-wrap" style="flex:1;">
             <div class="dp-trigger" onclick="dpToggle('dp-pun-edit', event)">
               <span class="dp-icon">📅</span>
-              <span class="dp-label" id="dp-pun-edit-label">Selecionar datas</span>
+              <span class="dp-label" id="dp-pun-edit-label">Selecionar data</span>
             </div>
             <div class="dp-popup" id="dp-pun-edit">
               <div class="dp-header">
@@ -2522,13 +2544,13 @@
               <div class="dp-grid" id="dp-pun-edit-grid"></div>
             </div>
           </div>
-          <div class="dp-pills" id="dp-pun-edit-pills" style="margin-top:6px;"></div>
+          <button class="btn btn-primary btn-sm" onclick="punAddCumprimento()">+ Adicionar</button>
         </div>
-        <button class="btn btn-primary btn-full btn-sm" style="margin-bottom:14px;" onclick="punAddCumprimento()">+ Adicionar Datas Selecionadas</button>
         <div class="alert error" id="pun-edit-error"></div>
       </div>
     </div>
   </div>
+</div>
 
 
 <!-- ══ MODAL EDITAR INFRAÇÃO ══ -->
@@ -3045,10 +3067,6 @@
 
       $('screen-login').classList.add('hidden');
       $('app').classList.add('visible');
-      if (window.innerWidth <= 640) {
-        const fab = document.getElementById('fab-ordens');
-        if (fab) fab.style.display = 'flex';
-      }
 
     } catch {
       doLogout();
@@ -3207,7 +3225,6 @@
         window._allUsuarios = users;
         window._usersMap = {};
         users.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
-        populatePelLancamento();
       }
       if (resTrans.ok) {
         const trans = await resTrans.json();
@@ -3246,7 +3263,6 @@
       window._allUsuarios = await res.json();
       window._usersMap = {};
       window._allUsuarios.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
-      populatePelLancamento();
       renderUsuarios();
 
     } catch {
@@ -3536,9 +3552,6 @@
             const u2 = window._allUsuarios.find(u => u.id === wrap._value);
             const k2 = u2 ? `${u2.turma}${u2.pel ? '-'+u2.pel : ''}` : '';
             if (val && k2 !== val) clearSd(`sd-cadete-${sec}`, loadFns[i]);
-            else loadFns[i](1);
-          } else {
-            loadFns[i](1);
           }
         });
       }
@@ -3583,8 +3596,8 @@
 
   // Populate infração dropdowns for pendentes, justificativa and justificadas
   function populateInfracaoSds() {
-    const sections = ['pendentes', 'justificativa', 'justificadas', 'veredito'];
-    const loadFns  = [loadPendentes, loadJustificativa, loadJustificadas, loadVeredito];
+    const sections = ['pendentes', 'justificativa', 'justificadas'];
+    const loadFns  = [loadPendentes, loadJustificativa, loadJustificadas];
     sections.forEach((sec, i) => {
       const listEl = document.getElementById(`sd-infracao-${sec}-list`);
       const trigEl = document.getElementById(`sd-infracao-${sec}-trigger`);
@@ -3712,15 +3725,13 @@
     try {
       const cadeteIdP  = getSdValue('sd-cadete-pendentes');
       const diaCfoIdP   = getSdValue('sd-diacfo-pendentes');
-      const tpPRaw = document.getElementById('tp-filter-pendentes')?.value ?? '';
-      const [tpPTurma, tpPPel] = tpPRaw ? tpPRaw.split('-') : ['', ''];
-      const infracaoP = getSdValue('sd-infracao-pendentes');
-      const params_p = new URLSearchParams({ status: 'pendente', page, limit: LIMIT });
+      const params_p = new URLSearchParams({ page, limit: LIMIT });
       if (cadeteIdP)  params_p.set('cadete_id', cadeteIdP);
       if (diaCfoIdP)  params_p.set('cad_resp',  diaCfoIdP);
-      if (infracaoP)  params_p.set('infracao',  infracaoP);
-      if (tpPTurma)   params_p.set('turma',     tpPTurma);
-      if (tpPPel)     params_p.set('pel',        tpPPel);
+      // Use coordenador/anotacoes when any filter is active (supports more params)
+      const tpValP = document.getElementById('tp-filter-pendentes')?.value || '';
+      if (tpValP) { const tP = tpValP.split('-')[0]; if (tP) params_p.set('turma', tP); }
+      params_p.set('status', 'pendente');
       const urlP = `${API}/coordenador/anotacoes?${params_p}`;
       const res = await fetch(urlP, {
         headers: { 'Authorization': `Bearer ${token()}` },
@@ -3735,11 +3746,6 @@
       if (badge) {
         badge.textContent = json.total;
         badge.style.display = json.total > 0 ? 'inline-block' : 'none';
-      }
-      const badgeAux = document.getElementById('badge-pendentes-aux');
-      if (badgeAux) {
-        badgeAux.textContent = json.total;
-        badgeAux.style.display = json.total > 0 ? 'inline-block' : 'none';
       }
 
       document.getElementById('meta-pendentes').textContent =
@@ -3783,14 +3789,10 @@
 
     try {
       const cadeteIdJ = getSdValue('sd-cadete-justificativa');
-      const tpJRaw = document.getElementById('tp-filter-justificativa')?.value ?? '';
-      const [tpJTurma, tpJPel] = tpJRaw ? tpJRaw.split('-') : ['', ''];
-      const infracaoJ = getSdValue('sd-infracao-justificativa');
       const paramsJ = new URLSearchParams({ status: 'aprovada', justificativa: 'nao_respondida', page, limit: LIMIT });
-      if (cadeteIdJ)  paramsJ.set('cadete_id', cadeteIdJ);
-      if (infracaoJ)  paramsJ.set('infracao',  infracaoJ);
-      if (tpJTurma)   paramsJ.set('turma',     tpJTurma);
-      if (tpJPel)     paramsJ.set('pel',        tpJPel);
+      if (cadeteIdJ) paramsJ.set('cadete_id', cadeteIdJ);
+      const tpValJ = document.getElementById('tp-filter-justificativa')?.value || '';
+      if (tpValJ) { const tJ = tpValJ.split('-')[0]; if (tJ) paramsJ.set('turma', tJ); }
       const res = await fetch(`${API}/coordenador/anotacoes?${paramsJ}`,
         { headers: { 'Authorization': `Bearer ${token()}` } }
       );
@@ -3799,15 +3801,10 @@
 
       ANOT_STATE.justificativa = { page, total: json.total, data: json.data };
 
-      const badgeJustAux = document.getElementById('badge-justificativa-aux');
       const badge = document.getElementById('badge-justificativa');
       if (badge) {
         badge.textContent = json.total;
         badge.style.display = json.total > 0 ? 'inline-block' : 'none';
-      }
-      if (badgeJustAux) {
-        badgeJustAux.textContent = json.total;
-        badgeJustAux.style.display = json.total > 0 ? 'inline-block' : 'none';
       }
 
       document.getElementById('meta-justificativa').textContent =
@@ -3862,15 +3859,13 @@
       const respIdJd    = getSdValue('sd-resp-justificadas');
       const infracaoJd  = getSdValue('sd-infracao-justificadas');
       const dataFatoJd  = document.getElementById('filter-just-data-fato')?.value || '';
-      const tpJdRaw = document.getElementById('tp-filter-justificadas')?.value ?? '';
-      const [tpJdTurma, tpJdPel] = tpJdRaw ? tpJdRaw.split('-') : ['', ''];
       const paramsJd = new URLSearchParams({ justificativa: 'respondida', veredito_status: 'pendente', page, limit: LIMIT });
       if (cadeteIdJd) paramsJd.set('cadete_id', cadeteIdJd);
       if (respIdJd)   paramsJd.set('cad_resp',  respIdJd);
       if (infracaoJd) paramsJd.set('infracao',  infracaoJd);
       if (dataFatoJd) paramsJd.set('data_fato', dataFatoJd);
-      if (tpJdTurma)  paramsJd.set('turma',     tpJdTurma);
-      if (tpJdPel)    paramsJd.set('pel',        tpJdPel);
+      const tpValJd = document.getElementById('tp-filter-justificadas')?.value || '';
+      if (tpValJd) { const tJd = tpValJd.split('-')[0]; if (tJd) paramsJd.set('turma', tJd); }
       const res = await fetch(`${API}/coordenador/anotacoes?${paramsJd}`,
         { headers: { 'Authorization': `Bearer ${token()}` } }
       );
@@ -3894,7 +3889,7 @@
         const preview = a.justificativa ? a.justificativa.substring(0, 60) + (a.justificativa.length > 60 ? '…' : '') : '—';
         return `
         <tr id="jrow-${a.id}" style="cursor:pointer;" onclick="openAnotModal(${a.id}, 'justificadas')">
-          <td class="cb-wrap" onclick="event.stopPropagation()"><input type="checkbox" class="cb-row cb-just" data-id="${a.id}" onchange="updateBatchJustSel()" /></td>
+          <td class="cb-wrap" onclick="event.stopPropagation()"><input type="checkbox" class="cb-just" data-id="${a.id}" onchange="updateBatchJustSel()" /></td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
@@ -3949,8 +3944,7 @@
     document.getElementById('manot-infracao-editor').style.display = 'none';
     document.getElementById('veredito-resultado').value = '';
     document.getElementById('veredito-observacao').value = '';
-    _datasVeredito = [];
-    dpInit('dp-cumpr', { mode: 'multi', pillsId: 'dp-cumpr-pills', onChange: (dates) => { _datasVeredito = dates; } });
+    _datasVeredito = []; dpClear('dp-cumpr');
     document.getElementById('veredito-cumprimento-wrap').style.display = 'none';
     document.getElementById('modal-anot').classList.add('open');
 
@@ -3975,12 +3969,10 @@
       document.getElementById('manot-data-fato').textContent = fmtDateOnly(a.data_do_fato);
       document.getElementById('manot-descricao').textContent = a.descricao ?? '—';
 
-      // Botão de editar infração
-      const _roleEdit = window._currentUser?.role;
-      const _canEditInfracao = _roleEdit === 'coordenador'
-        ? (a.status !== 'descartada' && !a.veredito)
-        : (['xerife', 'dia_cfo'].includes(_roleEdit) && a.status === 'pendente');
-      document.getElementById('btn-modal-edit-infracao').style.display = _canEditInfracao ? 'inline-flex' : 'none';
+      // Botão de editar infração: pendente ou aprovada (não descartada)
+      if (a.status !== 'descartada' && !a.veredito) {
+        document.getElementById('btn-modal-edit-infracao').style.display = 'inline-flex';
+      }
 
       // Justificativa
       if (a.justificativa) {
@@ -4081,19 +4073,13 @@
     if (!tbody) return;
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
-    const resultado  = document.getElementById('filter-veredito-resultado')?.value ?? '';
-    const cadeteIdV  = getSdValue('sd-cadete-veredito');
-    const infracaoV  = getSdValue('sd-infracao-veredito');
-    const dataFatoV  = document.getElementById('filter-verd-data-fato')?.value || '';
-    const tpVRaw = document.getElementById('tp-filter-veredito')?.value ?? '';
-    const [tpVTurma, tpVPel] = tpVRaw ? tpVRaw.split('-') : ['', ''];
+    const resultado = document.getElementById('filter-veredito-resultado')?.value ?? '';
+    const cadeteIdV = getSdValue('sd-cadete-veredito');
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
-    if (resultado)  params.set('resultado',  resultado);
-    if (cadeteIdV)  params.set('cadete_id',  cadeteIdV);
-    if (infracaoV)  params.set('infracao',   infracaoV);
-    if (dataFatoV)  params.set('data_fato',  dataFatoV);
-    if (tpVTurma)   params.set('turma',      tpVTurma);
-    if (tpVPel)     params.set('pel',        tpVPel);
+    if (resultado) params.set('resultado', resultado);
+    if (cadeteIdV) params.set('cadete_id', cadeteIdV);
+    const tpValV = document.getElementById('tp-filter-veredito')?.value || '';
+    if (tpValV) { const tV = tpValV.split('-')[0]; if (tV) params.set('turma', tV); }
 
     try {
       const res = await fetch(`${API}/coordenador/anotacoes?${params}`, {
@@ -4142,7 +4128,7 @@
         const isPun = ['pernoite','recolher','licença_nao_concedida'].includes(a.veredito);
         return `
         <tr style="cursor:pointer;" id="vrow-${a.id}" onclick="openAnotModal(${a.id}, 'veredito')">
-          <td class="cb-wrap" onclick="event.stopPropagation()">${isPun ? `<input type="checkbox" class="cb-row cb-veredito" data-id="${a.id}" onchange="updateBatchVereditoSel()">` : ''}</td>
+          <td class="cb-wrap" onclick="event.stopPropagation()">${isPun ? `<input type="checkbox" class="cb-veredito" data-id="${a.id}" onchange="updateBatchVereditoSel()">` : ''}</td>
           <td class="td-mono">#${a.id}</td>
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
@@ -4223,11 +4209,7 @@
       _datasVeredito = [];
       dpClear('dp-cumpr');
     } else {
-      if (!_dpState['dp-cumpr']) {
-        dpInit('dp-cumpr', { mode: 'multi', pillsId: 'dp-cumpr-pills', onChange: (dates) => { _datasVeredito = dates; } });
-      } else {
-        dpRender('dp-cumpr');
-      }
+      dpRender('dp-cumpr');
     }
   }
 
@@ -4324,7 +4306,6 @@
           window._usersMap = {};
           users.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
           populateCadetesLancamento();
-          populatePelLancamento();
         }
       } catch {}
     } catch {}
@@ -4417,44 +4398,6 @@
     }
     _lancCadetes.push({ id, label });
     renderCadetesLancamento();
-  }
-
-  function adicionarPelotao() {
-    const val = document.getElementById('sel-pel-lancamento')?.value;
-    if (!val) { toast('Selecione um pelotão.', 'error'); return; }
-    const [turma, pel] = val.split('-');
-    const cadetes = (window._allUsuarios || []).filter(u =>
-      String(u.turma) === turma && u.pel === pel &&
-      ['cadete', 'dia_cfo', 'xerife'].includes(u.role)
-    );
-    if (!cadetes.length) { toast('Nenhum cadete encontrado neste pelotão.', 'error'); return; }
-    let adicionados = 0;
-    cadetes.forEach(u => {
-      if (!_lancCadetes.find(c => c.id === u.id)) {
-        _lancCadetes.push({ id: u.id, label: u.username });
-        adicionados++;
-      }
-    });
-    renderCadetesLancamento();
-    toast(adicionados > 0 ? `${adicionados} cadete(s) do pelotão adicionados.` : 'Todos os cadetes do pelotão já estão na lista.');
-  }
-
-  function populatePelLancamento() {
-    const sel = document.getElementById('sel-pel-lancamento');
-    if (!sel) return;
-    const grupos = {};
-    (window._allUsuarios || []).forEach(u => {
-      if (!['cadete', 'dia_cfo', 'xerife'].includes(u.role)) return;
-      if (u.turma == null || !u.pel) return;
-      const key = `${u.turma}-${u.pel}`;
-      grupos[key] = true;
-    });
-    const keys = Object.keys(grupos).sort();
-    sel.innerHTML = '<option value="">— Selecionar —</option>' +
-      keys.map(k => {
-        const [t, p] = k.split('-');
-        return `<option value="${k}">Turma ${t} · Pel ${p}</option>`;
-      }).join('');
   }
 
   function removerCadete(id) {
@@ -4598,18 +4541,10 @@
 
     if (err === 0) {
       showAlert('lanc-success', `${ok} anotação(ões) lançada(s) com sucesso.`, 'success');
-      // Reset completo — tudo foi lançado
-      setTimeout(() => resetLancamento(), 1200);
     } else if (ok === 0) {
       showAlert('lanc-error', `Todas as ${err} anotação(ões) falharam.`);
     } else {
-      // Sucesso parcial — remove só os cadetes que foram lançados com sucesso
-      _lancCadetes = _lancCadetes.filter(c => {
-        const el = document.getElementById(`lote-${c.id}`);
-        return el && el.className.includes('err');
-      });
-      renderCadetesLancamento();
-      showAlert('lanc-success', `${ok} lançada(s) com sucesso, ${err} com erro. Corrija e tente novamente.`, 'success');
+      showAlert('lanc-success', `${ok} lançada(s) com sucesso, ${err} com erro.`, 'success');
     }
   }
 
@@ -4658,12 +4593,12 @@
         const isPendente = a.status === 'pendente';
         const isMinhaAnot = a.cad_resp === currentUserId;
         const temDescricao = isMinhaAnot && !!a.descricao;
-        // RESTRITO só quando não é o responsável E a API não retornou a descrição
-        const descrPreview = a.descricao
-          ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
-          : (isMinhaAnot || a.descricao === '')
-            ? '<span style="font-size:10px;color:var(--muted);">sem descrição</span>'
-            : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
+        const hasDescricao = a.descricao != null;  // null = sem acesso, "" = acesso mas vazio
+        const descrPreview = hasDescricao
+          ? (a.descricao
+              ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
+              : '<span style="font-size:10px;color:var(--muted);">sem descrição</span>')
+          : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
         return `
         <tr style="cursor:pointer;${isMinhaAnot ? '' : 'opacity:.85;'}" onclick="openEditDescr(${a.id})">
           <td class="td-mono">#${a.id}</td>
@@ -5249,7 +5184,6 @@
         listEl.querySelectorAll('.sd-option').forEach(o => {
           o.style.display = !val || o.dataset.tp === val ? '' : 'none';
         });
-        loadAuxVereditos(1);
       });
     }
   }
@@ -5263,13 +5197,9 @@
 
     const resultado  = document.getElementById('aux-filter-resultado')?.value ?? '';
     const cadeteId   = getSdValue('sd-cadete-aux-veredito');
-    const tpAVRaw = document.getElementById('tp-filter-aux-veredito')?.value ?? '';
-    const [tpAVTurma, tpAVPel] = tpAVRaw ? tpAVRaw.split('-') : ['', ''];
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
-    if (resultado)  params.set('resultado', resultado);
-    if (cadeteId)   params.set('cadete_id', cadeteId);
-    if (tpAVTurma)  params.set('turma',     tpAVTurma);
-    if (tpAVPel)    params.set('pel',       tpAVPel);
+    if (resultado) params.set('resultado', resultado);
+    if (cadeteId)  params.set('cadete_id', cadeteId);
 
     const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
@@ -5491,15 +5421,12 @@
       document.querySelectorAll('.coord-nav').forEach(el => el.style.display = 'flex');
     }
     if (role === 'dia_cfo' || role === 'xerife') {
-      document.querySelectorAll('.nav-fo-plus').forEach(el => el.style.display = '');
       document.querySelectorAll('.diacfo-nav, .shared-nav').forEach(el => el.style.display = 'flex');
     }
     if (role === 'cadete') {
       document.querySelectorAll('.shared-nav').forEach(el => el.style.display = 'flex');
     }
     if (role === 'auxiliar') {
-      const optPend = document.getElementById('opt-elogio-pendente');
-      if (optPend) optPend.style.display = '';
       document.querySelectorAll('.aux-nav').forEach(el => el.style.display = 'flex');
     }
   }
@@ -5964,14 +5891,12 @@
 
       const badge = document.getElementById('badge-elogios-pend');
       if (badge) { badge.textContent = json.total; badge.style.display = json.total > 0 ? 'inline-block' : 'none'; }
-      const badgeAux = document.getElementById('badge-elogios-pend-aux');
-      if (badgeAux) { badgeAux.textContent = json.total; badgeAux.style.display = json.total > 0 ? 'inline-block' : 'none'; }
 
       document.getElementById('meta-elogios-pend').textContent =
         `${json.total} elogio(s) aguardando aprovação`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM ELOGIO PENDENTE</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM ELOGIO PENDENTE</td></tr>';
         document.getElementById('pag-info-elogios-pend').textContent = '0 registros';
         document.getElementById('pag-btns-elogios-pend').innerHTML = '';
         return;
@@ -5987,7 +5912,7 @@
           : '—';
         const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
         return `
-        <tr id="elogio-row-${e.id}" style="cursor:pointer;" onclick="openElogioModal(${e.id})">
+        <tr id="elogio-row-${e.id}">
           <td class="cb-wrap" onclick="event.stopPropagation()">
             <input type="checkbox" class="cb-row cb-elogio" value="${e.id}" onchange="onElogioCheckChange()" />
           </td>
@@ -5995,7 +5920,6 @@
           <td class="td-mono">${fmtDate(e.created_at)}</td>
           <td class="td-mono">${dataEvento}</td>
           <td class="td-mono">${resolveUser(e.cadete_elogiado_id)}</td>
-          <td class="td-mono" style="font-size:11px;color:var(--muted);">${e.responsavel_username || '—'}</td>
           <td style="font-size:12px;">${e.tipo_elogio}</td>
           <td class="td-mono" style="color:var(--success);font-weight:700;">+${e.pontos}</td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${motivoPreview}</td>
@@ -6050,24 +5974,15 @@
         }).join('');
     }
 
-    // Populate tipo dropdown — dia_cfo e xerife só veem FO+
+    // Populate tipo dropdown
     const tipList = document.getElementById('sd-tipo-elogio-list');
-    const _role = window._currentUser?.role;
-    const isRestrictedRole = _role === 'dia_cfo' || _role === 'xerife';
     if (tipList) {
-      const entries = Object.entries(window._elogioTypesMap)
-        .filter(([, t]) => !isRestrictedRole || t.description === 'FO+');
-      tipList.innerHTML = entries.map(([id, t]) => `
+      tipList.innerHTML = Object.entries(window._elogioTypesMap).map(([id, t]) => `
         <div class="sd-option" data-value="${id}" data-search="${t.description.toLowerCase()}"
           onclick="selectElogioTipo(${id}, '${t.description.replace(/'/g, String.fromCharCode(39))}', ${t.pontos})">
           <span class="sd-option-label" style="flex:1;">${t.description}</span>
           <span style="font-size:10px;color:var(--success);font-weight:700;">+${t.pontos}</span>
         </div>`).join('');
-      // Auto-selecionar FO+ se for role restrito e houver apenas um tipo
-      if (isRestrictedRole && entries.length === 1) {
-        const [id, t] = entries[0];
-        selectElogioTipo(Number(id), t.description, t.pontos);
-      }
     }
 
     // Set today as default date
@@ -6160,7 +6075,6 @@
   // ELOGIOS — LISTA (coord + aux)
   // ══════════════════════════════════════════════════
   const ELOGIOS_LISTA_STATE = { page: 1, total: 0, data: [] };
-  const MEUS_ELOGIOS_STATE  = { page: 1, total: 0, data: [] };
   let _elogiosListaInit = false;
 
   async function loadElogiosLista(page = 1) {
@@ -6202,11 +6116,10 @@
     const params = new URLSearchParams({ page, limit: LIMIT });
     if (mes)    params.set('mes',    mes);
     if (ano)    params.set('ano',    ano);
-    // Nunca mostrar pendentes na aba Ver Elogios — default aprovado
-    params.set('status', status || 'aprovado');
+    if (status) params.set('status', status);
     if (turma)  params.set('turma',  turma);
 
-    const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Descartado' };
+    const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
     const statusStyle = {
       pendente:   'color:var(--warn);border-color:rgba(224,123,42,.3);background:var(--warn-dim);',
       aprovado:   'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
@@ -6225,7 +6138,7 @@
         `${json.total} elogio(s) encontrado(s)`;
 
       if (!json.data.length) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM ELOGIO ENCONTRADO</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM ELOGIO ENCONTRADO</td></tr>';
         document.getElementById('pag-info-elogios-lista').textContent = '0 registros';
         document.getElementById('pag-btns-elogios-lista').innerHTML = '';
         return;
@@ -6236,13 +6149,12 @@
         const motivoPreview = e.descricao_motivo ? e.descricao_motivo.substring(0,50)+(e.descricao_motivo.length>50?'…':'') : '—';
         const turmaPel = e.turma != null ? `${e.turma}${e.pel ?? ''}` : '—';
         return `
-        <tr style="cursor:pointer;" onclick="openElogioModal(${e.id})">
+        <tr>
           <td class="td-mono">#${e.id}</td>
           <td class="td-mono">${fmtDate(e.created_at)}</td>
           <td class="td-mono">${dataEvento}</td>
           <td class="td-mono">${resolveUser(e.cadete_elogiado_id)}</td>
           <td class="td-mono">${turmaPel}</td>
-          <td class="td-mono" style="font-size:11px;color:var(--muted);">${e.responsavel_username || '—'}</td>
           <td style="font-size:12px;">${e.tipo_elogio}</td>
           <td class="td-mono" style="color:var(--success);font-weight:700;">+${e.pontos}</td>
           <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${motivoPreview}</td>
@@ -6321,15 +6233,13 @@
         return;
       }
 
-      Object.assign(MEUS_ELOGIOS_STATE, { page, total: json.total, data: json.data });
-
       tbody.innerHTML = json.data.map(e => {
         const dataEvento = e.data_evento
           ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
         const motivoPreview = e.descricao_motivo
           ? e.descricao_motivo.substring(0, 60) + (e.descricao_motivo.length > 60 ? '\u2026' : '') : '—';
         return `
-        <tr style="cursor:pointer;" onclick="openElogioModal(${e.id})">
+        <tr>
           <td class="td-mono">#${e.id}</td>
           <td class="td-mono">${dataEvento}</td>
           <td class="td-mono">${fmtDate(e.approved_at)}</td>
@@ -6348,129 +6258,7 @@
   }
 
 
-  // ── ELOGIOS — Context Menu ──────────────────────────────────────
-
-  let _elogioModalData = null;
-
-  async function openElogioModal(id) {
-    id = Number(id);
-    document.getElementById('modal-elogio').classList.add('open');
-    document.getElementById('elogio-modal-body').innerHTML =
-      '<div style="text-align:center;padding:24px;font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Carregando...</div>';
-    document.getElementById('elogio-modal-actions').innerHTML = '';
-    document.getElementById('elogio-modal-error').className = 'alert error';
-
-    // Buscar em todos os caches disponíveis
-    const cached = [
-      ...(ELOGIO_STATE?.data        || []),
-      ...(ELOGIOS_LISTA_STATE?.data || []),
-      ...(MEUS_ELOGIOS_STATE?.data  || []),
-    ].find(e => Number(e.id) === id);
-
-    if (cached) {
-      _elogioModalData = cached;
-      renderElogioModal(cached);
-      return;
-    }
-
-    // Fallback: buscar da API
-    const role = window._currentUser?.role;
-    try {
-      const endpoint = (role === 'coordenador' || role === 'auxiliar')
-        ? `${API}/coordenador/elogios?page=1&limit=9999`
-        : `${API}/cadete/elogios?page=1&limit=9999`;
-      const res = await fetch(endpoint, { headers: { 'Authorization': `Bearer ${token()}` } });
-      if (res.ok) {
-        const json = await res.json();
-        const found = (json.data || []).find(e => Number(e.id) === id);
-        if (found) { _elogioModalData = found; renderElogioModal(found); return; }
-      }
-    } catch {}
-
-    document.getElementById('elogio-modal-body').innerHTML =
-      '<div style="text-align:center;padding:24px;color:var(--danger);font-family:IBM Plex Mono,monospace;font-size:11px;">Elogio não encontrado.</div>';
-  }
-
-  function renderElogioModal(e) {
-    const role = window._currentUser?.role;
-    const isCoordAux = role === 'coordenador';
-    const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Descartado' };
-    const statusStyle = {
-      pendente:  'color:var(--warn);',
-      aprovado:  'color:var(--success);',
-      rejeitado: 'color:var(--danger);',
-    };
-    const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
-    const dataCriado = e.created_at  ? fmtDate(e.created_at) : '—';
-    const dataAprov  = e.approved_at ? fmtDate(e.approved_at) : '—';
-
-    const row = (label, val) => `
-      <div style="display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--border);padding-bottom:10px;">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);width:110px;flex-shrink:0;">${label}</span>
-        <span style="font-size:13px;color:var(--text-dim);">${val}</span>
-      </div>`;
-
-    document.getElementById('elogio-modal-body').innerHTML = `
-      ${row('ID', `<span style="font-family:'IBM Plex Mono',monospace;">#${e.id}</span>`)}
-      ${row('Cadete', `<strong>${resolveUser(e.cadete_elogiado_id)}</strong>`)}
-      ${e.responsavel_username ? row('Lançado por', e.responsavel_username) : ''}
-      ${row('Tipo', `<span style="color:var(--success);font-weight:700;">${e.tipo_elogio} &nbsp;+${e.pontos} pts</span>`)}
-      ${row('Data do Evento', dataEvento)}
-      ${row('Lançado em', dataCriado)}
-      ${row('Status', `<span style="${statusStyle[e.status]||''};font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;">${statusLabel[e.status]||e.status}</span>`)}
-      ${e.approved_at ? row('Decidido em', dataAprov) : ''}
-      ${e.descricao_motivo ? `
-      <div style="border-bottom:1px solid var(--border);padding-bottom:10px;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Motivo</div>
-        <div style="font-size:13px;color:var(--text-dim);line-height:1.7;white-space:pre-wrap;">${e.descricao_motivo}</div>
-      </div>` : ''}
-    `;
-
-    // Ações por role e status
-    const acts = document.getElementById('elogio-modal-actions');
-    acts.innerHTML = '';
-
-    if (isCoordAux && e.status === 'pendente') {
-      acts.innerHTML = `
-        <button class="btn btn-primary" style="flex:1;" onclick="elogioAcao(${e.id},'aprovado')">✓ Aprovar</button>
-        <button class="btn btn-danger" style="flex:1;" onclick="elogioAcao(${e.id},'rejeitado')">✕ Descartar</button>`;
-    } else if (isCoordAux && e.status !== 'pendente') {
-      acts.innerHTML = `
-        <button class="btn btn-ghost btn-sm" onclick="elogioAcao(${e.id},'pendente')">↺ Devolver para Pendente</button>`;
-    }
-  }
-
-  async function elogioAcao(id, novoStatus) {
-    const errEl = document.getElementById('elogio-modal-error');
-    errEl.className = 'alert error';
-    try {
-      const res = await fetch(`${API}/elogios/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-        body: JSON.stringify({ status: novoStatus }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(()=>({}));
-        errEl.textContent = d.detail || 'Erro ao alterar status.';
-        errEl.className = 'alert error show'; return;
-      }
-      closeElogioModal();
-      toast(`Elogio ${novoStatus === 'aprovado' ? 'aprovado' : novoStatus === 'rejeitado' ? 'descartado' : 'devolvido'}.`);
-      // Recarregar a seção ativa
-      const active = document.querySelector('.section.active')?.id || '';
-      if (active.includes('elogios-pendentes')) loadElogiosPendentes(ELOGIO_STATE.page);
-      else if (active.includes('elogios-lista'))  loadElogiosLista(ELOGIOS_LISTA_STATE.page);
-    } catch {
-      errEl.textContent = 'Erro de conexão.'; errEl.className = 'alert error show';
-    }
-  }
-
-  function closeElogioModal() {
-    document.getElementById('modal-elogio').classList.remove('open');
-    _elogioModalData = null;
-  }
-
-  // ── ELOGIOS — seleção em lote ──────────────────────────────────────
+  // ── ELOGIOS — seleção em lote ──────────────────────────────────
   function getCheckedElogios() {
     return [...document.querySelectorAll('.cb-elogio:checked')].map(cb => Number(cb.value));
   }
@@ -6634,8 +6422,6 @@
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">Selecione uma data no calendário ou use os filtros acima</td></tr>`;
       titulo.textContent = 'Selecione uma data no calendário';
       btnCsv.style.display = 'none';
-      const btnListaReset = document.getElementById('btn-pun-export-lista');
-      if (btnListaReset) btnListaReset.style.display = 'none';
       return;
     }
 
@@ -6656,16 +6442,12 @@
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA PUNIÇÃO NESTA DATA</td></tr>`;
         titulo.textContent = `${fmtDateOnly(data)} — nenhuma punição`;
         btnCsv.style.display = 'none';
-        const btnListaHide = document.getElementById('btn-pun-export-lista');
-        if (btnListaHide) btnListaHide.style.display = 'none';
         return;
       }
 
       const tipoLabel = tipo ? ` · ${_punResultadoLabel[tipo] || tipo}` : '';
       titulo.textContent = `${fmtDateOnly(data)}${tipoLabel} — ${json.length} cadete(s)`;
       btnCsv.style.display = 'inline-flex';
-      const btnLista = document.getElementById('btn-pun-export-lista');
-      if (btnLista) btnLista.style.display = 'inline-flex';
 
       tbody.innerHTML = json.map(r => {
         const cor = _punResultadoColor[r.resultado] || 'var(--text)';
@@ -6687,124 +6469,6 @@
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>`;
       btnCsv.style.display = 'none';
     }
-  }
-
-  async function exportarPunicoesLista() {
-    const data  = document.getElementById('pun-filtro-data').value;
-    const tipo  = document.getElementById('pun-filtro-tipo').value;
-    const lista = window._punListaData || [];
-    if (!lista.length) return;
-
-    const dataFmt = data ? data.split('-').reverse().join('/') : '—';
-
-    // Converter imagens para base64 para funcionar no blob
-    const toBase64 = async (src) => {
-      try {
-        const res = await fetch(src);
-        const blob = await res.blob();
-        return await new Promise(res => {
-          const r = new FileReader();
-          r.onload = () => res(r.result);
-          r.readAsDataURL(blob);
-        });
-      } catch { return ''; }
-    };
-    const [abmBase64, cbmpaBase64] = await Promise.all([toBase64('ABM.png'), toBase64('CBMPA.png')]);
-
-    // Agrupar por tipo de punição
-    const grupos = {};
-    lista.forEach(r => {
-      const g = _punResultadoLabel[r.resultado] || r.resultado;
-      if (!grupos[g]) grupos[g] = [];
-      grupos[g].push(r);
-    });
-
-    const gruposHtml = Object.entries(grupos).map(([grp, cadetes]) => `
-      <div style="margin-bottom:32px;page-break-inside:avoid;">
-        <h2 style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid #111;">
-          Lista de ${grp} — ${dataFmt} &nbsp;·&nbsp; ${cadetes.length} cadete(s)
-        </h2>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <thead>
-            <tr style="background:#e8e8e8;">
-              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:36px;">Nº</th>
-              <th style="text-align:left;padding:6px 8px;border:1px solid #bbb;">Nome de Guerra</th>
-              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:50px;">Pel</th>
-              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:65px;">Turma</th>
-              <th style="text-align:center;padding:6px 8px;border:1px solid #bbb;width:180px;">Assinatura do Cadete</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${cadetes.map((r, i) => `
-              <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
-                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.numero_geral ?? '—'}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;font-weight:600;">${r.username}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.pel ?? '—'}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.turma ?? '—'}</td>
-                <td style="padding:0;border:1px solid #bbb;height:40px;"></td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-        <div style="margin-top:36px;display:flex;justify-content:flex-end;">
-          <div style="text-align:center;width:280px;">
-            <div style="border-top:1px solid #111;padding-top:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;">Assinatura do Coordenador</div>
-          </div>
-        </div>
-      </div>`).join('');
-
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Lista de Punições — ${dataFmt}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; padding: 28px 36px; color: #111; font-size: 12px; }
-    @media print {
-      body { padding: 16px 20px; }
-      .no-print { display: none !important; }
-      @page { margin: 15mm; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Cabeçalho institucional -->
-  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;gap:12px;">
-    <div style="flex-shrink:0;margin-left:8px;">
-      ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:90px;width:auto;display:block;" />` : ''}
-    </div>
-    <div style="flex:1;text-align:center;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:2.0;">
-        Corpo de Bombeiros Militar do Pará E<br>
-        Coordenadoria Estadual de Proteção e Defesa Civil<br>
-        Departamento-Geral de Cultura, Educação e Pesquisa<br>
-        Academia Bombeiro Militar
-      </div>
-    </div>
-    <div style="flex-shrink:0;margin-right:8px;">
-      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:90px;width:auto;display:block;" />` : ''}
-    </div>
-  </div>
-
-  <!-- Corpo do documento -->
-  ${gruposHtml}
-
-  <div style="margin-top:32px;border-top:1px solid #ccc;padding-top:10px;font-size:9px;color:#aaa;">
-    Gerado em ${new Date().toLocaleString('pt-BR')} · Sistema de Controle do Corpo de Alunos
-  </div>
-
-  <div class="no-print" style="margin-top:28px;text-align:center;">
-    <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
-  </div>
-
-</html>`;
-
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const win  = window.open(url, '_blank');
-    if (win) win.focus();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   function exportarPunicoesCsv() {
@@ -6844,7 +6508,7 @@
     _punEditAnotId = anotacaoId;
     document.getElementById('pun-edit-cadete').textContent = `CAD BM ${username}`;
     document.getElementById('pun-edit-error').className = 'alert error';
-    dpInit('dp-pun-edit', { mode: 'multi', pillsId: 'dp-pun-edit-pills' });
+    dpInit('dp-pun-edit', { mode: 'single', labelId: 'dp-pun-edit-label' });
     document.getElementById('modal-pun-edit').classList.add('open');
     loadPunEditDatas(anotacaoId);
   }
@@ -6872,27 +6536,24 @@
   }
 
   async function punAddCumprimento() {
-    const datas = dpGetSelected("dp-pun-edit");
-    if (!datas.length || !_punEditAnotId) return;
+    const novaData = dpGetSelected("dp-pun-edit")[0];
+    if (!novaData || !_punEditAnotId) return;
     document.getElementById('pun-edit-error').className = 'alert error';
     try {
-      const results = await Promise.all(datas.map(data =>
-        fetch(`${API}/vereditos/${_punEditAnotId}/cumprimentos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-          body: JSON.stringify({ data }),
-        })
-      ));
-      const failed = results.filter(r => !r.ok);
-      if (failed.length) {
-        const err = await failed[0].json().catch(() => ({}));
-        document.getElementById('pun-edit-error').textContent = err.detail || 'Erro ao adicionar.';
+      const res = await fetch(`${API}/vereditos/${_punEditAnotId}/cumprimentos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ data: novaData }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById('pun-edit-error').textContent = data.detail || 'Erro ao adicionar.';
         document.getElementById('pun-edit-error').className = 'alert error show'; return;
       }
-      dpInit('dp-pun-edit', { mode: 'multi', pillsId: 'dp-pun-edit-pills' });
+    dpClear("dp-pun-edit");
       await loadPunEditDatas(_punEditAnotId);
       await loadPunCalendario(); loadPunicoesList();
-      toast(datas.length > 1 ? `${datas.length} datas adicionadas.` : 'Data adicionada.');
+      toast('Data adicionada.');
     } catch {
       document.getElementById('pun-edit-error').textContent = 'Erro de conexão.';
       document.getElementById('pun-edit-error').className = 'alert error show';
@@ -7161,10 +6822,9 @@
   function updateBatchJustSel() {
     const checked = [...document.querySelectorAll('.cb-just:checked')];
     const n = checked.length;
-    const selCount = document.getElementById('batch-sel-count');
-    if (selCount) selCount.textContent = n;
-    const btnVeredito = document.getElementById('btn-batch-veredito');
-    if (btnVeredito) btnVeredito.style.display = n >= 1 ? 'inline-flex' : 'none';
+    document.getElementById('batch-sel-count').textContent = n;
+    document.getElementById('batch-pun-count').textContent = n;
+    document.getElementById('btn-batch-veredito').style.display = n >= 1 ? 'inline-flex' : 'none';
   }
 
   function getSelectedJustIds() {
@@ -7305,87 +6965,6 @@
     window._batchPunIds = null;
   }
 
-  function switchBatchPunTab(tab) {
-    const isAdd = tab === 'add';
-    document.getElementById('tab-pun-add-content').style.display = isAdd ? '' : 'none';
-    document.getElementById('tab-pun-rem-content').style.display = isAdd ? 'none' : '';
-    document.getElementById('tab-pun-add').style.borderBottomColor = isAdd ? 'var(--accent)' : 'transparent';
-    document.getElementById('tab-pun-add').style.color = isAdd ? 'var(--accent)' : 'var(--muted)';
-    document.getElementById('tab-pun-rem').style.borderBottomColor = isAdd ? 'transparent' : 'var(--accent)';
-    document.getElementById('tab-pun-rem').style.color = isAdd ? 'var(--muted)' : 'var(--accent)';
-    document.getElementById('batch-pun-error').className = 'alert error';
-    document.getElementById('batch-pun-success').className = 'alert success';
-    if (!isAdd) loadBatchPunRemList();
-  }
-
-  async function loadBatchPunRemList() {
-    const ids = window._batchPunIds || getSelectedJustIds();
-    const listEl = document.getElementById('batch-pun-rem-list');
-    listEl.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Carregando...</div>';
-    try {
-      const results = await Promise.all(ids.map(async anotId => {
-        const res = await fetch(`${API}/vereditos/${anotId}/cumprimentos`, {
-          headers: { 'Authorization': `Bearer ${token()}` }
-        });
-        const list = res.ok ? await res.json() : [];
-        return { anotId, list };
-      }));
-      const allDatas = results.flatMap(({ anotId, list }) =>
-        list.map(c => ({ ...c, anotId }))
-      );
-      if (!allDatas.length) {
-        listEl.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--muted);">Nenhuma data registrada nos selecionados.</div>';
-        return;
-      }
-      // Agrupar por anotId para exibir com contexto
-      const byAnot = {};
-      allDatas.forEach(c => {
-        if (!byAnot[c.anotId]) byAnot[c.anotId] = [];
-        byAnot[c.anotId].push(c);
-      });
-      listEl.innerHTML = Object.entries(byAnot).map(([anotId, cumprs]) => `
-        <div style="margin-bottom:8px;">
-          <div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--muted);margin-bottom:4px;">Anotação #${anotId}</div>
-          ${cumprs.map(c => `
-            <label style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);padding:6px 10px;border-radius:4px;cursor:pointer;margin-bottom:4px;">
-              <input type="checkbox" class="cb-row cb-pun-rem" data-cumpr-id="${c.id}" style="flex-shrink:0;" />
-              <span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:var(--warn);">${fmtDateOnly(c.data)}</span>
-              ${c.tipo ? `<span style="font-size:10px;color:var(--muted);">${c.tipo}</span>` : ''}
-            </label>`).join('')}
-        </div>`).join('');
-    } catch {
-      listEl.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--danger);">Erro ao carregar datas.</div>';
-    }
-  }
-
-  async function submitBatchPunRemove() {
-    const checked = [...document.querySelectorAll('.cb-pun-rem:checked')];
-    if (!checked.length) { showAlert('batch-pun-error', 'Selecione ao menos uma data para remover.'); return; }
-    const btn = document.getElementById('btn-batch-pun-rem-submit');
-    btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...';
-    document.getElementById('batch-pun-error').className = 'alert error';
-    let ok = 0, err = 0;
-    for (const cb of checked) {
-      try {
-        const res = await fetch(`${API}/vereditos/cumprimentos/${cb.dataset.cumprId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token()}` }
-        });
-        if (res.ok) ok++; else err++;
-      } catch { err++; }
-    }
-    btn.classList.remove('btn-loading'); btn.textContent = 'REMOVER SELECIONADAS';
-    if (err === 0) {
-      showAlert('batch-pun-success', `${ok} data(s) removida(s) com sucesso.`, 'success');
-      loadPunCalendario(); loadPunicoesList();
-      if (window._batchPunIds) loadVeredito(); else loadJustificadas();
-      setTimeout(() => loadBatchPunRemList(), 600);
-    } else {
-      showAlert('batch-pun-error', `${ok} removida(s), ${err} com erro.`);
-      setTimeout(() => loadBatchPunRemList(), 600);
-    }
-  }
-
   async function submitBatchPun() {
     const ids   = window._batchPunIds || getSelectedJustIds();
     const datas = dpGetSelected('dp-batch-pun');
@@ -7410,7 +6989,7 @@
       }
     }
 
-    btn.classList.remove('btn-loading'); btn.textContent = 'ADICIONAR DATAS';
+    btn.classList.remove('btn-loading'); btn.textContent = 'REAGENDAR';
     if (err === 0) {
       showAlert('batch-pun-success', `${ok} data(s) adicionada(s) com sucesso.`, 'success');
       setTimeout(() => {
@@ -7599,66 +7178,32 @@
 
   <!-- Modal: Reagendar Punições em Lote -->
   <div class="modal-overlay" id="modal-batch-pun" onclick="if(event.target===this)closeBatchPun()">
-    <div class="modal-box" style="max-width:440px;">
+    <div class="modal-box" style="max-width:420px;">
       <div class="modal-header">
-        <div class="modal-title">Punições em Lote</div>
+        <div class="modal-title">Reagendar Punições em Lote</div>
         <button class="modal-close" onclick="closeBatchPun()">✕</button>
       </div>
       <div style="padding:20px;">
-        <div id="batch-pun-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:80px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
-        <!-- Abas -->
-        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);">
-          <button id="tab-pun-add" onclick="switchBatchPunTab('add')" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;">+ ADICIONAR</button>
-          <button id="tab-pun-rem" onclick="switchBatchPunTab('rem')" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;">✕ REMOVER</button>
-        </div>
-        <!-- Aba Adicionar -->
-        <div id="tab-pun-add-content">
-          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Nova(s) Data(s) de Cumprimento *</label>
-          <div class="dp-wrap">
-            <div class="dp-trigger" onclick="dpToggle('dp-batch-pun', event)">
-              <span class="dp-icon">📅</span>
-              <span class="dp-label">Selecionar datas</span>
-            </div>
-            <div class="dp-popup" id="dp-batch-pun">
-              <div class="dp-header">
-                <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',-1,event)\">‹</button>
-                <div class="dp-month" id="dp-batch-pun-month"></div>
-                <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',1,event)\">›</button>
-              </div>
-              <div class="dp-grid" id="dp-batch-pun-grid"></div>
-            </div>
+        <div id="batch-pun-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:100px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Nova(s) Data(s) de Cumprimento *</label>
+        <div class="dp-wrap">
+          <div class="dp-trigger" onclick="dpToggle('dp-batch-pun', event)">
+            <span class="dp-icon">📅</span>
+            <span class="dp-label">Selecionar datas</span>
           </div>
-          <div class="dp-pills" id="dp-batch-pun-pills"></div>
-          <button class="btn btn-primary btn-full" id="btn-batch-pun-submit" style="margin-top:14px;" onclick="submitBatchPun()">ADICIONAR DATAS</button>
-        </div>
-        <!-- Aba Remover -->
-        <div id="tab-pun-rem-content" style="display:none;">
-          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">Datas existentes — marque para remover</label>
-          <div id="batch-pun-rem-list" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;margin-bottom:12px;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
+          <div class="dp-popup" id="dp-batch-pun">
+            <div class="dp-header">
+              <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',-1,event)\">‹</button>
+              <div class="dp-month" id="dp-batch-pun-month"></div>
+              <button class="dp-nav" onclick=\"dpNav('dp-batch-pun',1,event)\">›</button>
+            </div>
+            <div class="dp-grid" id="dp-batch-pun-grid"></div>
           </div>
-          <button class="btn btn-danger btn-full" id="btn-batch-pun-rem-submit" style="margin-top:4px;" onclick="submitBatchPunRemove()">REMOVER SELECIONADAS</button>
         </div>
-        <div class="alert error"   id="batch-pun-error"   style="margin-top:10px;margin-bottom:6px;"></div>
-        <div class="alert success" id="batch-pun-success" style="margin-bottom:6px;"></div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Modal: Detalhes do Elogio -->
-  <div class="modal-overlay" id="modal-elogio" onclick="if(event.target===this)closeElogioModal()">
-    <div class="modal-box" style="max-width:480px;">
-      <div class="modal-header">
-        <div class="modal-title">Detalhes do Elogio</div>
-        <button class="modal-close" onclick="closeElogioModal()">✕</button>
-      </div>
-      <div style="padding:20px;">
-        <div id="elogio-modal-body" style="display:flex;flex-direction:column;gap:14px;">
-          <div style="text-align:center;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
-        </div>
-        <div class="alert error" id="elogio-modal-error" style="margin-top:12px;"></div>
-        <div id="elogio-modal-actions" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
+        <div class="dp-pills" id="dp-batch-pun-pills"></div>
+        <div class="alert error"   id="batch-pun-error"   style="margin-top:12px;margin-bottom:10px;"></div>
+        <div class="alert success" id="batch-pun-success" style="margin-bottom:10px;"></div>
+        <button class="btn btn-primary btn-full" id="btn-batch-pun-submit" style="margin-top:12px;" onclick="submitBatchPun()">REAGENDAR</button>
       </div>
     </div>
   </div>
