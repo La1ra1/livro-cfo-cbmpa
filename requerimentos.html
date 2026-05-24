@@ -1452,28 +1452,30 @@
                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   async function loadCalendario() {
-    // Busca todas as dispensas deferidas do mês atual (sem paginação agressiva)
+    // Busca categoria dispensa primeiro para obter o id
     try {
-      const params = new URLSearchParams({
-        status: 'deferido',
-        categoria_id: '', // será filtrado no frontend pela categoria dispensa
-        mes: _calMonth + 1,
-        ano: _calYear,
-        limit: 200,
-        page: 1,
-      });
+      let dispensaId = null;
+      if (_categorias.length) {
+        const cat = _categorias.find(c => c.nome === 'dispensa');
+        if (cat) dispensaId = cat.id;
+      }
+
+      // Busca sem filtro de mês para pegar dispensas que atravessam meses
+      const params = new URLSearchParams({ status: 'deferido', limit: 500, page: 1 });
+      if (dispensaId) params.set('categoria_id', dispensaId);
+
       const res = await fetch(`${API}/coordenador/requerimentos?${params}`, {
         headers: { Authorization: `Bearer ${token()}` },
       });
       if (!res.ok) return;
       const json = await res.json();
-      // Filtra só dispensas com datas de afastamento
+
+      // Filtra só dispensas com datas de afastamento válidas
       _calData = (json.data || []).filter(r =>
-        r.categoria === 'dispensa' &&
         r.data_afastamento_inicio &&
         r.data_afastamento_fim
       );
-    } catch { _calData = []; }
+    } catch (e) { console.error('loadCalendario:', e); _calData = []; }
   }
 
   async function renderCalendario() {
@@ -1507,23 +1509,33 @@
     const today = new Date();
 
     // Build a map: "YYYY-MM-DD" -> [req, ...]
+    // Uses pure date arithmetic to avoid timezone shifts
     _calAusMap = {};
     _calData.forEach(r => {
-      let cur = new Date(r.data_afastamento_inicio + 'T00:00:00');
-      const end = new Date(r.data_afastamento_fim + 'T00:00:00');
-      while (cur <= end) {
-        const key = cur.toISOString().slice(0, 10);
+      const [iy, im, id] = r.data_afastamento_inicio.slice(0,10).split('-').map(Number);
+      const [ey, em, ed] = r.data_afastamento_fim.slice(0,10).split('-').map(Number);
+      let cy = iy, cm = im, cd = id;
+      while (cy < ey || (cy === ey && cm < em) || (cy === ey && cm === em && cd <= ed)) {
+        const key = `${cy}-${String(cm).padStart(2,'0')}-${String(cd).padStart(2,'0')}`;
         if (!_calAusMap[key]) _calAusMap[key] = [];
         _calAusMap[key].push(r);
-        cur.setDate(cur.getDate() + 1);
+        // advance one day
+        cd++;
+        const daysInCm = new Date(cy, cm, 0).getDate();
+        if (cd > daysInCm) { cd = 1; cm++; }
+        if (cm > 12)       { cm = 1; cy++; }
       }
     });
-    const ausMap = _calAusMap; // alias for cell rendering
-    // Convert to simple display objects for makeCell pills
+    // Filter to current month for display
     const ausDisplayMap = {};
-    Object.entries(ausMap).forEach(([k, reqs]) => {
-      ausDisplayMap[k] = reqs.map(r => ({ num: r.cadete_numero_geral, name: r.cadete_username }));
-    });
+    Object.entries(_calAusMap)
+      .filter(([k]) => {
+        const [ky, km] = k.split('-').map(Number);
+        return ky === _calYear && km === _calMonth + 1;
+      })
+      .forEach(([k, reqs]) => {
+        ausDisplayMap[k] = reqs.map(r => ({ num: r.cadete_numero_geral, name: r.cadete_username }));
+      });
 
     // Prev month padding
     for (let i = firstDay - 1; i >= 0; i--) {
