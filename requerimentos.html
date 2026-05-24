@@ -1197,7 +1197,15 @@
       }
 
       // Formulário de despacho (só coordenador, só pendente)
-      if (_isCoord && r.status === 'pendente') {
+      if (_isCoord && (r.status === 'pendente' || r.status === 'ciente')) {
+        // Para ciente, só permite deferido/indeferido (não ciente novamente)
+        if (r.status === 'ciente') {
+          const optCiente = document.querySelector('#desp-status option[value="ciente"]');
+          if (optCiente) optCiente.style.display = 'none';
+        } else {
+          const optCiente = document.querySelector('#desp-status option[value="ciente"]');
+          if (optCiente) optCiente.style.display = '';
+        }
         document.getElementById('mdet-despacho-form').style.display = 'block';
       }
 
