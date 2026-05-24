@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="ABM.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Requerimentos — Academia Bombeiro Militar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:          #0a0c0f;
+      --surface:     #111318;
+      --surface2:    #181c22;
+      --border:      #1e2229;
+      --border2:     #2a3040;
+      --accent:      #c8a84b;
+      --accent2:     #8b6f2e;
+      --accent-dim:  rgba(200,168,75,.08);
+      --danger:      #c0392b;
+      --danger-dim:  rgba(192,57,43,.12);
+      --text:        #e8e4d9;
+      --text-dim:    #c8cdd8;
+      --muted:       #7a8394;
+      --success:     #2ecc71;
+      --success-dim: rgba(46,204,113,.1);
+      --blue:        #3498db;
+      --blue-dim:    rgba(52,152,219,.1);
+      --warn:        #e07b2a;
+      --warn-dim:    rgba(224,123,42,.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 48px;
+      background: rgba(17,19,24,.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--accent2);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 200;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .topbar-user { display: flex; align-items: center; gap: 12px; }
+    .topbar-nav-link {
+      display: flex; align-items: center;
+      padding: 0 16px; height: 100%;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      text-decoration: none; white-space: nowrap; transition: color .2s;
+    }
+    .topbar-name { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: 1px; }
+    .topbar-role { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .topbar-avatar {
+      width: 32px; height: 32px;
+      background: var(--accent-dim); border: 1px solid var(--accent2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent);
+    }
+
+    #app { display: none; }
+    #app.visible { display: block; }
+
+    /* ── LAYOUT ── */
+    .page-wrap {
+      position: relative; z-index: 1;
+      padding: 72px 28px 40px;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 28px; gap: 16px; flex-wrap: wrap;
+    }
+    .page-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 26px; font-weight: 700;
+      letter-spacing: 4px; color: var(--text);
+      text-transform: uppercase; line-height: 1;
+    }
+    .page-title span { color: var(--accent); }
+    .page-breadcrumb {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+    }
+    .page-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-top: 4px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      margin-bottom: 24px; gap: 0;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      color: var(--muted); cursor: pointer; transition: all .15s;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── FILTRO ── */
+    .filter-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 12px 16px; margin-bottom: 20px;
+    }
+    .filter-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .filter-bar select, .filter-bar input {
+      background: var(--bg); border: 1px solid var(--border2);
+      color: var(--text); padding: 6px 10px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      outline: none; cursor: pointer;
+    }
+    .filter-bar select option { background: var(--surface2); }
+
+    /* ── TABELA ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--accent2); }
+    th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); padding: 8px 12px; text-align: left;
+      white-space: nowrap;
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    tbody tr { transition: background .1s; cursor: pointer; }
+    tbody tr:hover { background: var(--surface); }
+    .td-mono { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); }
+
+    /* ── PILLS ── */
+    .pill {
+      display: inline-block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 3px 8px; white-space: nowrap;
+    }
+    .pill-pendente  { background: var(--warn-dim);    border: 1px solid rgba(224,123,42,.3); color: var(--warn); }
+    .pill-deferido  { background: var(--success-dim); border: 1px solid rgba(46,204,113,.3); color: var(--success); }
+    .pill-indeferido{ background: var(--danger-dim);  border: 1px solid rgba(192,57,43,.3);  color: var(--danger); }
+    .pill-ciente    { background: var(--blue-dim);    border: 1px solid rgba(52,152,219,.3); color: var(--blue); }
+
+    /* ── CATEGORIA BADGE ── */
+    .cat-badge {
+      display: inline-block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+      padding: 2px 7px;
+      background: var(--accent-dim); border: 1px solid rgba(200,168,75,.2);
+      color: var(--accent); white-space: nowrap;
+    }
+
+    /* ── PAGINAÇÃO ── */
+    .pag-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 16px; flex-wrap: wrap; gap: 8px;
+    }
+    .pag-info { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+    .pag-btns { display: flex; gap: 4px; }
+    .pag-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-dim); padding: 4px 10px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      cursor: pointer; transition: all .15s;
+    }
+    .pag-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .pag-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .pag-btn:disabled { opacity: .3; pointer-events: none; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 64px 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      border: 1px dashed var(--border2);
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: .4; }
+
+    /* ── BOTÕES ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border: none; cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      transition: all .15s;
+    }
+    .btn-sm { padding: 4px 10px; font-size: 10px; letter-spacing: 1px; }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn-primary { background: var(--accent); color: var(--bg); border-left: 3px solid var(--accent2); }
+    .btn-primary:hover { background: #d4b45a; }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(192,57,43,.3); }
+    .btn-danger:hover { background: rgba(192,57,43,.22); }
+    .btn-success { background: var(--success-dim); color: var(--success); border: 1px solid rgba(46,204,113,.3); }
+    .btn-success:hover { background: rgba(46,204,113,.2); }
+    .btn-loading { opacity: .55; pointer-events: none; }
+
+    /* ── FORMULÁRIO ── */
+    .form-field { margin-bottom: 16px; }
+    .form-lbl {
+      display: block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px;
+      color: var(--muted); text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .form-ctrl {
+      width: 100%;
+      background: var(--bg); border: 1px solid var(--border2);
+      border-bottom: 2px solid var(--border2);
+      color: var(--text); padding: 9px 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; outline: none;
+      transition: border-color .2s;
+    }
+    .form-ctrl:focus { border-color: var(--accent); border-bottom-color: var(--accent); }
+    .form-ctrl::placeholder { color: var(--muted); }
+    textarea.form-ctrl { resize: vertical; min-height: 90px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; line-height: 1.6; }
+    select.form-ctrl { cursor: pointer; }
+    select.form-ctrl option { background: var(--surface2); }
+
+    .alert {
+      padding: 10px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; display: none; margin-top: 10px;
+    }
+    .alert.show { display: block; }
+    .alert.error   { background: rgba(192,57,43,.12); border: 1px solid rgba(192,57,43,.25); color: #e74c3c; }
+    .alert.success { background: var(--success-dim);  border: 1px solid rgba(46,204,113,.25); color: var(--success); }
+
+    /* ── DISPENSA DATES ── */
+    .dispensa-fields { display: none; }
+    .dispensa-fields.show { display: block; }
+    .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px);
+      z-index: 400; display: none;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface); z-index: 1;
+    }
+    .modal-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px; font-weight: 700;
+      letter-spacing: 3px; color: var(--accent);
+      text-transform: uppercase;
+    }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer; padding: 0 4px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      padding: 14px 20px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px; justify-content: flex-end;
+    }
+
+    /* ── DETALHE ROW ── */
+    .det-row {
+      display: flex; gap: 12px; align-items: baseline;
+      border-bottom: 1px solid var(--border); padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+    .det-lbl {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); width: 130px; flex-shrink: 0;
+    }
+    .det-val { font-size: 13px; color: var(--text-dim); }
+
+    /* ── DESPACHO BOX ── */
+    .despacho-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 14px 16px; margin-top: 16px;
+    }
+    .despacho-box-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 10px;
+    }
+
+    /* ── ANEXOS ── */
+    .anexos-section { margin-top: 16px; }
+    .anexos-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .anexo-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; border: 1px solid var(--border);
+      margin-bottom: 6px; background: var(--bg);
+    }
+    .anexo-nome { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); }
+    .anexo-btn-ver {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      color: var(--accent); text-decoration: none; padding: 2px 8px;
+      border: 1px solid rgba(200,168,75,.3);
+      transition: background .15s;
+    }
+    .anexo-btn-ver:hover { background: var(--accent-dim); }
+    .anexo-empty { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); padding: 8px 0; }
+
+    .upload-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+    .file-input-wrap { position: relative; }
+    .file-input-wrap input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--surface); border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
+      padding: 10px 20px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; color: var(--text); z-index: 600;
+      transition: transform .25s ease; white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── REDIRECT ── */
+    #screen-redirect {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500; flex-direction: column; gap: 16px;
+    }
+    #screen-redirect.hidden { display: none; }
+
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 641px) {
+      #topbar-page-nav { display: flex; }
+      #btn-voltar { display: none !important; }
+    }
+    @media (max-width: 640px) {
+      .topbar-sub, .topbar-role { display: none; }
+      .topbar-name { font-size: 11px; }
+      #topbar-page-nav { display: none; }
+      #btn-voltar { display: flex !important; }
+      .page-wrap { padding: 62px 14px 32px; }
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal-box { max-width: 100% !important; border-radius: 0;
+        border-left: none; border-right: none; border-bottom: none;
+        border-top: 2px solid var(--accent); }
+      .date-row { grid-template-columns: 1fr; }
+      .tabs { overflow-x: auto; }
+      .tab-btn { white-space: nowrap; }
+      .page-header { flex-direction: column; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="screen-redirect">
+  <img src="ABM.png" style="width:60px;opacity:.5;" />
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;">VERIFICANDO SESSÃO...</div>
+</div>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <a href="index.html" id="btn-voltar" style="display:none;align-items:center;justify-content:center;width:36px;height:36px;color:var(--accent);font-size:20px;text-decoration:none;flex-shrink:0;margin-right:4px;">‹</a>
+      <img src="ABM.png" alt="ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
+      <div class="topbar-sub">Academia Bombeiro Militar</div>
+    </div>
+    <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;">
+      <a href="index.html"          class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
+      <a href="requerimentos.html" class="topbar-nav-link" style="color:var(--accent);border-bottom:2px solid var(--accent);">Requerimentos</a>
+      <a href="ordens_em_vigor.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
+    </nav>
+    <div class="topbar-user">
+      <div style="text-align:right;">
+        <div class="topbar-name" id="top-name">—</div>
+        <div class="topbar-role" id="top-role">—</div>
+      </div>
+      <div class="topbar-avatar" id="top-avatar">?</div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO -->
+  <div class="page-wrap">
+
+    <div class="page-header">
+      <div>
+        <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
+        <div class="page-title">Requeri<span>mentos</span></div>
+        <div class="page-meta" id="page-meta">—</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="refreshCurrent()">↻ Atualizar</button>
+        <button class="btn btn-primary btn-sm" id="btn-novo-req" onclick="openNovoModal()" style="display:none;">✚ Novo Requerimento</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs" id="tabs-wrap">
+      <!-- Coordenação/Auxiliar vê ambas as abas; cadete vê só as suas -->
+      <button class="tab-btn active" id="tab-btn-lista" onclick="switchTab('lista')">Lista</button>
+      <button class="tab-btn" id="tab-btn-novo" onclick="switchTab('novo')" style="display:none;">Novo Requerimento</button>
+    </div>
+
+    <!-- TAB: LISTA (coordenação/auxiliar) / MEUS (cadete) -->
+    <div class="tab-panel active" id="tab-lista">
+
+      <!-- Filtros — só coordenação/auxiliar -->
+      <div class="filter-bar" id="filter-bar" style="display:none;">
+        <span class="filter-label">Status</span>
+        <select id="f-status" onchange="loadLista(1)">
+          <option value="">Todos</option>
+          <option value="pendente">Pendente</option>
+          <option value="deferido">Deferido</option>
+          <option value="indeferido">Indeferido</option>
+          <option value="ciente">Ciente</option>
+        </select>
+        <span class="filter-label">Categoria</span>
+        <select id="f-categoria" onchange="loadLista(1)">
+          <option value="">Todas</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Limpar</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Data</th>
+              <th id="th-cadete" style="display:none;">Cadete</th>
+              <th>Categoria</th>
+              <th>Título</th>
+              <th>Status</th>
+              <th>Decidido em</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-lista">
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);font-family:monospace;font-size:11px;">CARREGANDO...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pag-bar">
+        <span class="pag-info" id="pag-info">—</span>
+        <div class="pag-btns" id="pag-btns"></div>
+      </div>
+    </div>
+
+    <!-- TAB: NOVO REQUERIMENTO (cadete) -->
+    <div class="tab-panel" id="tab-novo">
+      <div style="max-width:560px;">
+        <div class="form-field">
+          <label class="form-lbl">Categoria *</label>
+          <select class="form-ctrl" id="novo-categoria" onchange="onCategoriaChange()">
+            <option value="">Selecione a categoria...</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Título *</label>
+          <input class="form-ctrl" id="novo-titulo" type="text" placeholder="Título breve do requerimento" maxlength="120" />
+        </div>
+        <div class="dispensa-fields" id="dispensa-fields">
+          <div class="date-row">
+            <div class="form-field">
+              <label class="form-lbl">Data de Saída *</label>
+              <input class="form-ctrl" id="novo-data-ini" type="date" />
+            </div>
+            <div class="form-field">
+              <label class="form-lbl">Data de Retorno *</label>
+              <input class="form-ctrl" id="novo-data-fim" type="date" />
+            </div>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Descrição</label>
+          <textarea class="form-ctrl" id="novo-descricao" placeholder="Descreva o motivo e demais informações relevantes..." rows="5"></textarea>
+        </div>
+        <div class="alert error" id="novo-error"></div>
+        <div class="alert success" id="novo-success"></div>
+        <button class="btn btn-primary btn-full" id="btn-enviar-req" onclick="enviarRequerimento()">✦ ENVIAR REQUERIMENTO</button>
+      </div>
+    </div>
+
+  </div><!-- .page-wrap -->
+</div><!-- #app -->
+
+<!-- ══ MODAL DETALHE ══ -->
+<div class="modal-overlay" id="modal-detalhe">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="mdet-titulo">Requerimento</div>
+      <button class="modal-close" onclick="closeModal('modal-detalhe')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Info básica -->
+      <div id="mdet-info"></div>
+
+      <!-- Descrição -->
+      <div style="margin-top:14px;" id="mdet-descricao-wrap">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Descrição</div>
+        <div id="mdet-descricao" style="font-size:13px;color:var(--text-dim);line-height:1.7;white-space:pre-wrap;">—</div>
+      </div>
+
+      <!-- Despacho (leitura) -->
+      <div class="despacho-box" id="mdet-despacho-wrap" style="display:none;">
+        <div class="despacho-box-label">Despacho da Coordenação</div>
+        <div id="mdet-despacho-status" style="margin-bottom:8px;"></div>
+        <div id="mdet-despacho-obs" style="font-size:13px;color:var(--text-dim);line-height:1.6;white-space:pre-wrap;"></div>
+        <div id="mdet-despacho-meta" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;"></div>
+      </div>
+
+      <!-- Formulário de despacho (coordenador) -->
+      <div id="mdet-despacho-form" style="display:none;margin-top:16px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;border-top:1px solid var(--border);padding-top:14px;">Despachar Requerimento</div>
+        <div class="form-field">
+          <label class="form-lbl">Decisão *</label>
+          <select class="form-ctrl" id="desp-status">
+            <option value="">Selecione...</option>
+            <option value="deferido">Deferido</option>
+            <option value="indeferido">Indeferido</option>
+            <option value="ciente">Ciente</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Observação</label>
+          <textarea class="form-ctrl" id="desp-obs" placeholder="Observações ou justificativa da decisão (opcional)..." rows="3"></textarea>
+        </div>
+        <div class="alert error" id="desp-error"></div>
+        <button class="btn btn-primary btn-full" id="btn-despachar" onclick="despachar()">✦ CONFIRMAR DESPACHO</button>
+      </div>
+
+      <!-- Anexos -->
+      <div class="anexos-section">
+        <div class="anexos-label">
+          <span>Anexos</span>
+          <span id="mdet-anexos-count" style="color:var(--muted);font-size:9px;"></span>
+        </div>
+        <div id="mdet-anexos-lista"><div class="anexo-empty">—</div></div>
+        <div class="upload-row" id="mdet-upload-row" style="display:none;">
+          <div class="file-input-wrap">
+            <button class="btn btn-ghost btn-sm" id="btn-upload-anexo">+ Adicionar Anexo</button>
+            <input type="file" accept=".jpg,.jpeg,.png,.pdf" onchange="uploadAnexo(event)" />
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);">JPG · PNG · PDF · máx 20 MB</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-detalhe')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API   = 'https://gerenciamentodisciplinarabm-production.up.railway.app';
+  const token = () => localStorage.getItem('token');
+
+  const ROLE_LABELS = {
+    coordenador: 'Coordenador', auxiliar: 'Auxiliar',
+    dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete',
+  };
+  const STATUS_LABEL = { pendente: 'Pendente', deferido: 'Deferido', indeferido: 'Indeferido', ciente: 'Ciente' };
+  const STATUS_PILL  = { pendente: 'pill-pendente', deferido: 'pill-deferido', indeferido: 'pill-indeferido', ciente: 'pill-ciente' };
+
+  const CAT_LABEL = {
+    dispensa:          'Dispensa',
+    recurso_avaliacao: 'Recurso Avaliação',
+    informativo:       'Informativo',
+    atualizacao_dados: 'Atualização de Dados',
+  };
+
+  let _role       = null;
+  let _userId     = null;
+  let _isCoord    = false;
+  let _canManage  = false; // coordenador ou auxiliar
+  let _categorias = [];
+  let _currentReqId = null;
+  let _currentReqStatus = null;
+  let _currentPage = 1;
+  const LIMIT = 20;
+
+  // ── Auth ────────────────────────────────────────────────────────
+  async function init() {
+    const t = token();
+    if (!t) { redirect(); return; }
+
+    try {
+      const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${t}` } });
+      if (!res.ok) { redirect(); return; }
+      const me = await res.json();
+
+      _role      = me.role;
+      _userId    = me.user_id;
+      _isCoord   = _role === 'coordenador';
+      _canManage = ['coordenador', 'auxiliar'].includes(_role);
+
+      document.getElementById('top-name').textContent   = me.username || '—';
+      document.getElementById('top-role').textContent   = ROLE_LABELS[_role] || _role;
+      document.getElementById('top-avatar').textContent = (me.username || '?')[0].toUpperCase();
+      document.getElementById('screen-redirect').classList.add('hidden');
+      document.getElementById('app').classList.add('visible');
+
+      await loadCategorias();
+      setupUI();
+      await loadLista(1);
+    } catch {
+      redirect();
+    }
+  }
+
+  function redirect() { window.location.href = 'index.html'; }
+
+  // ── Setup UI por role ────────────────────────────────────────────
+  function setupUI() {
+    if (_canManage) {
+      document.getElementById('filter-bar').style.display  = 'flex';
+      document.getElementById('th-cadete').style.display   = '';
+      document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
+    } else {
+      // Cadete: mostra botão e tab de novo requerimento
+      document.getElementById('btn-novo-req').style.display  = 'inline-flex';
+      document.getElementById('tab-btn-novo').style.display  = '';
+      document.getElementById('page-meta').textContent       = 'Meus requerimentos';
+    }
+  }
+
+  // ── Categorias ──────────────────────────────────────────────────
+  async function loadCategorias() {
+    try {
+      const res = await fetch(`${API}/requerimento-categorias`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      _categorias = res.ok ? await res.json() : [];
+
+      const selNovo = document.getElementById('novo-categoria');
+      const selFilt = document.getElementById('f-categoria');
+
+      _categorias.forEach(c => {
+        const label = CAT_LABEL[c.nome] || c.nome;
+        selNovo.innerHTML += `<option value="${c.id}" data-nome="${c.nome}">${label}</option>`;
+        selFilt.innerHTML += `<option value="${c.id}">${label}</option>`;
+      });
+    } catch {}
+  }
+
+  // ── Tab switch ──────────────────────────────────────────────────
+  function switchTab(name) {
+    ['lista','novo'].forEach(t => {
+      document.getElementById(`tab-panel-${t}`) // fallback
+      document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
+      document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === name);
+    });
+  }
+
+  function openNovoModal() { switchTab('novo'); }
+
+  // ── Lista ───────────────────────────────────────────────────────
+  async function loadLista(page = 1) {
+    _currentPage = page;
+    const tbody = document.getElementById('tbody-lista');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted);font-family:monospace;font-size:11px;">CARREGANDO...</td></tr>`;
+
+    try {
+      let url, res, json;
+
+      if (_canManage) {
+        const status   = document.getElementById('f-status').value;
+        const catId    = document.getElementById('f-categoria').value;
+        const params   = new URLSearchParams({ page, limit: LIMIT });
+        if (status) params.set('status', status);
+        if (catId)  params.set('categoria_id', catId);
+        res  = await fetch(`${API}/coordenador/requerimentos?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+      } else {
+        const params = new URLSearchParams({ page, limit: LIMIT });
+        res = await fetch(`${API}/requerimentos/meus?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+      }
+
+      if (!res.ok) throw new Error();
+      json = await res.json();
+      const { data, total, pages } = json;
+
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div>Nenhum requerimento encontrado</div></td></tr>`;
+        document.getElementById('pag-info').textContent = '0 resultados';
+        document.getElementById('pag-btns').innerHTML = '';
+        return;
+      }
+
+      const fmtDate = s => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
+      const colSpan = _canManage ? 7 : 6;
+
+      tbody.innerHTML = data.map(r => {
+        const cat   = CAT_LABEL[r.categoria] || r.categoria;
+        const titulo = r.titulo.length > 50 ? r.titulo.substring(0,50) + '…' : r.titulo;
+        const cadeteCol = _canManage
+          ? `<td class="td-mono">${r.cadete_numero_geral != null ? r.cadete_numero_geral + ' ' : ''}${r.cadete_username || '—'}</td>`
+          : '';
+        return `
+        <tr onclick="openDetalhe(${r.id})">
+          <td class="td-mono">#${r.id}</td>
+          <td class="td-mono">${fmtDate(r.criado_em)}</td>
+          ${cadeteCol}
+          <td><span class="cat-badge">${cat}</span></td>
+          <td style="font-size:13px;">${titulo}</td>
+          <td><span class="pill ${STATUS_PILL[r.status]||''}">${STATUS_LABEL[r.status]||r.status}</span></td>
+          <td class="td-mono">${fmtDate(r.decidido_em)}</td>
+        </tr>`;
+      }).join('');
+
+      // Paginação
+      document.getElementById('pag-info').textContent = `${total} resultado(s) — página ${page} de ${pages}`;
+      const btnsEl = document.getElementById('pag-btns');
+      btnsEl.innerHTML = '';
+      for (let p = 1; p <= pages; p++) {
+        const btn = document.createElement('button');
+        btn.className = 'pag-btn' + (p === page ? ' active' : '');
+        btn.textContent = p;
+        btn.onclick = () => loadLista(p);
+        btnsEl.appendChild(btn);
+      }
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>`;
+    }
+  }
+
+  function clearFilters() {
+    document.getElementById('f-status').value    = '';
+    document.getElementById('f-categoria').value = '';
+    loadLista(1);
+  }
+
+  function refreshCurrent() { loadLista(_currentPage); }
+
+  // ── Abrir detalhe ───────────────────────────────────────────────
+  async function openDetalhe(id) {
+    _currentReqId = id;
+    document.getElementById('mdet-titulo').textContent  = `Requerimento #${id}`;
+    document.getElementById('mdet-info').innerHTML      = '<div style="color:var(--muted);font-family:monospace;font-size:11px;">CARREGANDO...</div>';
+    document.getElementById('mdet-despacho-wrap').style.display = 'none';
+    document.getElementById('mdet-despacho-form').style.display = 'none';
+    document.getElementById('mdet-anexos-lista').innerHTML = '<div class="anexo-empty">—</div>';
+    document.getElementById('mdet-upload-row').style.display = 'none';
+    document.getElementById('desp-error').className = 'alert error';
+    document.getElementById('desp-status').value = '';
+    document.getElementById('desp-obs').value    = '';
+    document.getElementById('modal-detalhe').classList.add('open');
+
+    try {
+      const res = await fetch(`${API}/requerimentos/${id}`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) throw new Error();
+      const r = await res.json();
+      _currentReqStatus = r.status;
+
+      const fmtDate  = s => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
+      const fmtDateOnly = s => s ? s.substring(0,10).split('-').reverse().join('/') : '—';
+      const cat = CAT_LABEL[r.categoria] || r.categoria;
+
+      const rows = [
+        det('ID',        `#${r.id}`),
+        det('Categoria', `<span class="cat-badge">${cat}</span>`),
+        det('Status',    `<span class="pill ${STATUS_PILL[r.status]||''}">${STATUS_LABEL[r.status]||r.status}</span>`),
+        det('Aberto em', fmtDate(r.criado_em)),
+      ];
+
+      if (_canManage) rows.splice(1, 0, det('Cadete', `<strong>${r.cadete_id}</strong>`));
+
+      if (r.data_afastamento_inicio) {
+        rows.push(det('Período', `${fmtDateOnly(r.data_afastamento_inicio)} → ${fmtDateOnly(r.data_afastamento_fim)}`));
+      }
+
+      document.getElementById('mdet-info').innerHTML = rows.join('');
+      document.getElementById('mdet-descricao').textContent = r.descricao || '—';
+
+      // Despacho existente
+      if (r.status !== 'pendente') {
+        document.getElementById('mdet-despacho-wrap').style.display = 'block';
+        document.getElementById('mdet-despacho-status').innerHTML =
+          `<span class="pill ${STATUS_PILL[r.status]||''}">${STATUS_LABEL[r.status]||r.status}</span>`;
+        document.getElementById('mdet-despacho-obs').textContent  = r.observacao_coord || '—';
+        document.getElementById('mdet-despacho-meta').textContent =
+          r.decidido_em ? `Decidido em ${fmtDate(r.decidido_em)}${r.decidido_por_username ? ' por ' + r.decidido_por_username : ''}` : '';
+      }
+
+      // Formulário de despacho (só coordenador, só pendente)
+      if (_isCoord && r.status === 'pendente') {
+        document.getElementById('mdet-despacho-form').style.display = 'block';
+      }
+
+      // Anexos
+      await loadAnexos(id);
+
+      // Upload: cadete dono pode adicionar a qualquer momento
+      const isCadeteDono = !_canManage && String(r.cadete_id) === String(_userId);
+      if (isCadeteDono) {
+        document.getElementById('mdet-upload-row').style.display = 'flex';
+      }
+
+    } catch {
+      document.getElementById('mdet-info').innerHTML = '<div style="color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</div>';
+    }
+  }
+
+  function det(label, val) {
+    return `<div class="det-row"><span class="det-lbl">${label}</span><span class="det-val">${val}</span></div>`;
+  }
+
+  // ── Anexos ──────────────────────────────────────────────────────
+  async function loadAnexos(id) {
+    const lista  = document.getElementById('mdet-anexos-lista');
+    const count  = document.getElementById('mdet-anexos-count');
+    lista.innerHTML = '<div class="anexo-empty">carregando...</div>';
+    try {
+      const res = await fetch(`${API}/requerimentos/${id}/anexos`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) throw new Error();
+      const anexos = await res.json();
+      count.textContent = `${anexos.length} arquivo(s)`;
+      if (!anexos.length) {
+        lista.innerHTML = '<div class="anexo-empty">Nenhum anexo</div>';
+      } else {
+        lista.innerHTML = anexos.map(a => `
+          <div class="anexo-item">
+            <span class="anexo-nome">📎 ${a.descricao}</span>
+            <a class="anexo-btn-ver" href="${a.url}" target="_blank" rel="noopener">Ver</a>
+          </div>`).join('');
+      }
+    } catch {
+      lista.innerHTML = '<div class="anexo-empty" style="color:var(--danger);">Erro ao carregar</div>';
+    }
+  }
+
+  async function uploadAnexo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const btn = document.getElementById('btn-upload-anexo');
+    btn.textContent = 'Enviando...';
+    btn.classList.add('btn-loading');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`${API}/requerimentos/${_currentReqId}/anexo`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token()}` },
+        body: form,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast(err.detail || 'Erro ao enviar anexo.', 'error');
+      } else {
+        toast('Anexo adicionado.');
+        await loadAnexos(_currentReqId);
+      }
+    } catch { toast('Erro de conexão.', 'error'); }
+    finally {
+      btn.textContent = '+ Adicionar Anexo';
+      btn.classList.remove('btn-loading');
+      event.target.value = '';
+    }
+  }
+
+  // ── Despachar ───────────────────────────────────────────────────
+  async function despachar() {
+    const status = document.getElementById('desp-status').value;
+    const obs    = document.getElementById('desp-obs').value.trim();
+    const errEl  = document.getElementById('desp-error');
+    errEl.className = 'alert error';
+
+    if (!status) {
+      errEl.textContent = 'Selecione uma decisão.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const btn = document.getElementById('btn-despachar');
+    btn.classList.add('btn-loading');
+    btn.textContent = 'Despachando...';
+
+    try {
+      const res = await fetch(`${API}/requerimentos/${_currentReqId}/status`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, observacao_coord: obs || null }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        errEl.textContent = err.detail || 'Erro ao despachar.';
+        errEl.classList.add('show');
+        return;
+      }
+      toast('Requerimento despachado.');
+      closeModal('modal-detalhe');
+      loadLista(_currentPage);
+    } catch { errEl.textContent = 'Erro de conexão.'; errEl.classList.add('show'); }
+    finally {
+      btn.classList.remove('btn-loading');
+      btn.textContent = '✦ CONFIRMAR DESPACHO';
+    }
+  }
+
+  // ── Novo requerimento ───────────────────────────────────────────
+  function onCategoriaChange() {
+    const sel      = document.getElementById('novo-categoria');
+    const opt      = sel.options[sel.selectedIndex];
+    const nome     = opt ? opt.getAttribute('data-nome') : '';
+    const dispEl   = document.getElementById('dispensa-fields');
+    dispEl.classList.toggle('show', nome === 'dispensa');
+  }
+
+  async function enviarRequerimento() {
+    const catId    = document.getElementById('novo-categoria').value;
+    const titulo   = document.getElementById('novo-titulo').value.trim();
+    const descricao = document.getElementById('novo-descricao').value.trim();
+    const dataIni  = document.getElementById('novo-data-ini').value;
+    const dataFim  = document.getElementById('novo-data-fim').value;
+    const errEl    = document.getElementById('novo-error');
+    const sucEl    = document.getElementById('novo-success');
+    errEl.className = 'alert error';
+    sucEl.className = 'alert success';
+
+    if (!catId)   { errEl.textContent = 'Selecione a categoria.'; errEl.classList.add('show'); return; }
+    if (!titulo)  { errEl.textContent = 'Informe o título.';       errEl.classList.add('show'); return; }
+
+    const sel  = document.getElementById('novo-categoria');
+    const nome = sel.options[sel.selectedIndex]?.getAttribute('data-nome') || '';
+    if (nome === 'dispensa' && (!dataIni || !dataFim)) {
+      errEl.textContent = 'Informe as datas de afastamento.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const body = { categoria_id: Number(catId), titulo, descricao: descricao || null };
+    if (nome === 'dispensa') {
+      body.data_afastamento_inicio = dataIni;
+      body.data_afastamento_fim    = dataFim;
+    }
+
+    const btn = document.getElementById('btn-enviar-req');
+    btn.classList.add('btn-loading');
+    btn.textContent = 'Enviando...';
+
+    try {
+      const res = await fetch(`${API}/requerimentos`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        errEl.textContent = err.detail || 'Erro ao enviar requerimento.';
+        errEl.classList.add('show');
+        return;
+      }
+      const data = await res.json();
+      sucEl.textContent = `Requerimento #${data.id} enviado com sucesso.`;
+      sucEl.classList.add('show');
+
+      // Limpa form
+      document.getElementById('novo-categoria').value  = '';
+      document.getElementById('novo-titulo').value     = '';
+      document.getElementById('novo-descricao').value  = '';
+      document.getElementById('novo-data-ini').value   = '';
+      document.getElementById('novo-data-fim').value   = '';
+      document.getElementById('dispensa-fields').classList.remove('show');
+
+      switchTab('lista');
+      loadLista(1);
+    } catch {
+      errEl.textContent = 'Erro de conexão.';
+      errEl.classList.add('show');
+    } finally {
+      btn.classList.remove('btn-loading');
+      btn.textContent = '✦ ENVIAR REQUERIMENTO';
+    }
+  }
+
+  // ── Utilitários ─────────────────────────────────────────────────
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  let _toastTimer;
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.borderLeftColor = type === 'error' ? 'var(--danger)' : 'var(--accent)';
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  window.addEventListener('load', init);
+</script>
+</body>
+</html>
