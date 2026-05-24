@@ -822,17 +822,6 @@
           <label class="form-lbl">Descrição</label>
           <textarea class="form-ctrl" id="novo-descricao" placeholder="Descreva o motivo e demais informações relevantes..." rows="5"></textarea>
         </div>
-        <!-- Anexos pré-envio -->
-        <div class="form-field">
-          <label class="form-lbl">Anexos <span style="font-weight:400;text-transform:none;letter-spacing:0;">(opcional · JPG, PNG, PDF · máx 20 MB cada)</span></label>
-          <div id="novo-anexos-lista" style="margin-bottom:8px;"></div>
-          <div class="upload-row">
-            <div class="file-input-wrap">
-              <button class="btn btn-ghost btn-sm" id="btn-novo-upload">+ Adicionar Arquivo</button>
-              <input type="file" accept=".jpg,.jpeg,.png,.pdf" onchange="adicionarArquivoNovo(event)" />
-            </div>
-          </div>
-        </div>
         <div class="alert error" id="novo-error"></div>
         <div class="alert success" id="novo-success"></div>
         <button class="btn btn-primary btn-full" id="btn-enviar-req" onclick="enviarRequerimento()">✦ ENVIAR REQUERIMENTO</button>
@@ -1420,27 +1409,19 @@
         return;
       }
       const data = await res.json();
-      // Upload dos arquivos selecionados
-      let anexoErro = false;
-      for (const arquivo of _novosArquivos.filter(Boolean)) {
-        const fd = new FormData();
-        fd.append('file', arquivo);
-        const ar = await fetch(`${API}/requerimentos/${data.id}/anexo`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token()}` },
-          body: fd,
-        });
-        if (!ar.ok) anexoErro = true;
-      }
-      const anexoMsg = _novosArquivos.length
-        ? (anexoErro ? ' ⚠ (algum anexo falhou)' : ` · ${_novosArquivos.length} anexo(s) enviado(s)`)
-        : '';
-      sucEl.textContent = `Requerimento #${data.id} enviado com sucesso${anexoMsg}.`;
+      sucEl.textContent = `Requerimento #${data.id} enviado com sucesso.`;
       sucEl.classList.add('show');
-      _novosArquivos = [];
-      document.getElementById('novo-anexos-lista').innerHTML = '';
+
+      // Limpa form
+      document.getElementById('novo-categoria').value  = '';
+      document.getElementById('novo-titulo').value     = '';
+      document.getElementById('novo-descricao').value  = '';
+      document.getElementById('novo-data-ini').value   = '';
+      document.getElementById('novo-data-fim').value   = '';
+      document.getElementById('dispensa-fields').classList.remove('show');
+
+      switchTab('lista');
       loadLista(1);
-      setTimeout(() => finalizarNovo(), 2000);
     } catch {
       errEl.textContent = 'Erro de conexão.';
       errEl.classList.add('show');
@@ -1448,46 +1429,6 @@
       btn.classList.remove('btn-loading');
       btn.textContent = '✦ ENVIAR REQUERIMENTO';
     }
-  }
-
-  // ── Novo requerimento — arquivos pré-envio ───────────────────────
-  let _novosArquivos = []; // File objects selecionados antes do envio
-
-  function adicionarArquivoNovo(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (_novosArquivos.length >= 6) { toast('Limite de 6 anexos atingido.', 'error'); return; }
-    _novosArquivos.push(file);
-    const lista = document.getElementById('novo-anexos-lista');
-    const idx = _novosArquivos.length - 1;
-    const item = document.createElement('div');
-    item.className = 'anexo-item';
-    item.id = `novo-arq-${idx}`;
-    item.innerHTML = `
-      <span class='anexo-nome'>📎 ${file.name}</span>
-      <button class='anexo-btn-del' onclick='removerArquivoNovo(${idx})'>✕</button>`;
-    lista.appendChild(item);
-    event.target.value = '';
-  }
-
-  function removerArquivoNovo(idx) {
-    _novosArquivos[idx] = null;
-    const el = document.getElementById(`novo-arq-${idx}`);
-    if (el) el.remove();
-  }
-
-  function finalizarNovo() {
-    _novosArquivos = [];
-    document.getElementById('novo-categoria').value  = '';
-    document.getElementById('novo-titulo').value     = '';
-    document.getElementById('novo-descricao').value  = '';
-    document.getElementById('novo-data-ini').value   = '';
-    document.getElementById('novo-data-fim').value   = '';
-    document.getElementById('dispensa-fields').classList.remove('show');
-    document.getElementById('novo-anexos-lista').innerHTML = '';
-    document.getElementById('novo-error').className = 'alert error';
-    document.getElementById('novo-success').className = 'alert success';
-    switchTab('lista');
   }
 
   // ── Utilitários ─────────────────────────────────────────────────
