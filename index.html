@@ -2806,6 +2806,8 @@
       <div class="detail-grid">
         <div class="detail-field"><label>ID da Anotação</label><div class="dv" id="just-id">—</div></div>
         <div class="detail-field"><label>Status</label><div class="dv" id="just-status">—</div></div>
+        <div class="detail-field"><label>Oficial de Dia</label><div class="dv" id="just-of-resp">—</div></div>
+        <div class="detail-field"><label>Lançado por</label><div class="dv" id="just-cad-resp">—</div></div>
         <div class="detail-field"><label>Infração</label><div class="dv" id="just-infracao">—</div></div>
         <div class="detail-field"><label>Data do Fato</label><div class="dv" id="just-data-fato">—</div></div>
         <div class="detail-field"><label>Aprovada em</label><div class="dv" id="just-approved">—</div></div>
@@ -4955,6 +4957,8 @@
     document.getElementById('just-modal-title').textContent = `Justificativa — Anotação #${a.id}`;
     document.getElementById('just-id').textContent         = `#${a.id}`;
     document.getElementById('just-status').innerHTML       = `<span class="pill ${statusCls[a.status]||''}">${statusMap[a.status]||a.status}</span>`;
+    document.getElementById('just-of-resp').textContent    = resolveOficial(a.of_resp);
+    document.getElementById('just-cad-resp').textContent   = resolveUser(a.cad_resp);
     document.getElementById('just-infracao').textContent   = resolveInfracao(a.infracao);
     document.getElementById('just-data-fato').textContent  = fmtDateOnly(a.data_do_fato);
     document.getElementById('just-approved').textContent   = fmtDate(a.approved_at);
