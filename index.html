@@ -1194,7 +1194,6 @@
     </div>
     <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;">
       <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Fatos Observados</a>
-      <a href="requerimentos.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Requerimentos</a>
       <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
     </nav>
     <div class="topbar-user">
@@ -1328,9 +1327,6 @@
     <div class="sidebar-spacer"></div>
     <div class="sidebar-section">
       <div class="sidebar-divider"></div>
-      <a href="requerimentos.html" class="nav-item" style="text-decoration:none;color:inherit;">
-        <span class="nav-icon">📄</span> Requerimentos
-      </a>
       <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;color:inherit;">
         <span class="nav-icon">📋</span> Ordens em Vigor
       </a>
@@ -4660,12 +4656,13 @@
 
       tbody.innerHTML = filtrada.map(a => {
         const isPendente = a.status === 'pendente';
-        const isMinhaAnot = a.cad_resp === currentUserId;
-        const temDescricao = isMinhaAnot && !!a.descricao;
+        const isMinhaAnot  = a.cad_resp === currentUserId;
+        const isAnot       = a.cad_anot === currentUserId;
+        const temDescricao = (isMinhaAnot || isAnot) && !!a.descricao;
         // RESTRITO só quando não é o responsável E a API não retornou a descrição
         const descrPreview = a.descricao
           ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
-          : (isMinhaAnot || a.descricao === '')
+          : (isMinhaAnot || isAnot || a.descricao === '')
             ? '<span style="font-size:10px;color:var(--muted);">sem descrição</span>'
             : '<span style="font-size:10px;letter-spacing:1px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;">[ RESTRITO ]</span>';
         return `
