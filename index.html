@@ -4656,10 +4656,10 @@
 
       tbody.innerHTML = filtrada.map(a => {
         const isPendente = a.status === 'pendente';
-        const isMinhaAnot  = a.cad_resp === currentUserId;
-        const isAnot       = a.cad_anot === currentUserId;
+        const isMinhaAnot = a.cad_resp === currentUserId;
+        const isAnot      = a.cad_anot === currentUserId;
         const temDescricao = (isMinhaAnot || isAnot) && !!a.descricao;
-        // RESTRITO só quando não é o responsável E a API não retornou a descrição
+        // RESTRITO só para quem não tem relação com a anotação
         const descrPreview = a.descricao
           ? a.descricao.substring(0, 60) + (a.descricao.length > 60 ? '…' : '')
           : (isMinhaAnot || isAnot || a.descricao === '')
@@ -4924,7 +4924,7 @@
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td class="td-mono">${fmtDate(a.approved_at)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
-          <td style="max-width:200px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-style:italic;">[ RESTRITO ]</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${a.descricao ? a.descricao.substring(0,60)+(a.descricao.length>60?'…':'') : '<span style="font-size:10px;color:var(--muted);">sem descrição</span>'}</td>
           <td>${temRascunho
             ? '<span class="pill" style="color:var(--warn);border-color:rgba(224,123,42,.3);background:var(--warn-dim);">Rascunho</span>'
             : '<span class="pill" style="color:var(--muted);border-color:var(--border);">Sem rascunho</span>'
@@ -4963,9 +4963,9 @@
         prazoEl.innerHTML = `<span style='color:var(--success);'>${h}h de 48h</span>`;
       }
     }
-    document.getElementById('just-descricao').textContent  = '[ Descrição restrita — acesso somente ao Dia CFO responsável e à coordenação ]';
-    document.getElementById('just-descricao').style.color  = 'var(--muted)';
-    document.getElementById('just-descricao').style.fontStyle = 'italic';
+    document.getElementById('just-descricao').textContent  = a.descricao || 'Sem descrição';
+    document.getElementById('just-descricao').style.color  = a.descricao ? 'var(--text-dim)' : 'var(--muted)';
+    document.getElementById('just-descricao').style.fontStyle = a.descricao ? 'normal' : 'italic';
 
     const u = window._currentUser;
     const infracao = resolveInfracao(a.infracao);
@@ -5095,7 +5095,7 @@
           <td class="td-mono">${fmtDate(a.created_at)}</td>
           <td class="td-mono">${fmtDateOnly(a.data_do_fato)}</td>
           <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(a.infracao)}<span style="margin-left:6px;font-size:10px;color:var(--danger);">${resolveDiscount(a.infracao)}</span></td>
-          <td style="max-width:160px;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-style:italic;">[ RESTRITO ]</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${a.descricao ? a.descricao.substring(0,50)+(a.descricao.length>50?'…':'') : '<span style="font-size:10px;color:var(--muted);">sem descrição</span>'}</td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${justPreview}</td>
           <td><span class="pill" style="${resultadoStyle[a.veredito]||''}">${resultadoLabel[a.veredito]||a.veredito}</span></td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${obsPreview}</td>
@@ -5787,9 +5787,9 @@
     document.getElementById('just-infracao').textContent     = resolveInfracao(a.infracao);
     document.getElementById('just-data-fato').textContent    = fmtDateOnly(a.data_do_fato);
     document.getElementById('just-approved').textContent     = fmtDate(a.approved_at);
-    document.getElementById('just-descricao').textContent    = '[ Descrição restrita — acesso somente ao Dia CFO responsável e à coordenação ]';
-    document.getElementById('just-descricao').style.color    = 'var(--muted)';
-    document.getElementById('just-descricao').style.fontStyle = 'italic';
+    document.getElementById('just-descricao').textContent    = a.descricao || 'Sem descrição';
+    document.getElementById('just-descricao').style.color    = a.descricao ? 'var(--text-dim)' : 'var(--muted)';
+    document.getElementById('just-descricao').style.fontStyle = a.descricao ? 'normal' : 'italic';
 
     const u2 = window._currentUser;
     const infracao2 = resolveInfracao(a.infracao);
