@@ -3236,6 +3236,10 @@
       }
       // Populate searchable dropdowns now that data is ready
       populateCadeteSds();
+      if (!window._auxUsuarios || window._auxUsuarios.length === 0) {
+        window._auxUsuarios = window._allUsuarios;
+      }
+      populateAuxCadeteSd();
       populateInfracaoSds();
     } catch {}
   }
