@@ -5,6 +5,9 @@
   <link rel="icon" type="image/png" href="ABM.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Requerimentos — Academia Bombeiro Militar</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/pt.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -565,6 +568,37 @@
       display: flex; gap: 16px; flex-wrap: wrap;
     }
 
+    /* ── FLATPICKR DARK THEME ── */
+    .flatpickr-calendar {
+      background: var(--surface2) !important;
+      border: 1px solid var(--border2) !important;
+      border-radius: 0 !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
+      font-family: 'IBM Plex Sans', sans-serif !important;
+    }
+    .flatpickr-months { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
+    .flatpickr-month { color: var(--text) !important; }
+    .flatpickr-current-month { color: var(--accent) !important; font-family: 'Rajdhani', sans-serif !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 2px !important; }
+    .flatpickr-current-month .numInputWrapper input,
+    .flatpickr-current-month select { color: var(--accent) !important; }
+    .flatpickr-monthDropdown-months { background: var(--surface2) !important; color: var(--text) !important; }
+    .flatpickr-prev-month svg, .flatpickr-next-month svg { fill: var(--muted) !important; }
+    .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: var(--accent) !important; }
+    .flatpickr-weekdays { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
+    span.flatpickr-weekday { color: var(--muted) !important; font-family: 'IBM Plex Mono', monospace !important; font-size: 9px !important; letter-spacing: 1px !important; text-transform: uppercase !important; }
+    .flatpickr-day { color: var(--text-dim) !important; border-radius: 0 !important; }
+    .flatpickr-day:hover { background: var(--accent-dim) !important; border-color: var(--accent2) !important; color: var(--text) !important; }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover {
+      background: var(--accent) !important; border-color: var(--accent) !important; color: var(--bg) !important; font-weight: 700 !important;
+    }
+    .flatpickr-day.today { border-color: var(--accent2) !important; }
+    .flatpickr-day.today:hover { background: var(--accent-dim) !important; }
+    .flatpickr-day.flatpickr-disabled { color: var(--border2) !important; }
+    .flatpickr-day.inRange { background: var(--accent-dim) !important; border-color: transparent !important; box-shadow: -5px 0 0 var(--accent-dim), 5px 0 0 var(--accent-dim) !important; }
+    .numInputWrapper:hover { background: var(--surface) !important; }
+    .numInputWrapper span { border-color: var(--border) !important; }
+    .numInputWrapper span svg path { fill: var(--muted) !important; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 640px) {
       .topbar-sub, .topbar-role { display: none; }
@@ -807,11 +841,11 @@
           <div class="date-row">
             <div class="form-field">
               <label class="form-lbl">Data de Saída *</label>
-              <input class="form-ctrl" id="novo-data-ini" type="date" />
+              <input class="form-ctrl" id="novo-data-ini" type="text" placeholder="DD/MM/AAAA" readonly />
             </div>
             <div class="form-field">
               <label class="form-lbl">Data de Retorno *</label>
-              <input class="form-ctrl" id="novo-data-fim" type="date" />
+              <input class="form-ctrl" id="novo-data-fim" type="text" placeholder="DD/MM/AAAA" readonly />
             </div>
           </div>
         </div>
@@ -961,6 +995,7 @@
 
       await loadCategorias();
       setupUI();
+      initFlatpickr();
       await loadLista(1);
     } catch {
       redirect();
@@ -989,7 +1024,7 @@
       document.getElementById('th-cadete').style.display   = '';
       document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
       loadCadeteSelect();
-      if (_canManage) {
+      if (_isCoord) {
         document.getElementById('tab-btn-calendario').style.display = '';
         const navCal = document.getElementById('nav-calendario');
         if (navCal) navCal.style.display = '';
@@ -1372,12 +1407,36 @@
     dispEl.classList.toggle('show', nome === 'dispensa');
   }
 
+  // Flatpickr instances
+  let _fpIni = null, _fpFim = null;
+
+  function initFlatpickr() {
+    const common = { locale: 'pt', dateFormat: 'd/m/Y', allowInput: false, disableMobile: false };
+    _fpIni = flatpickr('#novo-data-ini', {
+      ...common,
+      onChange(dates) { if (dates[0] && _fpFim) _fpFim.set('minDate', dates[0]); }
+    });
+    _fpFim = flatpickr('#novo-data-fim', {
+      ...common,
+      onChange(dates) { if (dates[0] && _fpIni) _fpIni.set('maxDate', dates[0]); }
+    });
+  }
+
+  function parseDataBR(str) {
+    const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return null;
+    const [, d, mo, y] = m;
+    return `${y}-${mo}-${d}`;
+  }
+
   async function enviarRequerimento() {
     const catId    = document.getElementById('novo-categoria').value;
     const titulo   = document.getElementById('novo-titulo').value.trim();
     const descricao = document.getElementById('novo-descricao').value.trim();
-    const dataIni  = document.getElementById('novo-data-ini').value;
-    const dataFim  = document.getElementById('novo-data-fim').value;
+    const dataIniRaw = document.getElementById('novo-data-ini').value;
+    const dataFimRaw = document.getElementById('novo-data-fim').value;
+    const dataIni  = dataIniRaw ? parseDataBR(dataIniRaw) : '';
+    const dataFim  = dataFimRaw ? parseDataBR(dataFimRaw) : '';
     const errEl    = document.getElementById('novo-error');
     const sucEl    = document.getElementById('novo-success');
     errEl.className = 'alert error';
@@ -1388,10 +1447,13 @@
 
     const sel  = document.getElementById('novo-categoria');
     const nome = sel.options[sel.selectedIndex]?.getAttribute('data-nome') || '';
-    if (nome === 'dispensa' && (!dataIni || !dataFim)) {
-      errEl.textContent = 'Informe as datas de afastamento.';
-      errEl.classList.add('show');
-      return;
+    if (nome === 'dispensa') {
+      if (!dataIniRaw || !dataFimRaw) {
+        errEl.textContent = 'Informe as datas de afastamento.'; errEl.classList.add('show'); return;
+      }
+      if (!dataIni || !dataFim) {
+        errEl.textContent = 'Data inválida. Use o formato DD/MM/AAAA.'; errEl.classList.add('show'); return;
+      }
     }
 
     const body = { categoria_id: Number(catId), titulo, descricao: descricao || null };
@@ -1478,8 +1540,9 @@
     document.getElementById('novo-categoria').value  = '';
     document.getElementById('novo-titulo').value     = '';
     document.getElementById('novo-descricao').value  = '';
-    document.getElementById('novo-data-ini').value   = '';
-    document.getElementById('novo-data-fim').value   = '';
+    if (_fpIni) _fpIni.clear();
+    if (_fpFim) { _fpFim.clear(); _fpFim.set('minDate', null); }
+    if (_fpIni) _fpIni.set('maxDate', null);
     document.getElementById('dispensa-fields').classList.remove('show');
     document.getElementById('novo-anexos-lista').innerHTML = '';
     document.getElementById('novo-error').className = 'alert error';
