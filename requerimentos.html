@@ -570,17 +570,14 @@
 
     /* ── FLATPICKR DARK THEME ── */
     .flatpickr-calendar {
-      background: var(--surface2) !important;
-      border: 1px solid var(--border2) !important;
-      border-radius: 0 !important;
-      box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
+      background: var(--surface2) !important; border: 1px solid var(--border2) !important;
+      border-radius: 0 !important; box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
       font-family: 'IBM Plex Sans', sans-serif !important;
     }
     .flatpickr-months { background: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
     .flatpickr-month { color: var(--text) !important; }
     .flatpickr-current-month { color: var(--accent) !important; font-family: 'Rajdhani', sans-serif !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 2px !important; }
-    .flatpickr-current-month .numInputWrapper input,
-    .flatpickr-current-month select { color: var(--accent) !important; }
+    .flatpickr-current-month .numInputWrapper input, .flatpickr-current-month select { color: var(--accent) !important; }
     .flatpickr-monthDropdown-months { background: var(--surface2) !important; color: var(--text) !important; }
     .flatpickr-prev-month svg, .flatpickr-next-month svg { fill: var(--muted) !important; }
     .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: var(--accent) !important; }
@@ -588,9 +585,7 @@
     span.flatpickr-weekday { color: var(--muted) !important; font-family: 'IBM Plex Mono', monospace !important; font-size: 9px !important; letter-spacing: 1px !important; text-transform: uppercase !important; }
     .flatpickr-day { color: var(--text-dim) !important; border-radius: 0 !important; }
     .flatpickr-day:hover { background: var(--accent-dim) !important; border-color: var(--accent2) !important; color: var(--text) !important; }
-    .flatpickr-day.selected, .flatpickr-day.selected:hover {
-      background: var(--accent) !important; border-color: var(--accent) !important; color: var(--bg) !important; font-weight: 700 !important;
-    }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--bg) !important; font-weight: 700 !important; }
     .flatpickr-day.today { border-color: var(--accent2) !important; }
     .flatpickr-day.today:hover { background: var(--accent-dim) !important; }
     .flatpickr-day.flatpickr-disabled { color: var(--border2) !important; }
@@ -1024,7 +1019,7 @@
       document.getElementById('th-cadete').style.display   = '';
       document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
       loadCadeteSelect();
-      if (_isCoord) {
+      if (_canManage) {
         document.getElementById('tab-btn-calendario').style.display = '';
         const navCal = document.getElementById('nav-calendario');
         if (navCal) navCal.style.display = '';
@@ -1407,7 +1402,7 @@
     dispEl.classList.toggle('show', nome === 'dispensa');
   }
 
-  // Flatpickr instances
+  // ── Flatpickr ────────────────────────────────────────────────────
   let _fpIni = null, _fpFim = null;
 
   function initFlatpickr() {
@@ -1540,9 +1535,8 @@
     document.getElementById('novo-categoria').value  = '';
     document.getElementById('novo-titulo').value     = '';
     document.getElementById('novo-descricao').value  = '';
-    if (_fpIni) _fpIni.clear();
+    if (_fpIni) { _fpIni.clear(); _fpIni.set('maxDate', null); }
     if (_fpFim) { _fpFim.clear(); _fpFim.set('minDate', null); }
-    if (_fpIni) _fpIni.set('maxDate', null);
     document.getElementById('dispensa-fields').classList.remove('show');
     document.getElementById('novo-anexos-lista').innerHTML = '';
     document.getElementById('novo-error').className = 'alert error';
