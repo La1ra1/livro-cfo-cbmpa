@@ -6923,11 +6923,11 @@
           <tbody>
             ${cadetes.map((r, i) => `
               <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
-                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.numero_geral ?? '—'}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;font-weight:600;">${r.username}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.pel ?? '—'}</td>
-                <td style="padding:10px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.turma ?? '—'}</td>
-                <td style="padding:0;border:1px solid #bbb;height:40px;"></td>
+                <td style="padding:5px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.numero_geral ?? '—'}</td>
+                <td style="padding:5px 8px;border:1px solid #bbb;font-weight:600;">${r.username}</td>
+                <td style="padding:5px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.pel ?? '—'}</td>
+                <td style="padding:5px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;">${r.turma ?? '—'}</td>
+                <td style="padding:0;border:1px solid #bbb;height:26px;"></td>
               </tr>`).join('')}
           </tbody>
         </table>
@@ -6958,18 +6958,18 @@
   <!-- Cabeçalho institucional -->
   <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;gap:12px;">
     <div style="flex-shrink:0;margin-left:8px;">
-      ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:90px;width:auto;display:block;" />` : ''}
+      ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:60px;width:auto;display:block;" />` : ''}
     </div>
     <div style="flex:1;text-align:center;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:2.0;">
-        Corpo de Bombeiros Militar do Pará E<br>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.6;">
+        Corpo de Bombeiros Militar do Pará<br>
         Coordenadoria Estadual de Proteção e Defesa Civil<br>
         Departamento-Geral de Cultura, Educação e Pesquisa<br>
         Academia Bombeiro Militar
       </div>
     </div>
     <div style="flex-shrink:0;margin-right:8px;">
-      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:90px;width:auto;display:block;" />` : ''}
+      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:60px;width:auto;display:block;" />` : ''}
     </div>
   </div>
 
