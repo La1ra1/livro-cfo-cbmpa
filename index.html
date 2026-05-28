@@ -1085,6 +1085,7 @@
       flex-wrap: wrap;
     }
     .bulk-bar.show { display: flex; }
+    body.role-auxiliar .coord-only { display: none !important; }
     .bulk-count {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 11px; color: var(--accent);
@@ -1468,9 +1469,9 @@
       </div>
       <div class="bulk-bar" id="bulk-bar-pendentes">
         <span class="bulk-count" id="bulk-count-pendentes">0 selecionada(s)</span>
-        <button class="btn btn-sm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+        <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
           onclick="bulkStatus('aprovada')">✓ Aprovar Selecionadas</button>
-        <button class="btn btn-sm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+        <button class="btn btn-sm coord-only" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
           onclick="bulkStatus('descartada')">✕ Descartar Selecionadas</button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelectionPendentes()">Limpar seleção</button>
       </div>
@@ -2213,9 +2214,9 @@
       </div>
       <div class="bulk-bar" id="bulk-bar-elogios">
         <span class="bulk-count" id="bulk-count-elogios">0 selecionado(s)</span>
-        <button class="btn btn-sm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+        <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
           onclick="bulkElogio('aprovado')">✓ Aprovar Selecionados</button>
-        <button class="btn btn-sm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+        <button class="btn btn-sm coord-only" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
           onclick="bulkElogio('rejeitado')">✕ Descartar Selecionados</button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelectionElogios()">Limpar seleção</button>
       </div>
@@ -3080,6 +3081,9 @@
       showMobileNav(u.role);
 
       // Mostrar nav de coordenador + carregar lookups
+      document.body.className = document.body.className.replace(/\brole-\S+/g, '').trim();
+      document.body.classList.add('role-' + u.role);
+
       if (u.role === 'coordenador') {
         $('nav-coord').style.display = 'block';
         loadLookups(); // carrega usuarios e transgressoes em background
@@ -3135,6 +3139,7 @@
     $('nav-diacfo').style.display = 'none';
     $('nav-auxiliar').style.display = 'none';
     $('nav-shared').style.display = 'none';
+    document.body.className = document.body.className.replace(/\brole-\S+/g, '').trim();
     window._currentUser = null;
     window._allUsuarios = [];
     window._usersMap = {};
