@@ -1683,6 +1683,17 @@
         <span class="anot-filter-label" style="margin-left:8px;">Data do fato:</span>
         <input type="date" id="filter-verd-data-fato" class="role-select" style="padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;" onchange="loadVeredito(1)" />
         <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="document.getElementById('filter-verd-data-fato').value='';loadVeredito(1)" title="Limpar data">✕</button>
+        <span class="anot-filter-label" style="margin-left:8px;">Mês:</span>
+        <select class="role-select" id="filter-verd-mes" onchange="loadVeredito(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="1">Jan</option><option value="2">Fev</option>
+          <option value="3">Mar</option><option value="4">Abr</option>
+          <option value="5">Mai</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Ago</option>
+          <option value="9">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+        <select class="role-select" id="filter-verd-ano" onchange="loadVeredito(1)" style="width:auto;"></select>
         <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
         <select class="role-select" id="tp-filter-veredito" onchange="loadVeredito(1)" style="width:auto;">
           <option value="">Todas</option>
@@ -1965,6 +1976,28 @@
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadMeusVereditos()">↻ Atualizar</button>
       </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Resultado:</span>
+        <select class="role-select" id="filter-meus-ver-resultado" onchange="loadMeusVereditos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="justificada">Justificada</option>
+          <option value="perda_de_ponto">Perda de Ponto</option>
+          <option value="pernoite">Pernoite</option>
+          <option value="licença_nao_concedida">Licença Não Concedida</option>
+          <option value="recolher">Recolher</option>
+        </select>
+        <span class="anot-filter-label" style="margin-left:8px;">Mês:</span>
+        <select class="role-select" id="filter-meus-ver-mes" onchange="loadMeusVereditos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="1">Jan</option><option value="2">Fev</option>
+          <option value="3">Mar</option><option value="4">Abr</option>
+          <option value="5">Mai</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Ago</option>
+          <option value="9">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+        <select class="role-select" id="filter-meus-ver-ano" onchange="loadMeusVereditos(1)" style="width:auto;"></select>
+      </div>
       <div class="card">
         <div class="table-wrap">
           <table>
@@ -2055,6 +2088,17 @@
         <select class="role-select" id="tp-filter-aux-veredito" onchange="loadAuxVereditos(1)" style="width:auto;">
           <option value="">Todas</option>
         </select>
+        <span class="anot-filter-label" style="margin-left:8px;">Mês:</span>
+        <select class="role-select" id="filter-aux-ver-mes" onchange="loadAuxVereditos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="1">Jan</option><option value="2">Fev</option>
+          <option value="3">Mar</option><option value="4">Abr</option>
+          <option value="5">Mai</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Ago</option>
+          <option value="9">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+        <select class="role-select" id="filter-aux-ver-ano" onchange="loadAuxVereditos(1)" style="width:auto;"></select>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -4104,15 +4148,33 @@
   }
 
   // ── COM VEREDITO ──────────────────────────────────
+  let _veredAnoInit = false;
   async function loadVeredito(page = 1) {
     const tbody = document.getElementById('tbody-veredito');
     if (!tbody) return;
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
+    if (!_veredAnoInit) {
+      _veredAnoInit = true;
+      const anoSel = document.getElementById('filter-verd-ano');
+      if (anoSel && anoSel.options.length <= 1) {
+        const y = new Date().getFullYear();
+        anoSel.appendChild(Object.assign(document.createElement('option'), { value: '', textContent: 'Todos' }));
+        for (let yr = y - 2; yr <= y + 1; yr++) {
+          const o = document.createElement('option');
+          o.value = yr; o.textContent = yr;
+          if (yr === y) o.selected = true;
+          anoSel.appendChild(o);
+        }
+      }
+    }
+
     const resultado  = document.getElementById('filter-veredito-resultado')?.value ?? '';
     const cadeteIdV  = getSdValue('sd-cadete-veredito');
     const infracaoV  = getSdValue('sd-infracao-veredito');
     const dataFatoV  = document.getElementById('filter-verd-data-fato')?.value || '';
+    const mesV       = document.getElementById('filter-verd-mes')?.value || '';
+    const anoV       = document.getElementById('filter-verd-ano')?.value || '';
     const tpVRaw = document.getElementById('tp-filter-veredito')?.value ?? '';
     const [tpVTurma, tpVPel] = tpVRaw ? tpVRaw.split('-') : ['', ''];
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
@@ -4120,6 +4182,8 @@
     if (cadeteIdV)  params.set('cadete_id',  cadeteIdV);
     if (infracaoV)  params.set('infracao',   infracaoV);
     if (dataFatoV)  params.set('data_fato',  dataFatoV);
+    if (mesV)       params.set('mes',        mesV);
+    if (anoV)       params.set('ano',        anoV);
     if (tpVTurma)   params.set('turma',      tpVTurma);
     if (tpVPel)     params.set('pel',        tpVPel);
 
@@ -5082,10 +5146,26 @@
   window._meusVereditos = [];
   // MEUS_VER_LIMIT follows global LIMIT
 
+  let _meusVerAnoInit = false;
   async function loadMeusVereditos(page = 1) {
     const tbody = document.getElementById('tbody-meus-vereditos');
     if (!tbody) return;
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
+
+    if (!_meusVerAnoInit) {
+      _meusVerAnoInit = true;
+      const anoSel = document.getElementById('filter-meus-ver-ano');
+      if (anoSel && anoSel.options.length <= 1) {
+        const y = new Date().getFullYear();
+        anoSel.appendChild(Object.assign(document.createElement('option'), { value: '', textContent: 'Todos' }));
+        for (let yr = y - 2; yr <= y + 1; yr++) {
+          const o = document.createElement('option');
+          o.value = yr; o.textContent = yr;
+          if (yr === y) o.selected = true;
+          anoSel.appendChild(o);
+        }
+      }
+    }
 
     const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
@@ -5096,8 +5176,16 @@
       recolher:                'color:var(--blue);border-color:rgba(52,152,219,.3);background:var(--blue-dim);',
     };
 
+    const mvResultado = document.getElementById('filter-meus-ver-resultado')?.value || '';
+    const mvMes       = document.getElementById('filter-meus-ver-mes')?.value || '';
+    const mvAno       = document.getElementById('filter-meus-ver-ano')?.value || '';
+    const mvParams    = new URLSearchParams({ page, limit: LIMIT });
+    if (mvResultado) mvParams.set('resultado', mvResultado);
+    if (mvMes)       mvParams.set('mes',       mvMes);
+    if (mvAno)       mvParams.set('ano',       mvAno);
+
     try {
-      const res = await fetch(`${API}/cadete/anotacoes/vereditos?page=${page}&limit=${LIMIT}`, {
+      const res = await fetch(`${API}/cadete/anotacoes/vereditos?${mvParams}`, {
         headers: { 'Authorization': `Bearer ${token()}` },
       });
       if (!res.ok) throw new Error();
@@ -5286,21 +5374,41 @@
   }
 
   const AUX_VER_STATE = { page: 1, total: 0, data: [] };
+  let _auxVerAnoInit = false;
 
   async function loadAuxVereditos(page = 1) {
     const tbody = document.getElementById('tbody-aux-veredito');
     if (!tbody) return;
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
+    if (!_auxVerAnoInit) {
+      _auxVerAnoInit = true;
+      const anoSel = document.getElementById('filter-aux-ver-ano');
+      if (anoSel && anoSel.options.length <= 1) {
+        const y = new Date().getFullYear();
+        anoSel.appendChild(Object.assign(document.createElement('option'), { value: '', textContent: 'Todos' }));
+        for (let yr = y - 2; yr <= y + 1; yr++) {
+          const o = document.createElement('option');
+          o.value = yr; o.textContent = yr;
+          if (yr === y) o.selected = true;
+          anoSel.appendChild(o);
+        }
+      }
+    }
+
     const resultado  = document.getElementById('aux-filter-resultado')?.value ?? '';
     const cadeteId   = getSdValue('sd-cadete-aux-veredito');
     const tpAVRaw = document.getElementById('tp-filter-aux-veredito')?.value ?? '';
     const [tpAVTurma, tpAVPel] = tpAVRaw ? tpAVRaw.split('-') : ['', ''];
+    const avMes = document.getElementById('filter-aux-ver-mes')?.value || '';
+    const avAno = document.getElementById('filter-aux-ver-ano')?.value || '';
     const params = new URLSearchParams({ veredito_status: 'dado', page, limit: LIMIT });
     if (resultado)  params.set('resultado', resultado);
     if (cadeteId)   params.set('cadete_id', cadeteId);
     if (tpAVTurma)  params.set('turma',     tpAVTurma);
     if (tpAVPel)    params.set('pel',       tpAVPel);
+    if (avMes)      params.set('mes',       avMes);
+    if (avAno)      params.set('ano',       avAno);
 
     const resultadoLabel = { justificada: 'Justificada', perda_de_ponto: 'Perda de Ponto', pernoite: 'Pernoite', 'licença_nao_concedida': 'Licença Não Concedida', recolher: 'Recolher' };
     const resultadoStyle = {
@@ -5817,6 +5925,8 @@
     document.getElementById('just-infracao').textContent     = resolveInfracao(a.infracao);
     document.getElementById('just-data-fato').textContent    = fmtDateOnly(a.data_do_fato);
     document.getElementById('just-approved').textContent     = fmtDate(a.approved_at);
+    document.getElementById('just-of-resp').textContent      = resolveOficial(a.of_resp);
+    document.getElementById('just-cad-resp').textContent     = resolveUser(a.cad_resp);
     document.getElementById('just-descricao').textContent    = a.descricao || 'Sem descrição';
     document.getElementById('just-descricao').style.color    = a.descricao ? 'var(--text-dim)' : 'var(--muted)';
     document.getElementById('just-descricao').style.fontStyle = a.descricao ? 'normal' : 'italic';
