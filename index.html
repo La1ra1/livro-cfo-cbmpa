@@ -4116,9 +4116,9 @@
       if (a.justificativa) {
         document.getElementById('manot-just-wrap').style.display = 'block';
         document.getElementById('manot-just-texto').textContent  = a.justificativa || '—';
-        document.getElementById('manot-just-data').textContent   =
+        document.getElementById('manot-just-data').innerHTML   =
           a.justificativa_enviada
-            ? `Enviada em ${fmtDate(a.justificativa_enviado_em)}`
+            ? `Enviada em ${fmtDate(a.justificativa_enviado_em)} · Tempo de resposta: ${horasResposta(a.approved_at, a.justificativa_enviado_em)}`
             : 'Rascunho — não enviado';
       }
 
