@@ -4997,9 +4997,10 @@
   // ══════════════════════════════════════════════════
   async function loadLookupsCadete() {
     try {
-      const [resTrans, resUsers] = await Promise.all([
+      const [resTrans, resUsers, resOficiais] = await Promise.all([
         fetch(`${API}/transgressoes`,    { headers: { 'Authorization': `Bearer ${token()}` } }),
         fetch(`${API}/usuarios/cadetes`, { headers: { 'Authorization': `Bearer ${token()}` } }),
+        fetch(`${API}/oficiais-de-dia`,  { headers: { 'Authorization': `Bearer ${token()}` } }),
       ]);
       if (resTrans.ok) {
         const trans = await resTrans.json();
@@ -5009,6 +5010,11 @@
         const users = await resUsers.json();
         window._usersMap = {};
         users.forEach(u => { window._usersMap[u.id] = { username: u.username, numero_geral: u.numero_geral, turma: u.turma, pel: u.pel }; });
+      }
+      if (resOficiais.ok) {
+        const oficiais = await resOficiais.json();
+        window._oficiaisMap = {};
+        oficiais.forEach(o => { window._oficiaisMap[o.id] = { nome_de_guerra: o.nome_de_guerra, posto: o.posto }; });
       }
     } catch {}
   }
