@@ -1268,8 +1268,8 @@
       <div class="nav-item" data-section="lancamento" onclick="showSection('lancamento')">
         <span class="nav-icon">✚</span> Lançar Anotações
       </div>
-      <div class="nav-item nav-fo-plus" data-section="lancar-elogio" onclick="showSection('lancar-elogio')" style="display:none;">
-        <span class="nav-icon">★</span> Lançar Elogio FO+
+      <div class="nav-item" data-section="lancar-elogio" onclick="showSection('lancar-elogio')">
+        <span class="nav-icon">★</span> Lançar Elogio
       </div>
       <div class="nav-item" data-section="minhas-anotacoes" onclick="showSection('minhas-anotacoes')">
         <span class="nav-icon">◧</span> Anotações Lançadas
@@ -3108,6 +3108,7 @@
         $('nav-coord').style.display = 'block';
         loadLookups(); // carrega usuarios e transgressoes em background
         loadLookupsDiaCfo(); // carrega oficiais e cadetes para lançamento
+        loadElogioTypes();
       }
       // Mostrar nav do dia_cfo + carregar lookups necessários
       if (u.role === 'dia_cfo' || u.role === 'xerife') {
