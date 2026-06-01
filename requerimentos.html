@@ -1215,7 +1215,7 @@
         det('Aberto em', fmtDate(r.criado_em)),
       ];
 
-      if (_canManage) rows.splice(1, 0, det('Cadete', `<strong>${r.cadete_id}</strong>`));
+      if (_canManage) rows.splice(1, 0, det('Cadete', `<strong>${r.cadete_numero_geral != null ? r.cadete_numero_geral + ' ' : ''}${r.cadete_username || r.cadete_id}</strong>`));
 
       if (r.data_afastamento_inicio) {
         rows.push(det('Período', `${fmtDateOnly(r.data_afastamento_inicio)} → ${fmtDateOnly(r.data_afastamento_fim)}`));
