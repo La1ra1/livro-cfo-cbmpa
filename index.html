@@ -2214,6 +2214,16 @@
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadElogiosPendentes()">↻ Atualizar</button>
       </div>
+      <div class="filter-bar">
+        <div class="sd-wrap" id="sd-cadete-elogios-pend">
+          <div class="sd-trigger" id="sd-cadete-elogios-pend-trigger" onclick="toggleSd('sd-cadete-elogios-pend')">Todos os cadetes</div>
+          <div class="sd-panel" id="sd-cadete-elogios-pend-panel">
+            <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-cadete-elogios-pend', this.value)" />
+            <div class="sd-list" id="sd-cadete-elogios-pend-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-elogios-pend', loadElogiosPendentes)">Limpar filtro</div>
+          </div>
+        </div>
+      </div>
       <div class="bulk-bar" id="bulk-bar-elogios">
         <span class="bulk-count" id="bulk-count-elogios">0 selecionado(s)</span>
         <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
@@ -2374,6 +2384,14 @@
           <select class="role-select" id="el-filter-turma" onchange="loadElogiosLista(1)" style="width:auto;">
             <option value="">Todas as turmas</option>
           </select>
+          <div class="sd-wrap" id="sd-cadete-elogios-lista">
+            <div class="sd-trigger" id="sd-cadete-elogios-lista-trigger" onclick="toggleSd('sd-cadete-elogios-lista')">Todos os cadetes</div>
+            <div class="sd-panel" id="sd-cadete-elogios-lista-panel">
+              <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-cadete-elogios-lista', this.value)" />
+              <div class="sd-list" id="sd-cadete-elogios-lista-list"></div>
+              <div class="sd-clear" onclick="clearSd('sd-cadete-elogios-lista', loadElogiosLista)">Limpar filtro</div>
+            </div>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -3651,6 +3669,26 @@
           </div>`;
         }).join('') || '<div class="sd-option" style="color:var(--muted);cursor:default;">Nenhum usuário</div>';
     }
+
+    // Cadete filter for elogios-pendentes and elogios-lista
+    [['sd-cadete-elogios-pend', loadElogiosPendentes], ['sd-cadete-elogios-lista', loadElogiosLista]].forEach(([sdId, loadFn]) => {
+      const listEl = document.getElementById(`${sdId}-list`);
+      const trigEl = document.getElementById(`${sdId}-trigger`);
+      if (!listEl) return;
+      if (trigEl) trigEl.dataset.placeholder = 'Todos os cadetes';
+      listEl.innerHTML = window._allUsuarios
+        .slice()
+        .sort((a, b) => (a.numero_geral ?? 9999) - (b.numero_geral ?? 9999) || a.username.localeCompare(b.username))
+        .map(u => {
+          const label      = u.numero_geral ? `${u.numero_geral} ${u.username}` : u.username;
+          const turmaLabel = u.turma != null ? `${u.turma}${u.pel ?? ''}` : '';
+          return `<div class="sd-option" data-value="${u.id}" data-search="${label.toLowerCase()}"
+            onclick="selectSdOption('${sdId}', ${u.id}, '${label.replace(/'/g, String.fromCharCode(92,39))}', ${loadFn.name})">
+            <span class="sd-option-label" style="flex:1;">${label}</span>
+            <span style="font-size:10px;color:var(--muted);flex-shrink:0;">${turmaLabel}</span>
+          </div>`;
+        }).join('') || '<div class="sd-option" style="color:var(--muted);cursor:default;">Nenhum usuário</div>';
+    });
   }
 
   // Populate infração dropdowns for pendentes, justificativa and justificadas
@@ -6160,7 +6198,10 @@
     tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
 
     try {
-      const res = await fetch(`${API}/coordenador/elogios/pendentes?page=${page}&limit=${LIMIT}`, {
+      const cadeteIdEP = getSdValue('sd-cadete-elogios-pend');
+      const paramsEP = new URLSearchParams({ page, limit: LIMIT });
+      if (cadeteIdEP) paramsEP.set('cadete_id', cadeteIdEP);
+      const res = await fetch(`${API}/coordenador/elogios/pendentes?${paramsEP}`, {
         headers: { 'Authorization': `Bearer ${token()}` },
       });
       if (!res.ok) throw new Error();
@@ -6400,17 +6441,19 @@
       }
     }
 
-    const mes    = document.getElementById('el-filter-mes')?.value    || '';
-    const ano    = document.getElementById('el-filter-ano')?.value    || '';
-    const status = document.getElementById('el-filter-status')?.value || '';
-    const turma  = document.getElementById('el-filter-turma')?.value  || '';
+    const mes        = document.getElementById('el-filter-mes')?.value    || '';
+    const ano        = document.getElementById('el-filter-ano')?.value    || '';
+    const status     = document.getElementById('el-filter-status')?.value || '';
+    const turma      = document.getElementById('el-filter-turma')?.value  || '';
+    const cadeteIdEL = getSdValue('sd-cadete-elogios-lista');
 
     const params = new URLSearchParams({ page, limit: LIMIT });
-    if (mes)    params.set('mes',    mes);
-    if (ano)    params.set('ano',    ano);
+    if (mes)        params.set('mes',       mes);
+    if (ano)        params.set('ano',       ano);
     // Nunca mostrar pendentes na aba Ver Elogios — default aprovado
     params.set('status', status || 'aprovado');
-    if (turma)  params.set('turma',  turma);
+    if (turma)      params.set('turma',     turma);
+    if (cadeteIdEL) params.set('cadete_id', cadeteIdEL);
 
     const statusLabel = { pendente: 'Pendente', aprovado: 'Aprovado', rejeitado: 'Descartado' };
     const statusStyle = {
