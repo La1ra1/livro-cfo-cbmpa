@@ -6236,7 +6236,7 @@
         const motivoPreview = e.descricao_motivo
           ? e.descricao_motivo.substring(0, 55) + (e.descricao_motivo.length > 55 ? '…' : '')
           : '—';
-        const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
+        const dataEvento = e.data_evento ? fmtDateOnly(e.data_evento) : '—';
         return `
         <tr id="elogio-row-${e.id}" style="cursor:pointer;" onclick="openElogioModal(${e.id})">
           <td class="cb-wrap" onclick="event.stopPropagation()">
@@ -6321,10 +6321,14 @@
       }
     }
 
-    // Set today as default date
+    // Set today as default date (local date, not UTC)
     const dateInput = document.getElementById('elogio-data-evento');
     if (dateInput && !dateInput.value) {
-      dateInput.value = new Date().toISOString().split('T')[0];
+      const t = new Date();
+      const iso = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+      dateInput.value = iso;
+      const lbl = document.getElementById('dp-elogio-label');
+      if (lbl) lbl.textContent = fmtDateOnly(iso);
     }
   }
 
@@ -6485,7 +6489,7 @@
       }
 
       tbody.innerHTML = json.data.map(e => {
-        const dataEvento  = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
+        const dataEvento  = e.data_evento ? fmtDateOnly(e.data_evento) : '—';
         const motivoPreview = e.descricao_motivo ? e.descricao_motivo.substring(0,50)+(e.descricao_motivo.length>50?'…':'') : '—';
         const turmaPel = e.turma != null ? `${e.turma}${e.pel ?? ''}` : '—';
         return `
@@ -6578,7 +6582,7 @@
 
       tbody.innerHTML = json.data.map(e => {
         const dataEvento = e.data_evento
-          ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
+          ? fmtDateOnly(e.data_evento) : '—';
         const motivoPreview = e.descricao_motivo
           ? e.descricao_motivo.substring(0, 60) + (e.descricao_motivo.length > 60 ? '\u2026' : '') : '—';
         return `
@@ -6653,7 +6657,7 @@
       aprovado:  'color:var(--success);',
       rejeitado: 'color:var(--danger);',
     };
-    const dataEvento = e.data_evento ? new Date(e.data_evento).toLocaleDateString('pt-BR') : '—';
+    const dataEvento = e.data_evento ? fmtDateOnly(e.data_evento) : '—';
     const dataCriado = e.created_at  ? fmtDate(e.created_at) : '—';
     const dataAprov  = e.approved_at ? fmtDate(e.approved_at) : '—';
 
