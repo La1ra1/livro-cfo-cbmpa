@@ -7171,14 +7171,14 @@
                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
       mesEl.innerHTML = '<option value="">Todos os meses</option>' +
         meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
-      mesEl.value     = now.getMonth() + 1;
+      mesEl.value     = '';
       mesEl.dataset.init = '1';
     }
     if (anoEl && !anoEl.dataset.init) {
       const cur = now.getFullYear();
       anoEl.innerHTML = '<option value="">Todos os anos</option>' +
         [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
-      anoEl.value     = cur;
+      anoEl.value     = '';
       anoEl.dataset.init = '1';
     }
 
