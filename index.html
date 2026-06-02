@@ -7169,13 +7169,15 @@
     if (mesEl && !mesEl.dataset.init) {
       const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      mesEl.innerHTML = meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
+      mesEl.innerHTML = '<option value="">Todos os meses</option>' +
+        meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
       mesEl.value     = now.getMonth() + 1;
       mesEl.dataset.init = '1';
     }
     if (anoEl && !anoEl.dataset.init) {
       const cur = now.getFullYear();
-      anoEl.innerHTML = [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
+      anoEl.innerHTML = '<option value="">Todos os anos</option>' +
+        [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
       anoEl.value     = cur;
       anoEl.dataset.init = '1';
     }
@@ -7231,9 +7233,8 @@
     const anoEl   = document.getElementById('dash-ano');
     if (turmaEl) turmaEl.value = '';
     if (pelEl)   pelEl.value   = '';
-    const now = new Date();
-    if (mesEl)   mesEl.value   = now.getMonth() + 1;
-    if (anoEl)   anoEl.value   = now.getFullYear();
+    if (mesEl)   mesEl.value   = '';
+    if (anoEl)   anoEl.value   = '';
     loadDashboard();
   }
 
