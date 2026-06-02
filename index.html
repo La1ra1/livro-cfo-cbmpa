@@ -2491,22 +2491,26 @@
         <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Atualizar</button>
       </div>
 
-      <!-- Filtros (coord/aux) -->
-      <div id="dash-filters" class="filter-bar" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-        <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
-          <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os cadetes</div>
-          <div class="sd-panel" id="sd-dash-cadete-panel">
-            <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-dash-cadete', this.value)" />
-            <div class="sd-list" id="sd-dash-cadete-list"></div>
+      <!-- Filtros -->
+      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+        <select id="dash-mes" class="role-select" style="min-width:140px;" onchange="loadDashboard()"></select>
+        <select id="dash-ano" class="role-select" style="min-width:100px;" onchange="loadDashboard()"></select>
+        <div id="dash-filters-adv" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;">
+          <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
+            <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os cadetes</div>
+            <div class="sd-panel" id="sd-dash-cadete-panel">
+              <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-dash-cadete', this.value)" />
+              <div class="sd-list" id="sd-dash-cadete-list"></div>
+            </div>
+            <div class="sd-clear" onclick="clearSd('sd-dash-cadete', loadDashboard)">Limpar</div>
           </div>
-          <div class="sd-clear" onclick="clearSd('sd-dash-cadete', loadDashboard)">Limpar</div>
+          <select id="dash-turma" class="role-select" style="min-width:130px;" onchange="onDashTurmaChange()">
+            <option value="">Todas as turmas</option>
+          </select>
+          <select id="dash-pel" class="role-select" style="min-width:130px;" onchange="loadDashboard()">
+            <option value="">Todos os pelotões</option>
+          </select>
         </div>
-        <select id="dash-turma" class="role-select" style="min-width:130px;" onchange="onDashTurmaChange()">
-          <option value="">Todas as turmas</option>
-        </select>
-        <select id="dash-pel" class="role-select" style="min-width:130px;" onchange="loadDashboard()">
-          <option value="">Todos os pelotões</option>
-        </select>
         <button class="btn btn-ghost btn-sm" onclick="clearDashFilters()">✕ Limpar</button>
       </div>
 
@@ -7152,12 +7156,33 @@
   };
 
   function initDashboard() {
-    const role    = window._currentUser?.role;
+    const role      = window._currentUser?.role;
     const filtersEl = document.getElementById('dash-filters');
     if (!filtersEl) return;
 
+    filtersEl.style.display = 'flex';
+
+    // Populate month/year selects once
+    const mesEl = document.getElementById('dash-mes');
+    const anoEl = document.getElementById('dash-ano');
+    const now   = new Date();
+    if (mesEl && !mesEl.dataset.init) {
+      const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      mesEl.innerHTML = meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
+      mesEl.value     = now.getMonth() + 1;
+      mesEl.dataset.init = '1';
+    }
+    if (anoEl && !anoEl.dataset.init) {
+      const cur = now.getFullYear();
+      anoEl.innerHTML = [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
+      anoEl.value     = cur;
+      anoEl.dataset.init = '1';
+    }
+
+    const advEl = document.getElementById('dash-filters-adv');
     if (role === 'coordenador' || role === 'auxiliar') {
-      filtersEl.style.display = 'flex';
+      if (advEl) advEl.style.display = 'flex';
 
       // Turma options
       const turmaSet = new Set((window._allUsuarios || []).map(u => u.turma).filter(t => t != null));
@@ -7175,11 +7200,11 @@
           .sort((a, b) => (a.numero_geral ?? 9999) - (b.numero_geral ?? 9999))
           .map(u => {
             const lbl = `${u.numero_geral != null ? u.numero_geral + ' ' : ''}${u.username}`;
-            return `<div class="sd-option" onclick="selectSdOption('sd-dash-cadete',${u.id},'${lbl.replace(/'/g,"\\'")}',loadDashboard)">${lbl}</div>`;
+            return `<div class="sd-option" data-value="${u.id}" data-search="${lbl.toLowerCase()}" onclick="selectSdOption('sd-dash-cadete',${u.id},'${lbl.replace(/'/g,"\\'")}',loadDashboard)">${lbl}</div>`;
           }).join('');
       }
     } else {
-      filtersEl.style.display = 'none';
+      if (advEl) advEl.style.display = 'none';
     }
 
     loadDashboard();
@@ -7202,8 +7227,13 @@
     clearSd('sd-dash-cadete', () => {});
     const turmaEl = document.getElementById('dash-turma');
     const pelEl   = document.getElementById('dash-pel');
+    const mesEl   = document.getElementById('dash-mes');
+    const anoEl   = document.getElementById('dash-ano');
     if (turmaEl) turmaEl.value = '';
     if (pelEl)   pelEl.value   = '';
+    const now = new Date();
+    if (mesEl)   mesEl.value   = now.getMonth() + 1;
+    if (anoEl)   anoEl.value   = now.getFullYear();
     loadDashboard();
   }
 
@@ -7216,8 +7246,15 @@
     container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
 
     const params = new URLSearchParams();
+
+    // Month/year (all roles)
+    const mes = document.getElementById('dash-mes')?.value;
+    const ano = document.getElementById('dash-ano')?.value;
+    if (mes) params.set('mes', mes);
+    if (ano) params.set('ano', ano);
+
     if (role === 'coordenador' || role === 'auxiliar') {
-      const cId  = getSdValue('sd-dash-cadete');
+      const cId   = getSdValue('sd-dash-cadete');
       const turma = document.getElementById('dash-turma')?.value;
       const pel   = document.getElementById('dash-pel')?.value;
       if (cId) {
