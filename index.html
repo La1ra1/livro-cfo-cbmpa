@@ -1262,6 +1262,11 @@
       <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
         <span class="nav-icon">📅</span> Punições
       </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Fatos Observados</div>
+      <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
     </div>
 
     <!-- Seção visível só para dia_cfo -->
@@ -1276,6 +1281,11 @@
       </div>
       <div class="nav-item" data-section="minhas-anotacoes" onclick="showSection('minhas-anotacoes')">
         <span class="nav-icon">◧</span> Anotações Lançadas
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Fatos Observados</div>
+      <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
       </div>
     </div>
 
@@ -1316,6 +1326,11 @@
       <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
         <span class="nav-icon">📅</span> Punições
       </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Fatos Observados</div>
+      <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
     </div>
 
     <!-- Seção compartilhada: dia_cfo e cadete -->
@@ -1334,6 +1349,11 @@
       </div>
       <div class="nav-item" data-section="meus-elogios" onclick="showSection('meus-elogios')">
         <span class="nav-icon">★</span> Meus Elogios
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Fatos Observados</div>
+      <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
       </div>
     </div>
 
@@ -2461,6 +2481,48 @@
       </div>
     </section>
 
+    <!-- ── DASHBOARD ── -->
+    <section class="section" id="section-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Fatos Observados</div>
+          <div class="page-title">Dashboard</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Atualizar</button>
+      </div>
+
+      <!-- Filtros -->
+      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+        <select id="dash-mes" class="role-select" style="min-width:140px;" onchange="loadDashboard()"></select>
+        <select id="dash-ano" class="role-select" style="min-width:100px;" onchange="loadDashboard()"></select>
+        <div id="dash-filters-adv" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;">
+          <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
+            <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os cadetes</div>
+            <div class="sd-panel" id="sd-dash-cadete-panel">
+              <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-dash-cadete', this.value)" />
+              <div class="sd-list" id="sd-dash-cadete-list"></div>
+            </div>
+            <div class="sd-clear" onclick="clearSd('sd-dash-cadete', loadDashboard)">Limpar</div>
+          </div>
+          <select id="dash-turma" class="role-select" style="min-width:130px;" onchange="onDashTurmaChange()">
+            <option value="">Todas as turmas</option>
+          </select>
+          <select id="dash-pel" class="role-select" style="min-width:130px;" onchange="loadDashboard()">
+            <option value="">Todos os pelotões</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearDashFilters()">✕ Limpar</button>
+      </div>
+
+      <div class="card" style="max-width:480px;">
+        <div class="card-header">
+          <span class="card-title">Anotações por Veredito</span>
+          <span id="dash-chart-subtitle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
+        </div>
+        <div id="dash-chart-container" style="padding:28px 24px;"></div>
+      </div>
+    </section>
+
     <!-- ── PUNIÇÕES ── -->
     <section class="section" id="section-punicoes">
       <div class="page-header">
@@ -2991,6 +3053,7 @@
     if (name === 'justificar')             loadJustificar();
     if (name === 'meus-vereditos')         loadMeusVereditos();
     if (name === 'meus-elogios')           loadMeusElogios();
+    if (name === 'dashboard')              initDashboard();
   }
 
   // ── INIT LISTENERS (DOM ready) ──────────────────────────────────
@@ -7071,6 +7134,218 @@
     const win  = window.open(url, '_blank');
     if (win) win.focus();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  // ── DASHBOARD ─────────────────────────────────────────────
+
+  const _dashLabels = {
+    justificada:             'Justificada',
+    perda_de_ponto:          'Perda de Ponto',
+    pernoite:                'Pernoite',
+    recolher:                'Recolher',
+    licença_nao_concedida:   'Lic. Não Concedida',
+    sem_veredito:            'Aguard. Veredito',
+  };
+  const _dashColors = {
+    justificada:             '#22c55e',
+    perda_de_ponto:          '#ef4444',
+    pernoite:                '#3b82f6',
+    recolher:                '#f59e0b',
+    licença_nao_concedida:   '#a855f7',
+    sem_veredito:            '#64748b',
+  };
+
+  function initDashboard() {
+    const role      = window._currentUser?.role;
+    const filtersEl = document.getElementById('dash-filters');
+    if (!filtersEl) return;
+
+    filtersEl.style.display = 'flex';
+
+    // Populate month/year selects once
+    const mesEl = document.getElementById('dash-mes');
+    const anoEl = document.getElementById('dash-ano');
+    const now   = new Date();
+    if (mesEl && !mesEl.dataset.init) {
+      const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      mesEl.innerHTML = meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
+      mesEl.value     = now.getMonth() + 1;
+      mesEl.dataset.init = '1';
+    }
+    if (anoEl && !anoEl.dataset.init) {
+      const cur = now.getFullYear();
+      anoEl.innerHTML = [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
+      anoEl.value     = cur;
+      anoEl.dataset.init = '1';
+    }
+
+    const advEl = document.getElementById('dash-filters-adv');
+    if (role === 'coordenador' || role === 'auxiliar') {
+      if (advEl) advEl.style.display = 'flex';
+
+      // Turma options
+      const turmaSet = new Set((window._allUsuarios || []).map(u => u.turma).filter(t => t != null));
+      const turmaEl  = document.getElementById('dash-turma');
+      if (turmaEl) {
+        turmaEl.innerHTML = '<option value="">Todas as turmas</option>' +
+          [...turmaSet].sort((a, b) => a - b).map(t => `<option value="${t}">Turma ${t}</option>`).join('');
+      }
+
+      // Cadete dropdown
+      const list = document.getElementById('sd-dash-cadete-list');
+      if (list) {
+        list.innerHTML = (window._allUsuarios || [])
+          .filter(u => ['cadete', 'dia_cfo', 'xerife'].includes(u.role))
+          .sort((a, b) => (a.numero_geral ?? 9999) - (b.numero_geral ?? 9999))
+          .map(u => {
+            const lbl = `${u.numero_geral != null ? u.numero_geral + ' ' : ''}${u.username}`;
+            return `<div class="sd-option" data-value="${u.id}" data-search="${lbl.toLowerCase()}" onclick="selectSdOption('sd-dash-cadete',${u.id},'${lbl.replace(/'/g,"\\'")}',loadDashboard)">${lbl}</div>`;
+          }).join('');
+      }
+    } else {
+      if (advEl) advEl.style.display = 'none';
+    }
+
+    loadDashboard();
+  }
+
+  function onDashTurmaChange() {
+    const turma = document.getElementById('dash-turma')?.value;
+    const pelEl = document.getElementById('dash-pel');
+    if (pelEl) {
+      const pelSet = new Set((window._allUsuarios || [])
+        .filter(u => !turma || String(u.turma) === turma)
+        .map(u => u.pel).filter(Boolean));
+      pelEl.innerHTML = '<option value="">Todos os pelotões</option>' +
+        [...pelSet].sort().map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+    loadDashboard();
+  }
+
+  function clearDashFilters() {
+    clearSd('sd-dash-cadete', () => {});
+    const turmaEl = document.getElementById('dash-turma');
+    const pelEl   = document.getElementById('dash-pel');
+    const mesEl   = document.getElementById('dash-mes');
+    const anoEl   = document.getElementById('dash-ano');
+    if (turmaEl) turmaEl.value = '';
+    if (pelEl)   pelEl.value   = '';
+    const now = new Date();
+    if (mesEl)   mesEl.value   = now.getMonth() + 1;
+    if (anoEl)   anoEl.value   = now.getFullYear();
+    loadDashboard();
+  }
+
+  async function loadDashboard() {
+    const role      = window._currentUser?.role;
+    const container = document.getElementById('dash-chart-container');
+    const subtitle  = document.getElementById('dash-chart-subtitle');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
+
+    const params = new URLSearchParams();
+
+    // Month/year (all roles)
+    const mes = document.getElementById('dash-mes')?.value;
+    const ano = document.getElementById('dash-ano')?.value;
+    if (mes) params.set('mes', mes);
+    if (ano) params.set('ano', ano);
+
+    if (role === 'coordenador' || role === 'auxiliar') {
+      const cId   = getSdValue('sd-dash-cadete');
+      const turma = document.getElementById('dash-turma')?.value;
+      const pel   = document.getElementById('dash-pel')?.value;
+      if (cId) {
+        params.set('cadete_id', cId);
+      } else if (turma) {
+        params.set('turma', turma);
+        if (pel) params.set('pel', pel);
+      }
+    }
+
+    const qs = params.toString();
+    try {
+      const res = await fetch(`${API}/dashboard/anotacoes${qs ? '?' + qs : ''}`,
+        { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) throw new Error((await res.json()).detail || res.status);
+      const json = await res.json();
+      if (subtitle) subtitle.textContent = `${json.total} anotação(ões)`;
+      renderDashboardChart(json.data, json.total);
+    } catch (e) {
+      container.innerHTML = `<div style="color:var(--danger);font-family:monospace;font-size:11px;padding:24px;text-align:center;">ERRO: ${e.message}</div>`;
+    }
+  }
+
+  function renderDashboardChart(data, total) {
+    const container = document.getElementById('dash-chart-container');
+    if (!container) return;
+
+    if (!total) {
+      container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUMA ANOTAÇÃO APROVADA</div>';
+      return;
+    }
+
+    const segments = data.filter(d => d.total > 0).map(d => ({
+      resultado: d.resultado,
+      label:     _dashLabels[d.resultado]  || d.resultado,
+      value:     d.total,
+      color:     _dashColors[d.resultado] || '#94a3b8',
+    }));
+
+    // SVG donut
+    const cx = 100, cy = 100, R = 78, r = 44;
+    let angle = -90;
+    let paths = '';
+
+    const xy = (a, rad) => ({
+      x: cx + rad * Math.cos(a * Math.PI / 180),
+      y: cy + rad * Math.sin(a * Math.PI / 180),
+    });
+
+    segments.forEach(seg => {
+      const sweep = (seg.value / total) * 360;
+      const end   = angle + sweep;
+      const large = sweep > 180 ? 1 : 0;
+
+      if (sweep >= 359.99) {
+        // Full circle: draw two halves
+        const t = xy(-90, R), b = xy(90, R), ti = xy(-90, r), bi = xy(90, r);
+        paths += `<path d="M ${t.x} ${t.y} A ${R} ${R} 0 1 1 ${b.x} ${b.y} A ${R} ${R} 0 1 1 ${t.x} ${t.y} M ${ti.x} ${ti.y} A ${r} ${r} 0 1 0 ${bi.x} ${bi.y} A ${r} ${r} 0 1 0 ${ti.x} ${ti.y} Z" fill="${seg.color}" fill-rule="evenodd"/>`;
+      } else {
+        const s1 = xy(angle, R), e1 = xy(end, R);
+        const s2 = xy(end, r),   e2 = xy(angle, r);
+        paths += `<path d="M ${s1.x} ${s1.y} A ${R} ${R} 0 ${large} 1 ${e1.x} ${e1.y} L ${s2.x} ${s2.y} A ${r} ${r} 0 ${large} 0 ${e2.x} ${e2.y} Z" fill="${seg.color}" stroke="#111" stroke-width="1.2"/>`;
+      }
+      angle = end;
+    });
+
+    const svg = `
+      <svg viewBox="0 0 200 200" style="width:100%;max-width:200px;display:block;margin:0 auto;">
+        ${paths}
+        <text x="${cx}" y="${cy - 7}" text-anchor="middle"
+          font-family="IBM Plex Mono,monospace" font-size="24" font-weight="700"
+          fill="var(--text)">${total}</text>
+        <text x="${cx}" y="${cy + 13}" text-anchor="middle"
+          font-family="IBM Plex Mono,monospace" font-size="8" letter-spacing="1.5"
+          fill="var(--muted)">ANOTAÇÕES</text>
+      </svg>`;
+
+    const legend = `
+      <div style="margin-top:22px;display:flex;flex-direction:column;gap:9px;">
+        ${segments.map(seg => {
+          const pct = ((seg.value / total) * 100).toFixed(1);
+          return `<div style="display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+            <div style="width:11px;height:11px;border-radius:2px;background:${seg.color};flex-shrink:0;"></div>
+            <span style="color:var(--text-dim);flex:1;">${seg.label}</span>
+            <span style="color:var(--text);font-weight:700;">${seg.value}</span>
+            <span style="color:var(--muted);width:44px;text-align:right;">${pct}%</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    container.innerHTML = svg + legend;
   }
 
   function exportarPunicoesCsv() {
