@@ -3794,8 +3794,17 @@
 
   function fmtDateOnly(iso) {
     if (!iso) return '—';
-    // Parse YYYY-MM-DD sem conversão de fuso
-    const [y, m, d] = iso.substring(0, 10).split('-');
+    const str = String(iso);
+    if (str.length === 10) {
+      const [y, m, d] = str.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    // String com hora/timezone: usa data UTC para não deslocar por fuso
+    const dt = new Date(str);
+    if (isNaN(dt)) return '—';
+    const y = dt.getUTCFullYear();
+    const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(dt.getUTCDate()).padStart(2, '0');
     return `${d}/${m}/${y}`;
   }
 
