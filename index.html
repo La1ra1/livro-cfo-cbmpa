@@ -2903,6 +2903,10 @@
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Observação</div>
             <p id="manot-veredito-obs" style="font-size:13px;line-height:1.6;color:var(--text-dim);"></p>
           </div>
+          <div id="manot-reverter-wrap" style="display:none;margin-top:14px;">
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(192,57,43,.3);" onclick="reverterVeredito()">↩ Reverter Veredito</button>
+            <span id="manot-reverter-prazo" style="margin-left:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
+          </div>
         </div>
       </div>
 
@@ -4404,6 +4408,24 @@
         } else {
           document.getElementById('manot-veredito-obs-wrap').style.display = 'none';
         }
+
+        // Botão reverter: só coordenador, só dentro de 24h
+        const reverterWrap = document.getElementById('manot-reverter-wrap');
+        if (window._currentUser?.role === 'coordenador' && a.veredito_decidido_em) {
+          const horasPassadas = (Date.now() - new Date(a.veredito_decidido_em)) / 3600000;
+          if (horasPassadas < 24) {
+            const restam = Math.max(0, 24 - horasPassadas);
+            const hh = Math.floor(restam);
+            const mm = Math.round((restam - hh) * 60);
+            document.getElementById('manot-reverter-prazo').textContent =
+              `Prazo: ${hh}h ${mm}min restantes`;
+            reverterWrap.style.display = 'block';
+          } else {
+            reverterWrap.style.display = 'none';
+          }
+        } else {
+          reverterWrap.style.display = 'none';
+        }
       }
 
       // Aprovar / descartar: só se pendente
@@ -4637,6 +4659,23 @@
       } else {
         dpRender('dp-cumpr');
       }
+    }
+  }
+
+  async function reverterVeredito() {
+    if (!_modalAnotId) return;
+    if (!confirm('Reverter o veredito desta anotação? A justificativa será mantida e um novo veredito poderá ser registrado.')) return;
+    try {
+      const res = await fetch(`${API}/anotacoes/${_modalAnotId}/veredito`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token()}` },
+      });
+      const json = await res.json();
+      if (!res.ok) { showAlert('manot-error', json.detail || 'Erro ao reverter.'); return; }
+      closeAnotModal();
+      loadVeredito();
+    } catch {
+      showAlert('manot-error', 'Erro de conexão.');
     }
   }
 
