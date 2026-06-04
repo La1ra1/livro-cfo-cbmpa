@@ -6112,8 +6112,9 @@
 
     const u2 = window._currentUser;
     const infracao2 = resolveInfracao(a.infracao);
+    const memorandoAprovadoEm = a.approved_at ? `Aprovado em: ${fmtDate(a.approved_at)}\n\n` : '';
     document.getElementById('just-memorando').textContent = u2
-      ? `Prezado(a) CAD BM ${u2.numero_geral ?? ''} ${u2.username},\n\nDeveis justificar no prazo de 48h sua anotação por ${infracao2}.\n\nAtenciosamente,\nCoordenação CFO BM`
+      ? `${memorandoAprovadoEm}Prezado(a) CAD BM ${u2.numero_geral ?? ''} ${u2.username},\n\nDeveis justificar no prazo de 48h sua anotação por ${infracao2}.\n\nAtenciosamente,\nCoordenação CFO BM`
       : '';
 
     // Justificativa — read only
