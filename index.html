@@ -1234,6 +1234,10 @@
       <div class="nav-item" data-section="anot-veredito" onclick="showSection('anot-veredito')">
         <span class="nav-icon">◆</span> Com Veredito
       </div>
+      <div class="nav-item" data-section="recursos" onclick="showSection('recursos')">
+        <span class="nav-icon">⚖</span> Pedidos de Recurso
+        <span class="nav-badge" id="badge-recursos-pend" style="display:none;background:var(--danger);">0</span>
+      </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-label">Lançamento</div>
       <div class="nav-item" data-section="lancamento" onclick="showSection('lancamento')">
@@ -1261,6 +1265,34 @@
       </div>
       <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
         <span class="nav-icon">📅</span> Punições
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Fatos Observados</div>
+      <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
+    </div>
+
+    <!-- Seção visível só para comandante -->
+    <div class="sidebar-section" id="nav-comandante" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Anotações</div>
+      <div class="nav-item" data-section="anot-veredito" onclick="showSection('anot-veredito')">
+        <span class="nav-icon">◆</span> Com Veredito
+      </div>
+      <div class="nav-item" data-section="comandante-recursos" onclick="showSection('comandante-recursos')">
+        <span class="nav-icon">⚖</span> Recursos
+        <span class="nav-badge" id="badge-recursos-cmd" style="display:none;background:var(--danger);">0</span>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Elogios</div>
+      <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
+        <span class="nav-icon">☆</span> Elogios Aprovados
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Punições</div>
+      <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
+        <span class="nav-icon">📅</span> Calendário de Punições
       </div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-label">Fatos Observados</div>
@@ -2038,6 +2070,7 @@
                 <th>Resultado</th>
                 <th>Observação</th>
                 <th>Decidido em</th>
+                <th>Recurso</th>
               </tr>
             </thead>
             <tbody id="tbody-meus-vereditos">
@@ -2052,6 +2085,99 @@
       </div>
     </section>
 
+
+    <!-- ── RECURSOS (coordenador) ── -->
+    <section class="section" id="section-recursos">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Coordenador</div>
+          <div class="page-title">Pedidos de <span>Recurso</span></div>
+          <div class="page-meta" id="meta-recursos">Requerimentos de revisão de veredito</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadRecursos()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Status:</span>
+        <select class="role-select" id="filter-recursos-status" onchange="loadRecursos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="pendente">Pendentes</option>
+          <option value="deferido">Deferidos</option>
+          <option value="indeferido">Indeferidos</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Anotação</th>
+                <th>Cadete</th>
+                <th>Infração</th>
+                <th>Veredito Original</th>
+                <th>Motivo do Recurso</th>
+                <th>Solicitado em</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-recursos">
+              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-recursos">—</span>
+          <div class="pag-btns" id="pag-btns-recursos"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RECURSOS (comandante) ── -->
+    <section class="section" id="section-comandante-recursos">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Comandante</div>
+          <div class="page-title">Julgamento de <span>Recursos</span></div>
+          <div class="page-meta" id="meta-cmd-recursos">Recursos aguardando julgamento</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadComandanteRecursos()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Status:</span>
+        <select class="role-select" id="filter-cmd-recursos-status" onchange="loadComandanteRecursos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="pendente">Pendentes</option>
+          <option value="deferido">Deferidos</option>
+          <option value="indeferido">Indeferidos</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Anotação</th>
+                <th>Cadete</th>
+                <th>Infração</th>
+                <th>Veredito Original</th>
+                <th>Motivo do Recurso</th>
+                <th>Solicitado em</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-cmd-recursos">
+              <tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-cmd-recursos">—</span>
+          <div class="pag-btns" id="pag-btns-cmd-recursos"></div>
+        </div>
+      </div>
+    </section>
 
     <!-- ── AUX: USUÁRIOS ── -->
     <section class="section" id="section-aux-usuarios">
@@ -3020,12 +3146,12 @@
   }
 
   function roleLabel(role) {
-    const map = { coordenador: 'Coordenador', auxiliar: 'Auxiliar', dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete' };
+    const map = { coordenador: 'Coordenador', auxiliar: 'Auxiliar', dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete', comandante: 'Comandante' };
     return map[role] || role;
   }
 
   function badgeHtml(role) {
-    const cls = role === 'coordenador' ? 'badge-gold' : role === 'auxiliar' ? 'badge-gold' : role === 'dia_cfo' ? 'badge-blue' : role === 'xerife' ? 'badge-green' : 'badge-silver';
+    const cls = role === 'coordenador' ? 'badge-gold' : role === 'auxiliar' ? 'badge-gold' : role === 'comandante' ? 'badge-gold' : role === 'dia_cfo' ? 'badge-blue' : role === 'xerife' ? 'badge-green' : 'badge-silver';
     return `<span class="badge ${cls}">${roleLabel(role)}</span>`;
   }
 
@@ -3055,6 +3181,8 @@
     if (name === 'meus-vereditos')         loadMeusVereditos();
     if (name === 'meus-elogios')           loadMeusElogios();
     if (name === 'dashboard')              initDashboard();
+    if (name === 'recursos')               loadRecursos();
+    if (name === 'comandante-recursos')    loadComandanteRecursos();
   }
 
   // ── INIT LISTENERS (DOM ready) ──────────────────────────────────
@@ -3175,6 +3303,11 @@
         $('nav-coord').style.display = 'block';
         loadLookups(); // carrega usuarios e transgressoes em background
         loadLookupsDiaCfo(); // carrega oficiais e cadetes para lançamento
+        loadElogioTypes();
+      }
+      if (u.role === 'comandante') {
+        $('nav-comandante').style.display = 'block';
+        loadLookups();
         loadElogioTypes();
       }
       // Mostrar nav do dia_cfo + carregar lookups necessários
@@ -3943,6 +4076,10 @@
       }
       if (d.justificar !== undefined) {
         setBadge('badge-justificar', d.justificar);
+      }
+      if (d.recursos_pendentes !== undefined) {
+        setBadge('badge-recursos-pend', d.recursos_pendentes);
+        setBadge('badge-recursos-cmd',  d.recursos_pendentes);
       }
     } catch {}
   }
@@ -5393,6 +5530,13 @@
       tbody.innerHTML = json.data.map(a => {
         const justPreview = a.justificativa ? a.justificativa.substring(0, 50) + (a.justificativa.length > 50 ? '…' : '') : '—';
         const obsPreview  = a.veredito_observacao ? a.veredito_observacao.substring(0, 50) + (a.veredito_observacao.length > 50 ? '…' : '') : '—';
+        const recursoCell = a.recurso_status === 'pendente'
+          ? `<span class="pill" style="color:var(--warn);border-color:rgba(224,123,42,.3);background:var(--warn-dim);">Pendente</span>`
+          : a.recurso_status === 'deferido'
+          ? `<span class="pill" style="color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);">Deferido</span>`
+          : a.recurso_status === 'indeferido'
+          ? `<span class="pill" style="color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);">Indeferido</span>`
+          : `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();openRecursoModal(${a.id})">Requerer</button>`;
         return `
         <tr style="cursor:pointer;" onclick="openMeuVeredito(${a.id})">
           <td class="td-mono">#${a.id}</td>
@@ -5404,6 +5548,7 @@
           <td><span class="pill" style="${resultadoStyle[a.veredito]||''}">${resultadoLabel[a.veredito]||a.veredito}</span></td>
           <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${obsPreview}</td>
           <td class="td-mono">${fmtDate(a.veredito_decidido_em)}</td>
+          <td onclick="event.stopPropagation()">${recursoCell}</td>
         </tr>`;
       }).join('');
 
@@ -7191,7 +7336,7 @@
     }
 
     const advEl = document.getElementById('dash-filters-adv');
-    if (role === 'coordenador' || role === 'auxiliar') {
+    if (role === 'coordenador' || role === 'auxiliar' || role === 'comandante') {
       if (advEl) advEl.style.display = 'flex';
 
       // Turma options
@@ -8088,6 +8233,216 @@
     }
   }
 
+  // ── RECURSOS ──────────────────────────────────
+
+  const _recursoStatusLabel = { pendente: 'Pendente', deferido: 'Deferido', indeferido: 'Indeferido' };
+  const _recursoStatusStyle = {
+    pendente:   'color:var(--warn);border-color:rgba(224,123,42,.3);background:var(--warn-dim);',
+    deferido:   'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
+    indeferido: 'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
+  };
+
+  async function loadRecursos(page = 1) {
+    const tbody = document.getElementById('tbody-recursos');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
+    const status = document.getElementById('filter-recursos-status')?.value || '';
+    const params = new URLSearchParams({ page, limit: LIMIT });
+    if (status) params.set('status', status);
+    try {
+      const res  = await fetch(`${API}/recursos?${params}`, { headers: { 'Authorization': `Bearer ${token()}` } });
+      const json = await res.json();
+      document.getElementById('meta-recursos').textContent =
+        `${json.total} pedido(s) de recurso`;
+      if (!json.data.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM RECURSO</td></tr>';
+        document.getElementById('pag-info-recursos').textContent = '0 registros';
+        document.getElementById('pag-btns-recursos').innerHTML = '';
+        return;
+      }
+      tbody.innerHTML = json.data.map(r => `
+        <tr>
+          <td class="td-mono">#${r.id}</td>
+          <td class="td-mono">#${r.anotacao_id}</td>
+          <td style="font-size:12px;">${r.cadete_numero != null ? r.cadete_numero + ' ' : ''}${r.cadete_username}</td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(r.infracao)}</td>
+          <td><span class="pill" style="${resultadoStyle[r.veredito_resultado]||''}">${resultadoLabel[r.veredito_resultado]||r.veredito_resultado||'—'}</span></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${r.motivo}</td>
+          <td class="td-mono">${fmtDate(r.criado_em)}</td>
+          <td><span class="pill" style="${_recursoStatusStyle[r.status]||''}">${_recursoStatusLabel[r.status]||r.status}</span></td>
+        </tr>`).join('');
+      renderPagBar('pag-btns-recursos', 'pag-info-recursos', { page, total: json.total, data: json.data }, loadRecursos);
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--danger);font-family:monospace;font-size:11px;padding:24px;">ERRO AO CARREGAR</td></tr>';
+    }
+  }
+
+  async function loadComandanteRecursos(page = 1) {
+    const tbody = document.getElementById('tbody-cmd-recursos');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>';
+    const status = document.getElementById('filter-cmd-recursos-status')?.value || '';
+    const params = new URLSearchParams({ page, limit: LIMIT });
+    if (status) params.set('status', status);
+    try {
+      const res  = await fetch(`${API}/recursos?${params}`, { headers: { 'Authorization': `Bearer ${token()}` } });
+      const json = await res.json();
+      document.getElementById('meta-cmd-recursos').textContent =
+        `${json.total} recurso(s)`;
+      if (!json.data.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM RECURSO</td></tr>';
+        document.getElementById('pag-info-cmd-recursos').textContent = '0 registros';
+        document.getElementById('pag-btns-cmd-recursos').innerHTML = '';
+        return;
+      }
+      window._cmdRecursosMap = {};
+      json.data.forEach(r => { window._cmdRecursosMap[r.id] = r; });
+      tbody.innerHTML = json.data.map(r => {
+        const acaoBtn = r.status === 'pendente'
+          ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="openJulgarRecursoModal(${r.id})">⚖ Julgar</button>`
+          : '—';
+        return `
+        <tr>
+          <td class="td-mono">#${r.id}</td>
+          <td class="td-mono">#${r.anotacao_id}</td>
+          <td style="font-size:12px;">${r.cadete_numero != null ? r.cadete_numero + ' ' : ''}${r.cadete_username}</td>
+          <td style="font-size:12px;color:var(--text-dim);">${resolveInfracaoShort(r.infracao)}</td>
+          <td><span class="pill" style="${resultadoStyle[r.veredito_resultado]||''}">${resultadoLabel[r.veredito_resultado]||r.veredito_resultado||'—'}</span></td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${r.motivo}</td>
+          <td class="td-mono">${fmtDate(r.criado_em)}</td>
+          <td><span class="pill" style="${_recursoStatusStyle[r.status]||''}">${_recursoStatusLabel[r.status]||r.status}</span></td>
+          <td>${acaoBtn}</td>
+        </tr>`;
+      }).join('');
+      renderPagBar('pag-btns-cmd-recursos', 'pag-info-cmd-recursos', { page, total: json.total, data: json.data }, loadComandanteRecursos);
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--danger);font-family:monospace;font-size:11px;padding:24px;">ERRO AO CARREGAR</td></tr>';
+    }
+  }
+
+  let _recursoAnotId = null;
+
+  function openRecursoModal(anotId) {
+    _recursoAnotId = anotId;
+    document.getElementById('recurso-anot-id').textContent = `#${anotId}`;
+    document.getElementById('recurso-motivo').value = '';
+    document.getElementById('recurso-error').style.display = 'none';
+    document.getElementById('recurso-success').style.display = 'none';
+    document.getElementById('btn-recurso-enviar').disabled = false;
+    document.getElementById('modal-recurso').classList.add('open');
+  }
+
+  function closeRecursoModal() {
+    document.getElementById('modal-recurso').classList.remove('open');
+    _recursoAnotId = null;
+  }
+
+  async function submitRecurso() {
+    if (!_recursoAnotId) return;
+    const motivo = document.getElementById('recurso-motivo').value.trim();
+    if (!motivo) {
+      const el = document.getElementById('recurso-error');
+      el.textContent = 'Descreva o motivo do recurso.';
+      el.style.display = 'block';
+      return;
+    }
+    document.getElementById('btn-recurso-enviar').disabled = true;
+    document.getElementById('recurso-error').style.display = 'none';
+    try {
+      const res = await fetch(`${API}/anotacoes/${_recursoAnotId}/recurso`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motivo }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const el = document.getElementById('recurso-error');
+        el.textContent = json.detail || 'Erro ao enviar recurso.';
+        el.style.display = 'block';
+        document.getElementById('btn-recurso-enviar').disabled = false;
+        return;
+      }
+      const el = document.getElementById('recurso-success');
+      el.textContent = 'Pedido de recurso enviado com sucesso!';
+      el.style.display = 'block';
+      setTimeout(() => { closeRecursoModal(); loadMeusVereditos(); }, 1500);
+    } catch {
+      const el = document.getElementById('recurso-error');
+      el.textContent = 'Erro de conexão.';
+      el.style.display = 'block';
+      document.getElementById('btn-recurso-enviar').disabled = false;
+    }
+  }
+
+  let _julgarRecursoId = null;
+
+  function openJulgarRecursoModal(recursoId) {
+    const r = (window._cmdRecursosMap || {})[recursoId];
+    if (!r) return;
+    _julgarRecursoId = recursoId;
+    document.getElementById('julgar-recurso-id').textContent = recursoId;
+    document.getElementById('julgar-cadete').textContent = `${r.cadete_numero != null ? r.cadete_numero + ' ' : ''}${r.cadete_username}`;
+    document.getElementById('julgar-anot-id').textContent = `#${r.anotacao_id}`;
+    document.getElementById('julgar-data-fato').textContent = fmtDateOnly(r.data_do_fato);
+    document.getElementById('julgar-infracao').textContent = resolveInfracao(r.infracao);
+    document.getElementById('julgar-veredito').innerHTML = `<span class="pill" style="${resultadoStyle[r.veredito_resultado]||''}">${resultadoLabel[r.veredito_resultado]||r.veredito_resultado||'—'}</span>`;
+
+    const obsWrap = document.getElementById('julgar-obs-veredito-wrap');
+    if (r.veredito_observacao) {
+      document.getElementById('julgar-obs-veredito').textContent = r.veredito_observacao;
+      obsWrap.style.display = '';
+    } else { obsWrap.style.display = 'none'; }
+
+    const descrWrap = document.getElementById('julgar-descricao-wrap');
+    if (r.descricao) {
+      document.getElementById('julgar-descricao').textContent = r.descricao;
+      descrWrap.style.display = 'block';
+    } else { descrWrap.style.display = 'none'; }
+
+    const justWrap = document.getElementById('julgar-just-wrap');
+    if (r.justificativa) {
+      document.getElementById('julgar-just-texto').textContent = r.justificativa;
+      justWrap.style.display = 'block';
+    } else { justWrap.style.display = 'none'; }
+
+    document.getElementById('julgar-motivo').textContent = r.motivo;
+    document.getElementById('julgar-observacao').value = '';
+    document.getElementById('julgar-error').style.display = 'none';
+    document.getElementById('modal-julgar-recurso').classList.add('open');
+  }
+
+  function closeJulgarRecursoModal() {
+    document.getElementById('modal-julgar-recurso').classList.remove('open');
+    _julgarRecursoId = null;
+  }
+
+  async function submitJulgarRecurso(status) {
+    if (!_julgarRecursoId) return;
+    const observacao = document.getElementById('julgar-observacao').value.trim() || null;
+    if (status === 'indeferido' && !confirm('Confirma o indeferimento? Uma anotação de perda de ponto será lançada automaticamente.')) return;
+    try {
+      const res = await fetch(`${API}/recursos/${_julgarRecursoId}/julgar`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, observacao }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const el = document.getElementById('julgar-error');
+        el.textContent = json.detail || 'Erro ao julgar recurso.';
+        el.style.display = 'block';
+        return;
+      }
+      closeJulgarRecursoModal();
+      loadComandanteRecursos();
+      loadBadges();
+    } catch {
+      const el = document.getElementById('julgar-error');
+      el.textContent = 'Erro de conexão.';
+      el.style.display = 'block';
+    }
+  }
+
   (async () => {
     if (token()) {
       await initApp();
@@ -8209,6 +8564,68 @@
         </div>
         <div class="alert error" id="elogio-modal-error" style="margin-top:12px;"></div>
         <div id="elogio-modal-actions" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: SOLICITAR RECURSO ── -->
+  <div class="modal-overlay" id="modal-recurso" onclick="if(event.target===this)closeRecursoModal()">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Requerer Revisão — Anotação <span id="recurso-anot-id"></span></div>
+        <button class="modal-close-btn" onclick="closeRecursoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">Descreva o motivo pelo qual você requer a revisão do veredito desta anotação. O pedido será apreciado pelo Comandante.</p>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Motivo</label>
+          <textarea id="recurso-motivo" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Descreva o motivo do recurso..."></textarea>
+        </div>
+        <div class="alert error" id="recurso-error" style="display:none;margin-bottom:10px;"></div>
+        <div class="alert success" id="recurso-success" style="display:none;margin-bottom:10px;"></div>
+        <button class="btn btn-primary btn-full" id="btn-recurso-enviar" onclick="submitRecurso()">ENVIAR PEDIDO DE RECURSO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: JULGAR RECURSO (comandante) ── -->
+  <div class="modal-overlay" id="modal-julgar-recurso" onclick="if(event.target===this)closeJulgarRecursoModal()">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <div class="modal-title">Julgar Recurso #<span id="julgar-recurso-id"></span></div>
+        <button class="modal-close-btn" onclick="closeJulgarRecursoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" style="margin-bottom:14px;">
+          <div class="detail-field"><label>Cadete</label><div class="dv" id="julgar-cadete">—</div></div>
+          <div class="detail-field"><label>Anotação</label><div class="dv" id="julgar-anot-id">—</div></div>
+          <div class="detail-field"><label>Data do Fato</label><div class="dv" id="julgar-data-fato">—</div></div>
+          <div class="detail-field"><label>Infração</label><div class="dv" id="julgar-infracao">—</div></div>
+          <div class="detail-field"><label>Veredito Original</label><div class="dv" id="julgar-veredito">—</div></div>
+          <div class="detail-field" id="julgar-obs-veredito-wrap" style="display:none;"><label>Obs. do Veredito</label><div class="dv" id="julgar-obs-veredito">—</div></div>
+        </div>
+        <div id="julgar-descricao-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Descrição do Fato</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.6;" id="julgar-descricao"></div>
+        </div>
+        <div id="julgar-just-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Justificativa do Cadete</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-just-texto"></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Motivo do Recurso</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-motivo"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação (opcional)</label>
+          <textarea id="julgar-observacao" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Observação para o cadete..."></textarea>
+        </div>
+        <div class="alert error" id="julgar-error" style="display:none;margin-bottom:10px;"></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" style="flex:1;background:var(--success);" onclick="submitJulgarRecurso('deferido')">✓ DEFERIR</button>
+          <button class="btn btn-primary" style="flex:1;background:var(--danger);" onclick="submitJulgarRecurso('indeferido')">✕ INDEFERIR</button>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center;">Atenção: ao indeferir, uma anotação automática de perda de ponto será lançada para o cadete.</p>
       </div>
     </div>
   </div>
