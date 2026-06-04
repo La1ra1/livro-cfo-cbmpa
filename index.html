@@ -2101,6 +2101,7 @@
         <select class="role-select" id="filter-recursos-status" onchange="loadRecursos(1)" style="width:auto;">
           <option value="">Todos</option>
           <option value="pendente">Pendentes</option>
+          <option value="despachado">Despachados</option>
           <option value="deferido">Deferidos</option>
           <option value="indeferido">Indeferidos</option>
         </select>
@@ -2147,7 +2148,7 @@
         <span class="anot-filter-label">Status:</span>
         <select class="role-select" id="filter-cmd-recursos-status" onchange="loadComandanteRecursos(1)" style="width:auto;">
           <option value="">Todos</option>
-          <option value="pendente">Pendentes</option>
+          <option value="despachado">Aguardando Julgamento</option>
           <option value="deferido">Deferidos</option>
           <option value="indeferido">Indeferidos</option>
         </select>
@@ -8275,9 +8276,10 @@
 
   // ── RECURSOS ──────────────────────────────────
 
-  const _recursoStatusLabel = { pendente: 'Pendente', deferido: 'Deferido', indeferido: 'Indeferido' };
+  const _recursoStatusLabel = { pendente: 'Pendente', despachado: 'Despachado', deferido: 'Deferido', indeferido: 'Indeferido' };
   const _recursoStatusStyle = {
     pendente:   'color:var(--warn);border-color:rgba(224,123,42,.3);background:var(--warn-dim);',
+    despachado: 'color:var(--blue);border-color:rgba(52,152,219,.3);background:var(--blue-dim);',
     deferido:   'color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);',
     indeferido: 'color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);',
   };
@@ -8307,7 +8309,7 @@
       json.data.forEach(r => { window._recursosMap[r.id] = r; });
       tbody.innerHTML = json.data.map(r => {
         const acaoBtn = r.status === 'pendente'
-          ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="openJulgarRecursoModal(${r.id})">⚖ Julgar</button>`
+          ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="openDespacharRecursoModal(${r.id})">📤 Despachar</button>`
           : '—';
         return `
         <tr>
@@ -8349,7 +8351,7 @@
       window._recursosMap = {};
       json.data.forEach(r => { window._recursosMap[r.id] = r; });
       tbody.innerHTML = json.data.map(r => {
-        const acaoBtn = r.status === 'pendente'
+        const acaoBtn = r.status === 'despachado'
           ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="openJulgarRecursoModal(${r.id})">⚖ Julgar</button>`
           : '—';
         return `
@@ -8425,6 +8427,53 @@
     }
   }
 
+  let _despacharRecursoId = null;
+
+  function openDespacharRecursoModal(recursoId) {
+    const r = (window._recursosMap || {})[recursoId];
+    if (!r) return;
+    _despacharRecursoId = recursoId;
+    document.getElementById('despachar-recurso-id').textContent = recursoId;
+    document.getElementById('despachar-cadete').textContent = `${r.cadete_numero != null ? r.cadete_numero + ' ' : ''}${r.cadete_username}`;
+    document.getElementById('despachar-anot-id').textContent = `#${r.anotacao_id}`;
+    document.getElementById('despachar-veredito').innerHTML = `<span class="pill" style="${_resStyle[r.veredito_resultado]||''}">${_resLabel[r.veredito_resultado]||r.veredito_resultado||'—'}</span>`;
+    document.getElementById('despachar-motivo').textContent = r.motivo;
+    document.getElementById('despachar-observacao').value = '';
+    document.getElementById('despachar-error').style.display = 'none';
+    document.getElementById('modal-despachar-recurso').classList.add('open');
+  }
+
+  function closeDespacharRecursoModal() {
+    document.getElementById('modal-despachar-recurso').classList.remove('open');
+    _despacharRecursoId = null;
+  }
+
+  async function submitDespacharRecurso() {
+    if (!_despacharRecursoId) return;
+    const observacao_coord = document.getElementById('despachar-observacao').value.trim() || null;
+    try {
+      const res = await fetch(`${API}/recursos/${_despacharRecursoId}/despachar`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ observacao_coord }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const el = document.getElementById('despachar-error');
+        el.textContent = json.detail || 'Erro ao despachar recurso.';
+        el.style.display = 'block';
+        return;
+      }
+      closeDespacharRecursoModal();
+      loadRecursos();
+      loadBadges();
+    } catch {
+      const el = document.getElementById('despachar-error');
+      el.textContent = 'Erro de conexão.';
+      el.style.display = 'block';
+    }
+  }
+
   let _julgarRecursoId = null;
 
   function openJulgarRecursoModal(recursoId) {
@@ -8455,6 +8504,12 @@
       document.getElementById('julgar-just-texto').textContent = r.justificativa;
       justWrap.style.display = 'block';
     } else { justWrap.style.display = 'none'; }
+
+    const obsCoordWrap = document.getElementById('julgar-obs-coord-wrap');
+    if (r.observacao_coord) {
+      document.getElementById('julgar-obs-coord').textContent = r.observacao_coord;
+      obsCoordWrap.style.display = 'block';
+    } else { obsCoordWrap.style.display = 'none'; }
 
     document.getElementById('julgar-motivo').textContent = r.motivo;
     document.getElementById('julgar-observacao').value = '';
@@ -8641,6 +8696,33 @@
     </div>
   </div>
 
+  <!-- ── MODAL: DESPACHAR RECURSO (coordenador) ── -->
+  <div class="modal-overlay" id="modal-despachar-recurso" onclick="if(event.target===this)closeDespacharRecursoModal()">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Despachar Recurso #<span id="despachar-recurso-id"></span></div>
+        <button class="modal-close-btn" onclick="closeDespacharRecursoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" style="margin-bottom:14px;">
+          <div class="detail-field"><label>Cadete</label><div class="dv" id="despachar-cadete">—</div></div>
+          <div class="detail-field"><label>Anotação</label><div class="dv" id="despachar-anot-id">—</div></div>
+          <div class="detail-field"><label>Veredito Original</label><div class="dv" id="despachar-veredito">—</div></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Motivo do Recurso</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="despachar-motivo"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação para o Comandante (opcional)</label>
+          <textarea id="despachar-observacao" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Comentário ao encaminhar..."></textarea>
+        </div>
+        <div class="alert error" id="despachar-error" style="display:none;margin-bottom:10px;"></div>
+        <button class="btn btn-primary btn-full" onclick="submitDespacharRecurso()">📤 DESPACHAR AO COMANDANTE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── MODAL: JULGAR RECURSO (comandante) ── -->
   <div class="modal-overlay" id="modal-julgar-recurso" onclick="if(event.target===this)closeJulgarRecursoModal()">
     <div class="modal" style="max-width:520px;">
@@ -8664,6 +8746,10 @@
         <div id="julgar-just-wrap" style="display:none;margin-bottom:12px;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Justificativa do Cadete</div>
           <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-just-texto"></div>
+        </div>
+        <div id="julgar-obs-coord-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Obs. do Coordenador</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--warn);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-obs-coord"></div>
         </div>
         <div style="margin-bottom:14px;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Motivo do Recurso</div>
