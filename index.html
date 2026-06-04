@@ -5573,11 +5573,15 @@
         const obsPreview  = a.veredito_observacao ? a.veredito_observacao.substring(0, 50) + (a.veredito_observacao.length > 50 ? '…' : '') : '—';
         const recursoCell = a.recurso_status === 'pendente'
           ? `<span class="pill" style="color:var(--warn);border-color:rgba(224,123,42,.3);background:var(--warn-dim);">Pendente</span>`
+          : a.recurso_status === 'despachado'
+          ? `<span class="pill" style="color:var(--blue);border-color:rgba(52,152,219,.3);background:var(--blue-dim);">Despachado</span>`
           : a.recurso_status === 'deferido'
           ? `<span class="pill" style="color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);">Deferido</span>`
           : a.recurso_status === 'indeferido'
           ? `<span class="pill" style="color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);">Indeferido</span>`
-          : `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();openRecursoModal(${a.id})">Requerer</button>`;
+          : a.veredito === 'perda_de_ponto' && a.veredito_decidido_em && ((Date.now() - new Date(a.veredito_decidido_em)) / 3600000) <= 48
+          ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();openRecursoModal(${a.id})">Requerer</button>`
+          : '—';
         return `
         <tr style="cursor:pointer;" onclick="openMeuVeredito(${a.id})">
           <td class="td-mono">#${a.id}</td>
@@ -8687,7 +8691,8 @@
         <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Descreva o motivo pelo qual você requer a revisão do veredito desta anotação. O pedido será apreciado pelo Comandante.</p>
         <div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.3);border-left:3px solid var(--danger);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--danger);line-height:1.6;">
           <strong>⚠ ATENÇÃO:</strong> Apresentar pedido de revisão sem fundamento pode incorrer em anotação por infração
-          <strong>G15 — Apresentar, sem fundamento, pedido de revisão de provas</strong>, com aplicação de <strong>perda de 1 (um) ponto</strong>.
+          <strong>G15 — Apresentar, sem fundamento, parte, queixa, representação ou pedido de revisão de provas</strong>,
+          com aplicação de <strong>perda de 1 (um) ponto</strong>.
           Certifique-se de que o seu pedido possui embasamento antes de enviá-lo.
         </div>
         <div style="margin-bottom:12px;">
