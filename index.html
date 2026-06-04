@@ -7407,7 +7407,7 @@
     if (mes) params.set('mes', mes);
     if (ano) params.set('ano', ano);
 
-    if (role === 'coordenador' || role === 'auxiliar') {
+    if (role === 'coordenador' || role === 'auxiliar' || role === 'comandante') {
       const cId   = getSdValue('sd-dash-cadete');
       const turma = document.getElementById('dash-turma')?.value;
       const pel   = document.getElementById('dash-pel')?.value;
