@@ -8383,8 +8383,28 @@
     document.getElementById('julgar-recurso-id').textContent = recursoId;
     document.getElementById('julgar-cadete').textContent = `${r.cadete_numero != null ? r.cadete_numero + ' ' : ''}${r.cadete_username}`;
     document.getElementById('julgar-anot-id').textContent = `#${r.anotacao_id}`;
+    document.getElementById('julgar-data-fato').textContent = fmtDateOnly(r.data_do_fato);
     document.getElementById('julgar-infracao').textContent = resolveInfracao(r.infracao);
     document.getElementById('julgar-veredito').innerHTML = `<span class="pill" style="${resultadoStyle[r.veredito_resultado]||''}">${resultadoLabel[r.veredito_resultado]||r.veredito_resultado||'—'}</span>`;
+
+    const obsWrap = document.getElementById('julgar-obs-veredito-wrap');
+    if (r.veredito_observacao) {
+      document.getElementById('julgar-obs-veredito').textContent = r.veredito_observacao;
+      obsWrap.style.display = '';
+    } else { obsWrap.style.display = 'none'; }
+
+    const descrWrap = document.getElementById('julgar-descricao-wrap');
+    if (r.descricao) {
+      document.getElementById('julgar-descricao').textContent = r.descricao;
+      descrWrap.style.display = 'block';
+    } else { descrWrap.style.display = 'none'; }
+
+    const justWrap = document.getElementById('julgar-just-wrap');
+    if (r.justificativa) {
+      document.getElementById('julgar-just-texto').textContent = r.justificativa;
+      justWrap.style.display = 'block';
+    } else { justWrap.style.display = 'none'; }
+
     document.getElementById('julgar-motivo').textContent = r.motivo;
     document.getElementById('julgar-observacao').value = '';
     document.getElementById('julgar-error').style.display = 'none';
@@ -8579,10 +8599,23 @@
         <div class="detail-grid" style="margin-bottom:14px;">
           <div class="detail-field"><label>Cadete</label><div class="dv" id="julgar-cadete">—</div></div>
           <div class="detail-field"><label>Anotação</label><div class="dv" id="julgar-anot-id">—</div></div>
+          <div class="detail-field"><label>Data do Fato</label><div class="dv" id="julgar-data-fato">—</div></div>
           <div class="detail-field"><label>Infração</label><div class="dv" id="julgar-infracao">—</div></div>
           <div class="detail-field"><label>Veredito Original</label><div class="dv" id="julgar-veredito">—</div></div>
+          <div class="detail-field" id="julgar-obs-veredito-wrap" style="display:none;"><label>Obs. do Veredito</label><div class="dv" id="julgar-obs-veredito">—</div></div>
         </div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;" id="julgar-motivo"></div>
+        <div id="julgar-descricao-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Descrição do Fato</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.6;" id="julgar-descricao"></div>
+        </div>
+        <div id="julgar-just-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Justificativa do Cadete</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-just-texto"></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Motivo do Recurso</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-motivo"></div>
+        </div>
         <div style="margin-bottom:12px;">
           <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação (opcional)</label>
           <textarea id="julgar-observacao" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Observação para o cadete..."></textarea>
