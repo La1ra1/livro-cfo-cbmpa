@@ -2708,6 +2708,7 @@
         <div class="detail-field"><label>Fato observado por</label><div class="dv" id="manot-of-resp">—</div></div>
         <div class="detail-field"><label>Data do Lançamento</label><div class="dv" id="manot-data">—</div></div>
         <div class="detail-field"><label>Data do Fato</label><div class="dv" id="manot-data-fato">—</div></div>
+        <div class="detail-field" id="manot-approved-wrap" style="display:none;"><label>Memorando Aprovado em</label><div class="dv" id="manot-approved">—</div></div>
       </div>
 
       <!-- INFRAÇÃO com edição inline -->
@@ -4218,6 +4219,12 @@
       document.getElementById('manot-data').textContent     = fmtDate(a.created_at);
       document.getElementById('manot-data-fato').textContent = fmtDateOnly(a.data_do_fato);
       document.getElementById('manot-descricao').textContent = a.descricao ?? '—';
+      if (a.approved_at) {
+        document.getElementById('manot-approved').textContent = fmtDate(a.approved_at);
+        document.getElementById('manot-approved-wrap').style.display = '';
+      } else {
+        document.getElementById('manot-approved-wrap').style.display = 'none';
+      }
 
       // Botão de editar infração
       const _roleEdit = window._currentUser?.role;
