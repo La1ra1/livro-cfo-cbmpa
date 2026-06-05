@@ -7261,14 +7261,27 @@
         + nomeCompleto.slice(idx + nomeGuerra.length);
     };
 
-    const tabelaRows = json.data.map((r, i) => `
+    // Agrupar por cadete, preservando a ordem de numero_geral
+    const cadeteMap = {};
+    const cadeteOrder = [];
+    json.data.forEach(r => {
+      const key = r.numero_geral ?? r.username;
+      if (!cadeteMap[key]) {
+        cadeteMap[key] = { numero_geral: r.numero_geral, username: r.username, infracoes: [] };
+        cadeteOrder.push(key);
+      }
+      cadeteMap[key].infracoes.push({ codigo: r.infracao_codigo, desconto: r.desconto });
+    });
+
+    const tabelaRows = cadeteOrder.map((key, i) => {
+      const c = cadeteMap[key];
+      const infHtml = c.infracoes.map(inf => `(${inf.codigo}) -${inf.desconto}`).join(' &nbsp;·&nbsp; ');
+      return `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
-        <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:10px;">${r.numero_geral ?? '—'}</td>
-        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;">${boldMatch(r.nome_completo || r.username, r.username)}</td>
-        <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:10px;font-weight:700;">${r.infracao_codigo}</td>
-        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;color:#555;">${r.infracao_descr || '—'}</td>
-        <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:10px;font-weight:700;color:#c0392b;">-${r.desconto}</td>
-      </tr>`).join('');
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-weight:600;">${c.username}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-family:monospace;color:#c0392b;">${infHtml}</td>
+      </tr>`;
+    }).join('');
 
     const anoAtual = new Date().getFullYear();
     const html = `<!DOCTYPE html>
@@ -7296,7 +7309,7 @@
       <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
         DESCONTOS DE PONTOS - ${mesNome} DE ${ano} — TURMA ${turma}
       </div>
-      <div style="font-size:10px;color:#444;margin-top:2px;">${json.data.length} registro(s)</div>
+      <div style="font-size:10px;color:#444;margin-top:2px;">${cadeteOrder.length} cadete(s) · ${json.data.length} desconto(s)</div>
     </div>
     <div style="flex-shrink:0;">${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:52px;width:auto;display:block;" />` : ''}</div>
   </div>
@@ -7304,11 +7317,8 @@
   <table style="width:100%;border-collapse:collapse;font-size:10px;">
     <thead>
       <tr style="background:#e8e8e8;">
-        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:32px;">Nº</th>
-        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">NOME DO CADETE</th>
-        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:55px;">CÓD. INF.</th>
-        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">DESCRIÇÃO DA INFRAÇÃO</th>
-        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:65px;">DESCONTO</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;width:35%;">NOME DE GUERRA</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">INFRAÇÕES E DESCONTOS</th>
       </tr>
     </thead>
     <tbody>${tabelaRows}</tbody>
