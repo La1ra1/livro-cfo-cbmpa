@@ -7267,19 +7267,22 @@
     json.data.forEach(r => {
       const key = r.numero_geral ?? r.username;
       if (!cadeteMap[key]) {
-        cadeteMap[key] = { numero_geral: r.numero_geral, username: r.username, infracoes: [] };
+        cadeteMap[key] = { numero_geral: r.numero_geral, username: r.username, nome_completo: r.nome_completo, infracoes: [] };
         cadeteOrder.push(key);
       }
-      cadeteMap[key].infracoes.push({ codigo: r.infracao_codigo, desconto: r.desconto });
+      cadeteMap[key].infracoes.push({ codigo: r.infracao_codigo, desconto: r.desconto, anotacao_id: r.anotacao_id });
     });
 
     const tabelaRows = cadeteOrder.map((key, i) => {
       const c = cadeteMap[key];
-      const infHtml = c.infracoes.map(inf => `(${inf.codigo}) -${inf.desconto}`).join(' &nbsp;·&nbsp; ');
+      const nome = `CAD 1° ANO BM ${c.nome_completo || c.username}`;
+      const infHtml = c.infracoes.map(inf => `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">MEM N° #${String(inf.anotacao_id).padStart(3,'0')}</span>`).join(' &nbsp;·&nbsp; ');
+      const total = c.infracoes.reduce((s, inf) => s + Number(inf.desconto), 0);
       return `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
-        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-weight:600;">${c.username}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-weight:600;">${nome}</td>
         <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-family:monospace;color:#c0392b;">${infHtml}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-family:monospace;font-weight:700;color:#c0392b;text-align:center;">-${total}</td>
       </tr>`;
     }).join('');
 
@@ -7303,11 +7306,12 @@
         CORPO DE BOMBEIROS MILITAR DO PARÁ<br>
         COORDENADORIA ESTADUAL DE PROTEÇÃO E DEFESA CIVIL<br>
         DEPARTAMENTO-GERAL DE CULTURA, EDUCAÇÃO E PESQUISA<br>
-        ACADEMIA BOMBEIRO MILITAR<br>
+        ACADEMIA BOMBEIRO MILITAR "CAPITÃO ANTÔNIO VERÍSSIMO IVO DE ABREU"<br>
         CURSO DE FORMAÇÃO DE OFICIAIS BM 2025 - CFO ABM/${anoAtual}
       </div>
       <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
-        DESCONTOS DE PONTOS - ${mesNome} DE ${ano} — TURMA ${turma}
+        DESCONTOS DE NOTA DE COMPORTAMENTO REFERENCIADOS PELO ANEXO I DO CÓDIGO DE ÉTICA DO CBMPA<br>
+        <span style="font-size:11px;">${mesNome} DE ${ano} — TURMA ${turma}</span>
       </div>
       <div style="font-size:10px;color:#444;margin-top:2px;">${cadeteOrder.length} cadete(s) · ${json.data.length} desconto(s)</div>
     </div>
@@ -7317,8 +7321,9 @@
   <table style="width:100%;border-collapse:collapse;font-size:10px;">
     <thead>
       <tr style="background:#e8e8e8;">
-        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;width:35%;">NOME DE GUERRA</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;width:33%;">NOME</th>
         <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">INFRAÇÕES E DESCONTOS</th>
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:70px;">TOTAL</th>
       </tr>
     </thead>
     <tbody>${tabelaRows}</tbody>
@@ -7429,7 +7434,7 @@
         CORPO DE BOMBEIROS MILITAR DO PARÁ<br>
         COORDENADORIA ESTADUAL DE PROTEÇÃO E DEFESA CIVIL<br>
         DEPARTAMENTO-GERAL DE CULTURA, EDUCAÇÃO E PESQUISA<br>
-        ACADEMIA BOMBEIRO MILITAR<br>
+        ACADEMIA BOMBEIRO MILITAR "CAPITÃO ANTÔNIO VERÍSSIMO IVO DE ABREU"<br>
         CURSO DE FORMAÇÃO DE OFICIAIS BM 2025 - CFO ABM/${anoAtual}
       </div>
       <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
