@@ -7276,13 +7276,21 @@
     const tabelaRows = cadeteOrder.map((key, i) => {
       const c = cadeteMap[key];
       const nome = `CAD 1° ANO BM ${c.nome_completo || c.username}`;
-      const infHtml = c.infracoes.map(inf => `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">MEM N° #${String(inf.anotacao_id).padStart(3,'0')}</span>`).join(' &nbsp;·&nbsp; ');
+      // Agrupar em pares: 2 itens por linha, separados por " · ", linhas centralizadas
+      const itens = c.infracoes.map(inf =>
+        `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">MEM N° #${String(inf.anotacao_id).padStart(3,'0')}</span>`
+      );
+      const linhas = [];
+      for (let i = 0; i < itens.length; i += 2) {
+        linhas.push(itens.slice(i, i + 2).join(' &nbsp;·&nbsp; '));
+      }
+      const infHtml = linhas.join('<br>');
       const total = parseFloat(c.infracoes.reduce((s, inf) => s + Number(inf.desconto), 0).toFixed(2));
       return `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
-        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-weight:600;">${nome}</td>
-        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-family:monospace;color:#c0392b;">${infHtml}</td>
-        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-family:monospace;font-weight:700;color:#c0392b;text-align:center;">-${total}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:8px;font-weight:600;width:42%;">${nome}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:9px;font-family:monospace;color:#c0392b;text-align:center;line-height:1.7;">${infHtml}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:9px;font-family:monospace;font-weight:700;color:#c0392b;text-align:center;width:55px;">-${total}</td>
       </tr>`;
     }).join('');
 
@@ -7321,9 +7329,9 @@
   <table style="width:100%;border-collapse:collapse;font-size:10px;">
     <thead>
       <tr style="background:#e8e8e8;">
-        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;width:33%;">NOME</th>
-        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">INFRAÇÕES E DESCONTOS</th>
-        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:70px;">TOTAL</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;width:42%;font-size:9px;">NOME</th>
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;font-size:9px;">INFRAÇÕES E DESCONTOS</th>
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:55px;font-size:9px;">TOTAL</th>
       </tr>
     </thead>
     <tbody>${tabelaRows}</tbody>
