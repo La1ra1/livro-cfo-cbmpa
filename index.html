@@ -7277,7 +7277,7 @@
       const c = cadeteMap[key];
       const nome = `CAD 1° ANO BM ${c.nome_completo || c.username}`;
       const infHtml = c.infracoes.map(inf => `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">MEM N° #${String(inf.anotacao_id).padStart(3,'0')}</span>`).join(' &nbsp;·&nbsp; ');
-      const total = c.infracoes.reduce((s, inf) => s + Number(inf.desconto), 0);
+      const total = parseFloat(c.infracoes.reduce((s, inf) => s + Number(inf.desconto), 0).toFixed(2));
       return `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
         <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;font-weight:600;">${nome}</td>
