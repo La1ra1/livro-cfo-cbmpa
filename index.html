@@ -6131,10 +6131,11 @@
         const desconto   = Number(r.desconto_total) || 0;
         const elogios    = Number(r.pontos_elogios) || 0;
         const notaFinal  = Math.min(10, Math.max(0, 8 - desconto + elogios));
+        const nome = r.nome_completo || r.username;
         return `
         <tr>
           <td class="td-mono">${r.numero_geral ?? '—'}</td>
-          <td class="td-name">${r.username}</td>
+          <td class="td-name">${nome}</td>
           <td class="td-mono">${r.pel ?? '—'}</td>
           <td class="td-mono" style="text-align:center;font-weight:700;color:${desconto > 0 ? 'var(--danger)' : 'var(--muted)'};">-${desconto}</td>
           <td class="td-mono" style="text-align:center;font-weight:700;color:${elogios > 0 ? 'var(--success)' : 'var(--muted)'};">+${elogios}</td>
@@ -7243,17 +7244,28 @@
     };
     const [abmBase64, cbmpaBase64] = await Promise.all([toBase64('ABM.png'), toBase64('CBMPA.png')]);
 
+    const boldMatch = (nomeCompleto, nomeGuerra) => {
+      if (!nomeCompleto) return nomeGuerra || '';
+      if (!nomeGuerra) return nomeCompleto;
+      const idx = nomeCompleto.toUpperCase().indexOf(nomeGuerra.toUpperCase());
+      if (idx === -1) return nomeCompleto;
+      return nomeCompleto.slice(0, idx)
+        + '<strong>' + nomeCompleto.slice(idx, idx + nomeGuerra.length) + '</strong>'
+        + nomeCompleto.slice(idx + nomeGuerra.length);
+    };
+
     const rows = _expData.map(r => {
       const desconto  = Number(r.desconto_total) || 0;
       const elogios   = Number(r.pontos_elogios) || 0;
       const nota      = Math.min(10, Math.max(0, 8 - desconto + elogios));
-      return { ...r, desconto, elogios, nota };
+      const nomeHtml  = boldMatch(r.nome_completo || r.username, r.username);
+      return { ...r, desconto, elogios, nota, nomeHtml };
     });
 
     const tabelaRows = rows.map((r, i) => `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:9px;">${r.numero_geral ?? '—'}</td>
-        <td style="padding:2px 4px;border:1px solid #bbb;font-weight:600;font-size:9px;">${r.username}</td>
+        <td style="padding:2px 4px;border:1px solid #bbb;font-size:9px;">${r.nomeHtml}</td>
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:9px;color:#c0392b;">-${r.desconto}</td>
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:9px;color:#27ae60;">+${r.elogios}</td>
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-weight:700;font-size:9px;">${r.nota.toFixed(2)}</td>
