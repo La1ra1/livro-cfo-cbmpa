@@ -742,6 +742,52 @@
       /* Perfil card */
       .profile-avatar { width: 42px; height: 42px; font-size: 18px; }
       .profile-name { font-size: 20px; }
+
+      /* ── Botões em grupo viram coluna ── */
+      .btn-group-mobile { flex-direction: column !important; gap: 8px !important; }
+      .btn-group-mobile .btn { width: 100%; justify-content: center; }
+
+      /* ── Seção exportar: grid e flex de botões viram coluna ── */
+      #section-exportar .card > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+      #section-exportar div[style*="padding:0 20px 20px"] {
+        flex-direction: column;
+        gap: 8px !important;
+        padding: 0 14px 16px !important;
+      }
+      #section-exportar div[style*="padding:0 20px 20px"] .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      #section-exportar div[style*="padding:20px"][style*="grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 14px !important;
+      }
+
+      /* ── Filter bars com wrap ── */
+      .anot-filter-bar { flex-wrap: wrap; }
+      .anot-filter-bar select,
+      .anot-filter-bar input { flex: 1 1 140px; min-width: 120px; }
+
+      /* ── Page header: botão em linha separada ── */
+      .page-header { align-items: flex-start; }
+
+      /* ── Pag bar botões mais fáceis de tocar ── */
+      .pag-btn { min-width: 36px; min-height: 34px; font-size: 12px; }
+
+      /* ── Cards de stats (dashboard) 2 colunas ── */
+      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+
+      /* ── Tabela mínima menor ── */
+      table { min-width: 380px; }
+
+      /* ── Modais: padding extra para teclado virtual ── */
+      .modal-body { padding-bottom: 32px; }
+
+      /* ── Resultado exportar: scroll horizontal ── */
+      #exp-resultado .table-wrap { overflow-x: auto; }
     }
 
     /* Desktop: sem hamburger nem overlay */
@@ -2320,7 +2366,7 @@
             </select>
           </div>
         </div>
-        <div style="padding:0 20px 20px;display:flex;gap:10px;">
+        <div style="padding:0 20px 20px;display:flex;flex-wrap:wrap;gap:10px;">
           <button class="btn btn-primary" onclick="gerarRelatorio()">↓ Gerar Relatório</button>
           <button class="btn btn-ghost" id="btn-exportar-csv" style="display:none;" onclick="exportarCSV()">↓ Exportar CSV</button>
           <button class="btn btn-ghost" id="btn-exportar-nota" style="display:none;" onclick="exportarNotaComportamento()">↓ Nota de Comportamento</button>
