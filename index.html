@@ -2324,6 +2324,7 @@
           <button class="btn btn-primary" onclick="gerarRelatorio()">↓ Gerar Relatório</button>
           <button class="btn btn-ghost" id="btn-exportar-csv" style="display:none;" onclick="exportarCSV()">↓ Exportar CSV</button>
           <button class="btn btn-ghost" id="btn-exportar-nota" style="display:none;" onclick="exportarNotaComportamento()">↓ Nota de Comportamento</button>
+          <button class="btn btn-ghost" id="btn-exportar-descontos" style="display:none;" onclick="exportarDescontosDetalhado()">↓ Descontos</button>
         </div>
         <div class="alert error" id="exp-error" style="margin:0 20px 16px;"></div>
       </div>
@@ -6096,6 +6097,7 @@
     document.getElementById('exp-resultado').style.display = 'block';
     document.getElementById('btn-exportar-csv').style.display = 'none';
     document.getElementById('btn-exportar-nota').style.display = 'none';
+    document.getElementById('btn-exportar-descontos').style.display = 'none';
 
     try {
       const res = await fetch(
@@ -6157,6 +6159,7 @@
 
       document.getElementById('btn-exportar-csv').style.display = 'inline-flex';
       document.getElementById('btn-exportar-nota').style.display = 'inline-flex';
+      document.getElementById('btn-exportar-descontos').style.display = 'inline-flex';
 
     } catch {
       errEl.textContent = 'Erro de conexão.';
@@ -7218,6 +7221,124 @@
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>`;
       btnCsv.style.display = 'none';
     }
+  }
+
+  async function exportarDescontosDetalhado() {
+    const mes   = document.getElementById('exp-mes').value;
+    const ano   = document.getElementById('exp-ano').value;
+    const turma = document.getElementById('exp-turma').value;
+    if (!mes || !ano || !turma) return;
+
+    const mesesNomes = ['','JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
+                        'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+    const mesNome = mesesNomes[mes] || mes;
+
+    const toBase64 = async (src) => {
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        return await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); });
+      } catch { return ''; }
+    };
+    const [abmBase64, cbmpaBase64] = await Promise.all([toBase64('ABM.png'), toBase64('CBMPA.png')]);
+
+    const res = await fetch(
+      `${API}/exportar/descontos-detalhado?turma=${turma}&mes=${mes}&ano=${ano}`,
+      { headers: { 'Authorization': `Bearer ${token()}` } }
+    );
+    if (!res.ok) { alert('Erro ao buscar descontos.'); return; }
+    const json = await res.json();
+
+    if (!json.data.length) { alert('Nenhum desconto encontrado para os filtros selecionados.'); return; }
+
+    const boldMatch = (nomeCompleto, nomeGuerra) => {
+      if (!nomeCompleto) return nomeGuerra || '';
+      if (!nomeGuerra) return nomeCompleto;
+      const idx = nomeCompleto.toUpperCase().indexOf(nomeGuerra.toUpperCase());
+      if (idx === -1) return nomeCompleto;
+      return nomeCompleto.slice(0, idx)
+        + '<strong>' + nomeCompleto.slice(idx, idx + nomeGuerra.length) + '</strong>'
+        + nomeCompleto.slice(idx + nomeGuerra.length);
+    };
+
+    const tabelaRows = json.data.map((r, i) => `
+      <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
+        <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:10px;">${r.numero_geral ?? '—'}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;">${boldMatch(r.nome_completo || r.username, r.username)}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:10px;font-weight:700;">${r.infracao_codigo}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;font-size:10px;color:#555;">${r.infracao_descr || '—'}</td>
+        <td style="padding:3px 5px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:10px;font-weight:700;color:#c0392b;">-${r.desconto}</td>
+      </tr>`).join('');
+
+    const anoAtual = new Date().getFullYear();
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>DESCONTOS DE PONTOS - ${mesNome} DE ${ano}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; color: #111; font-size: 11px; }
+    @media print { .no-print { display: none !important; } @page { margin: 8mm 12mm; } }
+  </style>
+</head>
+<body style="padding:10px 20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px;gap:12px;">
+    <div style="flex-shrink:0;">${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:52px;width:auto;display:block;" />` : ''}</div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.7;">
+        CORPO DE BOMBEIROS MILITAR DO PARÁ<br>
+        COORDENADORIA ESTADUAL DE PROTEÇÃO E DEFESA CIVIL<br>
+        DEPARTAMENTO-GERAL DE CULTURA, EDUCAÇÃO E PESQUISA<br>
+        ACADEMIA BOMBEIRO MILITAR<br>
+        CURSO DE FORMAÇÃO DE OFICIAIS BM 2025 - CFO ABM/${anoAtual}
+      </div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
+        DESCONTOS DE PONTOS - ${mesNome} DE ${ano} — TURMA ${turma}
+      </div>
+      <div style="font-size:10px;color:#444;margin-top:2px;">${json.data.length} registro(s)</div>
+    </div>
+    <div style="flex-shrink:0;">${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:52px;width:auto;display:block;" />` : ''}</div>
+  </div>
+
+  <table style="width:100%;border-collapse:collapse;font-size:10px;">
+    <thead>
+      <tr style="background:#e8e8e8;">
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:32px;">Nº</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">NOME DO CADETE</th>
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:55px;">CÓD. INF.</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;">DESCRIÇÃO DA INFRAÇÃO</th>
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:65px;">DESCONTO</th>
+      </tr>
+    </thead>
+    <tbody>${tabelaRows}</tbody>
+  </table>
+
+  <div style="margin-top:36px;display:flex;justify-content:flex-end;">
+    <div style="text-align:center;width:320px;">
+      <div style="height:48px;"></div>
+      <div style="border-top:1.5px solid #111;padding-top:6px;font-size:11px;line-height:1.7;">
+        Matheus Barbosa <strong>Padilha</strong> - <strong>1º TEN</strong> QOBM<br>
+        <strong>Chefe da Seção do Corpo de Alunos ABM</strong>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;border-top:1px solid #ccc;padding-top:8px;font-size:9px;color:#aaa;">
+    Gerado em ${new Date().toLocaleString('pt-BR')} · Sistema de Controle do Corpo de Alunos
+  </div>
+
+  <div class="no-print" style="margin-top:20px;text-align:center;">
+    <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (win) win.focus();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   async function exportarNotaComportamento() {
