@@ -7275,7 +7275,7 @@
 
     const tabelaRows = cadeteOrder.map((key, i) => {
       const c = cadeteMap[key];
-      const nome = c.nome_completo || c.username;
+      const nome = `CAD 1° ANO BM ${c.nome_completo || c.username}`;
       const infHtml = c.infracoes.map(inf => `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">#${inf.anotacao_id}</span>`).join(' &nbsp;·&nbsp; ');
       return `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
@@ -7308,7 +7308,8 @@
         CURSO DE FORMAÇÃO DE OFICIAIS BM 2025 - CFO ABM/${anoAtual}
       </div>
       <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
-        DESCONTOS DE PONTOS - ${mesNome} DE ${ano} — TURMA ${turma}
+        DESCONTOS DE NOTA DE COMPORTAMENTO REFERENCIADOS PELO ANEXO I DO CÓDIGO DE ÉTICA DO CBMPA<br>
+        <span style="font-size:11px;">${mesNome} DE ${ano} — TURMA ${turma}</span>
       </div>
       <div style="font-size:10px;color:#444;margin-top:2px;">${cadeteOrder.length} cadete(s) · ${json.data.length} desconto(s)</div>
     </div>
