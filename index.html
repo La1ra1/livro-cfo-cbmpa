@@ -2323,6 +2323,7 @@
         <div style="padding:0 20px 20px;display:flex;gap:10px;">
           <button class="btn btn-primary" onclick="gerarRelatorio()">↓ Gerar Relatório</button>
           <button class="btn btn-ghost" id="btn-exportar-csv" style="display:none;" onclick="exportarCSV()">↓ Exportar CSV</button>
+          <button class="btn btn-ghost" id="btn-exportar-nota" style="display:none;" onclick="exportarNotaComportamento()">↓ Nota de Comportamento</button>
         </div>
         <div class="alert error" id="exp-error" style="margin:0 20px 16px;"></div>
       </div>
@@ -6094,6 +6095,7 @@
       '<tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>';
     document.getElementById('exp-resultado').style.display = 'block';
     document.getElementById('btn-exportar-csv').style.display = 'none';
+    document.getElementById('btn-exportar-nota').style.display = 'none';
 
     try {
       const res = await fetch(
@@ -6128,7 +6130,7 @@
       document.getElementById('tbody-exportar').innerHTML = json.data.map(r => {
         const desconto   = Number(r.desconto_total) || 0;
         const elogios    = Number(r.pontos_elogios) || 0;
-        const notaFinal  = 8 - desconto + elogios;
+        const notaFinal  = Math.min(10, Math.max(0, 8 - desconto + elogios));
         return `
         <tr>
           <td class="td-mono">${r.numero_geral ?? '—'}</td>
@@ -6143,7 +6145,7 @@
 
       const totalElogios = json.data.reduce((s, r) => s + (Number(r.pontos_elogios) || 0), 0);
       const mediaNotas   = json.data.length
-        ? (json.data.reduce((s, r) => s + (8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0)), 0) / json.data.length).toFixed(2)
+        ? (json.data.reduce((s, r) => s + Math.min(10, Math.max(0, 8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0))), 0) / json.data.length).toFixed(2)
         : '—';
       document.getElementById('exp-total-bar').innerHTML =
         `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
@@ -6153,6 +6155,7 @@
         </span>`;
 
       document.getElementById('btn-exportar-csv').style.display = 'inline-flex';
+      document.getElementById('btn-exportar-nota').style.display = 'inline-flex';
 
     } catch {
       errEl.textContent = 'Erro de conexão.';
@@ -6174,7 +6177,7 @@
     const rows = _expData.map(r => {
       const desconto  = Number(r.desconto_total) || 0;
       const elogios   = Number(r.pontos_elogios) || 0;
-      const notaFinal = (8 - desconto + elogios).toFixed(2);
+      const notaFinal = Math.min(10, Math.max(0, 8 - desconto + elogios)).toFixed(2);
       return [
         r.numero_geral ?? '',
         r.username,
@@ -7214,6 +7217,123 @@
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);font-family:monospace;font-size:11px;">ERRO AO CARREGAR</td></tr>`;
       btnCsv.style.display = 'none';
     }
+  }
+
+  async function exportarNotaComportamento() {
+    if (!_expData || !_expData.length) return;
+
+    const mes   = document.getElementById('exp-mes').value;
+    const ano   = document.getElementById('exp-ano').value;
+    const turma = document.getElementById('exp-turma').value;
+    const mesesNomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                        'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const mesNome = mesesNomes[mes] || mes;
+
+    const toBase64 = async (src) => {
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        return await new Promise(res => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.readAsDataURL(blob);
+        });
+      } catch { return ''; }
+    };
+    const [abmBase64, cbmpaBase64] = await Promise.all([toBase64('ABM.png'), toBase64('CBMPA.png')]);
+
+    const rows = _expData.map(r => {
+      const desconto  = Number(r.desconto_total) || 0;
+      const elogios   = Number(r.pontos_elogios) || 0;
+      const nota      = Math.min(10, Math.max(0, 8 - desconto + elogios));
+      return { ...r, nota };
+    });
+
+    const tabelaRows = rows.map((r, i) => `
+      <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
+        <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${r.numero_geral ?? '—'}</td>
+        <td style="padding:4px 6px;border:1px solid #bbb;font-weight:600;font-size:12px;">${r.username}</td>
+        <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${r.pel ?? '—'}</td>
+        <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-weight:700;font-size:12px;">${r.nota.toFixed(2)}</td>
+        <td style="padding:0;border:1px solid #bbb;height:24px;width:160px;"></td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Nota de Comportamento — Turma ${turma} · ${mesNome}/${ano}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; color: #111; font-size: 12px; }
+    @media print {
+      .no-print { display: none !important; }
+      @page { margin: 8mm 12mm; }
+    }
+  </style>
+</head>
+<body style="padding:10px 20px;">
+
+  <!-- Cabeçalho institucional -->
+  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px;gap:12px;">
+    <div style="flex-shrink:0;">
+      ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:52px;width:auto;display:block;" />` : ''}
+    </div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.6;">
+        Corpo de Bombeiros Militar do Pará<br>
+        Coordenadoria Estadual de Proteção e Defesa Civil<br>
+        Departamento-Geral de Cultura, Educação e Pesquisa<br>
+        Academia Bombeiro Militar
+      </div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">
+        Nota de Comportamento — ${mesNome}/${ano}
+      </div>
+      <div style="font-size:11px;color:#444;margin-top:2px;">Turma ${turma} &nbsp;·&nbsp; ${rows.length} cadete(s)</div>
+    </div>
+    <div style="flex-shrink:0;">
+      ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:52px;width:auto;display:block;" />` : ''}
+    </div>
+  </div>
+
+  <!-- Tabela de notas e assinaturas -->
+  <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead>
+      <tr style="background:#e8e8e8;">
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:36px;">Nº</th>
+        <th style="text-align:left;padding:5px 6px;border:1px solid #bbb;">Nome de Guerra</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:40px;">Pel</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:70px;">Nota Final</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:160px;">Assinatura do Cadete</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tabelaRows}
+    </tbody>
+  </table>
+
+  <div style="margin-top:28px;display:flex;justify-content:flex-end;">
+    <div style="text-align:center;width:280px;">
+      <div style="border-top:1px solid #111;padding-top:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;">Assinatura do Coordenador</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;border-top:1px solid #ccc;padding-top:8px;font-size:9px;color:#aaa;">
+    Gerado em ${new Date().toLocaleString('pt-BR')} · Sistema de Controle do Corpo de Alunos
+  </div>
+
+  <div class="no-print" style="margin-top:20px;text-align:center;">
+    <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
+  </div>
+
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (win) win.focus();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   async function exportarPunicoesLista() {
