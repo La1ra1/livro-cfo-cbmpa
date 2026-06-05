@@ -7225,9 +7225,10 @@
     const mes   = document.getElementById('exp-mes').value;
     const ano   = document.getElementById('exp-ano').value;
     const turma = document.getElementById('exp-turma').value;
-    const mesesNomes = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                        'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const mesesNomes = ['','JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO',
+                        'JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
     const mesNome = mesesNomes[mes] || mes;
+    const anoAtual = new Date().getFullYear();
 
     const toBase64 = async (src) => {
       try {
@@ -7246,23 +7247,24 @@
       const desconto  = Number(r.desconto_total) || 0;
       const elogios   = Number(r.pontos_elogios) || 0;
       const nota      = Math.min(10, Math.max(0, 8 - desconto + elogios));
-      return { ...r, nota };
+      return { ...r, desconto, elogios, nota };
     });
 
     const tabelaRows = rows.map((r, i) => `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
         <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${r.numero_geral ?? '—'}</td>
         <td style="padding:4px 6px;border:1px solid #bbb;font-weight:600;font-size:12px;">${r.username}</td>
-        <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${r.pel ?? '—'}</td>
+        <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;color:#c0392b;">-${r.desconto}</td>
+        <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;color:#27ae60;">+${r.elogios}</td>
         <td style="padding:4px 6px;border:1px solid #bbb;text-align:center;font-weight:700;font-size:12px;">${r.nota.toFixed(2)}</td>
-        <td style="padding:0;border:1px solid #bbb;height:24px;width:160px;"></td>
+        <td style="padding:0;border:1px solid #bbb;height:32px;width:180px;"></td>
       </tr>`).join('');
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Nota de Comportamento — Turma ${turma} · ${mesNome}/${ano}</title>
+  <title>NOTA DE COMPORTAMENTO ESCOLAR - ${mesNome} DE ${ano}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; color: #111; font-size: 12px; }
@@ -7280,16 +7282,16 @@
       ${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:52px;width:auto;display:block;" />` : ''}
     </div>
     <div style="flex:1;text-align:center;">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.6;">
-        Corpo de Bombeiros Militar do Pará<br>
-        Coordenadoria Estadual de Proteção e Defesa Civil<br>
-        Departamento-Geral de Cultura, Educação e Pesquisa<br>
-        Academia Bombeiro Militar
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.7;">
+        CORPO DE BOMBEIROS MILITAR DO PARÁ<br>
+        COORDENADORIA ESTADUAL DE PROTEÇÃO E DEFESA CIVIL<br>
+        DEPARTAMENTO-GERAL DE CULTURA, EDUCAÇÃO E PESQUISA<br>
+        ACADEMIA BOMBEIRO MILITAR<br>
+        CURSO DE FORMAÇÃO DE OFICIAIS BM 2025 - CFO ABM/${anoAtual}
       </div>
-      <div style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:6px;">
-        Nota de Comportamento — ${mesNome}/${ano}
+      <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
+        NOTA DE COMPORTAMENTO ESCOLAR - ${mesNome} DE ${ano}
       </div>
-      <div style="font-size:11px;color:#444;margin-top:2px;">Turma ${turma} &nbsp;·&nbsp; ${rows.length} cadete(s)</div>
     </div>
     <div style="flex-shrink:0;">
       ${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:52px;width:auto;display:block;" />` : ''}
@@ -7301,10 +7303,11 @@
     <thead>
       <tr style="background:#e8e8e8;">
         <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:36px;">Nº</th>
-        <th style="text-align:left;padding:5px 6px;border:1px solid #bbb;">Nome de Guerra</th>
-        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:40px;">Pel</th>
-        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:70px;">Nota Final</th>
-        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:160px;">Assinatura do Cadete</th>
+        <th style="text-align:left;padding:5px 6px;border:1px solid #bbb;">NOME DE GUERRA</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:60px;">DESCONTO</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:60px;">ELOGIOS</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:70px;">NOTA FINAL</th>
+        <th style="text-align:center;padding:5px 6px;border:1px solid #bbb;width:180px;">ASSINATURA</th>
       </tr>
     </thead>
     <tbody>
@@ -7312,9 +7315,13 @@
     </tbody>
   </table>
 
-  <div style="margin-top:28px;display:flex;justify-content:flex-end;">
-    <div style="text-align:center;width:280px;">
-      <div style="border-top:1px solid #111;padding-top:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;">Assinatura do Coordenador</div>
+  <div style="margin-top:36px;display:flex;justify-content:flex-end;">
+    <div style="text-align:center;width:320px;">
+      <div style="height:48px;"></div>
+      <div style="border-top:1.5px solid #111;padding-top:6px;font-size:11px;line-height:1.7;">
+        Matheus Barbosa <strong>Padilha</strong> - <strong>1º TEN</strong> QOBM<br>
+        <strong>Chefe da Seção do Corpo de Alunos ABM</strong>
+      </div>
     </div>
   </div>
 
