@@ -3444,6 +3444,13 @@
       $('app').classList.add('visible');
 
       if (!termsData.accepted) {
+        const errEl = $('terms-modal-error');
+        errEl.style.display = 'none';
+        errEl.textContent = '';
+        $('chk-terms-modal').checked = false;
+        $('btn-accept-terms').disabled = true;
+        $('btn-accept-terms').style.opacity = '.45';
+        $('btn-accept-terms').style.cursor = 'not-allowed';
         $('modal-terms').classList.add('open');
       }
       if (window.innerWidth <= 640) {
