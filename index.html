@@ -3469,12 +3469,14 @@
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token()}` },
       });
-      if (!res.ok) throw new Error();
+      let detail = `HTTP ${res.status}`;
+      try { const d = await res.json(); detail = JSON.stringify(d); } catch {}
+      if (!res.ok) throw new Error(detail);
       $('modal-terms').classList.remove('open');
       $('chk-terms-modal').checked = false;
-    } catch {
+    } catch (err) {
       const errEl = $('terms-modal-error');
-      errEl.textContent = 'Não foi possível registrar o aceite. Tente novamente.';
+      errEl.textContent = `Erro: ${err.message}`;
       errEl.style.display = 'block';
       btn.disabled = false;
       btn.style.opacity = '1';
