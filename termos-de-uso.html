@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="ABM.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Termos de Uso — CFO Academia Bombeiro Militar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0a0c0f;
+      --surface:   #111318;
+      --surface2:  #181c22;
+      --border:    #1e2229;
+      --border2:   #2a3040;
+      --accent:    #c8a84b;
+      --accent2:   #8b6f2e;
+      --text:      #e8e4d9;
+      --text-dim:  #c8cdd8;
+      --muted:     #7a8394;
+      --danger:    #c0392b;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+      line-height: 1.7;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    header img { width: 64px; height: auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+
+    .header-text h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .header-text p {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: .5px;
+    }
+
+    .version-badge {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .warning-box {
+      background: rgba(192,57,43,.1);
+      border: 1px solid rgba(192,57,43,.35);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 40px;
+      font-size: .9rem;
+      color: #e07070;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .warning-box .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    section {
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      counter-increment: section;
+    }
+
+    h2::before {
+      content: counter(section, decimal-leading-zero) ". ";
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .85rem;
+      color: var(--accent2);
+    }
+
+    body { counter-reset: section; }
+
+    p { font-size: .92rem; color: var(--text-dim); margin-bottom: 12px; }
+
+    ul, ol {
+      margin: 0 0 12px 20px;
+      font-size: .92rem;
+      color: var(--text-dim);
+    }
+
+    li { margin-bottom: 6px; }
+
+    strong { color: var(--text); font-weight: 600; }
+
+    .highlight-box {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: .9rem;
+      color: var(--text-dim);
+    }
+
+    .highlight-box strong { color: var(--accent); }
+
+    .legal-note {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--danger);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: .88rem;
+      color: #e07070;
+    }
+
+    footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: .8rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-size: .85rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-decoration: none;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      transition: opacity .15s;
+    }
+
+    .back-link:hover { opacity: .7; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <a href="index.html" class="back-link">← Voltar ao sistema</a>
+
+  <header>
+    <img src="ABM.png" alt="Brasão ABM" />
+    <div class="header-text">
+      <h1>Termos de Uso</h1>
+      <p>Academia Bombeiro Militar do Pará — Sistema de Controle do Corpo de Alunos</p>
+    </div>
+    <div class="version-badge">Versão 1.0 · Jun/2026</div>
+  </header>
+
+  <div class="warning-box">
+    <span class="icon">⚠</span>
+    <span>O uso deste sistema implica a <strong>aceitação integral e irrevogável</strong> destes Termos. Toda ação realizada com suas credenciais produz efeitos disciplinares reais e possui validade jurídica plena nos termos da legislação vigente.</span>
+  </div>
+
+  <!-- 1 -->
+  <section>
+    <h2>Identificação do sistema e do controlador</h2>
+    <p>O <strong>Sistema de Controle do Corpo de Alunos</strong> (doravante "Sistema") é uma plataforma digital de uso interno da <strong>Academia Bombeiro Militar do Pará (ABM/CBMPA)</strong>, destinada ao gerenciamento disciplinar do Curso de Formação de Oficiais (CFO).</p>
+    <p>O controlador dos dados e responsável operacional pelo Sistema é a <strong>ABM/CBMPA</strong>, com sede no município de <strong>Marituba, Estado do Pará</strong>, vinculada ao Corpo de Bombeiros Militar do Pará (CBMPA).</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2>Aceitação e vinculação do usuário</h2>
+    <p>Ao <strong>marcar a caixa de aceite e efetuar o login</strong> no Sistema, o usuário — identificado como Aluno Oficial, Instrutor, Oficial-do-Dia, Xerife, Coordenador ou Comandante — declara, de forma expressa, livre e informada, que:</p>
+    <ol>
+      <li>Leu e compreendeu integralmente estes Termos de Uso;</li>
+      <li>Concorda com todas as condições aqui estabelecidas;</li>
+      <li>Reconhece que suas credenciais de acesso (nome de usuário e senha) são de uso <strong>estritamente pessoal e intransferível</strong>;</li>
+      <li>Assume responsabilidade plena por <strong>todas as ações</strong> realizadas a partir de sua sessão autenticada, incluindo envio de requerimentos, respostas a memorandos, justificativas, recursos e interações com anotações disciplinares.</li>
+    </ol>
+    <div class="highlight-box">
+      <strong>Registro de aceite:</strong> O Sistema registra data, hora e identificador do usuário no momento do aceite. Esse registro constitui prova eletrônica do consentimento e poderá ser utilizado como elemento probatório em procedimentos disciplinares ou judiciais.
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2>Autoria das ações e não-repúdio</h2>
+    <p>Cada operação realizada no Sistema — envio de requerimento, resposta a memorando, submissão de justificativa, interposição de recurso, registro de elogio ou anotação disciplinar — é <strong>vinculada de forma automática e indelével</strong> à conta autenticada que a executou, mediante:</p>
+    <ul>
+      <li>Registro do identificador único do usuário (<em>user_id</em>);</li>
+      <li>Timestamp de data e hora no fuso horário de Brasília (UTC-3);</li>
+      <li>Log de sessão com token de autenticação (JWT) e endereço IP de origem.</li>
+    </ul>
+    <div class="legal-note">
+      <strong>Cláusula de não-repúdio:</strong> O usuário <strong>não poderá alegar, em sede administrativa ou judicial</strong>, desconhecimento ou não-autoria de ação realizada sob suas credenciais. O registro eletrônico produzido pelo Sistema possui valor probatório equivalente ao de documento assinado, nos termos do art. 10, §2º do Decreto nº 10.278/2020 e do art. 6º da Lei nº 14.063/2020, aplicados por analogia ao ambiente de sistema de informação institucional.
+    </div>
+    <p>A única excludente de responsabilidade aceita é o <strong>comunicado formal e comprovado</strong> de comprometimento de credenciais ao responsável pelo Sistema, <em>antes</em> da ocorrência da ação questionada. Comunicados posteriores ao fato não produzirão efeito liberatório.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2>Credenciais de acesso — guarda e sigilo</h2>
+    <p>O usuário é o único responsável pela guarda, confidencialidade e uso de seu nome de usuário e senha. São expressamente vedadas:</p>
+    <ul>
+      <li>A divulgação da senha a terceiros, ainda que a outros alunos do CFO;</li>
+      <li>O empréstimo ou compartilhamento de credenciais;</li>
+      <li>O acesso ao Sistema em nome de outro usuário;</li>
+      <li>A utilização de mecanismos automatizados (bots, scripts) sem autorização expressa da administração do Sistema.</li>
+    </ul>
+    <p>O descumprimento destas obrigações configura <strong>infração disciplinar grave</strong> e poderá ensejar responsabilidade civil e/ou criminal, além das sanções previstas no Regulamento Disciplinar do CBMPA.</p>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <h2>Efeitos disciplinares das ações no sistema</h2>
+    <p>O usuário reconhece que as seguintes operações produzem efeitos disciplinares diretos sobre a sua <strong>Nota de Comportamento (NC)</strong> e, consequentemente, sobre sua <strong>classificação de antiguidade</strong> no CFO:</p>
+    <ul>
+      <li><strong>Anotações disciplinares:</strong> registros de transgressões que podem resultar em desconto de pontos na NC;</li>
+      <li><strong>Justificativas:</strong> defesa escrita apresentada pelo aluno em resposta a uma anotação — o conteúdo e o prazo de envio influenciam o veredito;</li>
+      <li><strong>Requerimentos:</strong> pedidos formais enviados pelo aluno à administração — produzem efeitos a partir do momento do envio registrado no Sistema;</li>
+      <li><strong>Recursos:</strong> impugnações de vereditos — o prazo de interposição é contado a partir do timestamp registrado na anotação com veredito;</li>
+      <li><strong>Respostas a memorandos:</strong> manifestações do aluno em procedimentos disciplinares — vinculam o aluno ao teor declarado.</li>
+    </ul>
+    <div class="highlight-box">
+      <strong>Prazo e oportunidade:</strong> A inércia do usuário — não responder a um memorando, não enviar justificativa, não interpor recurso dentro do prazo exibido no Sistema — é tratada como manifestação tácita de concordância com o ato impugnável, sem possibilidade de alegação de desconhecimento posterior, dada a disponibilidade permanente do Sistema e o envio de notificações por e-mail ao endereço cadastrado.
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2>Autenticidade e integridade dos registros</h2>
+    <p>O Sistema mantém registros históricos imutáveis de todas as transações. O usuário reconhece que:</p>
+    <ul>
+      <li>Os logs e registros armazenados no banco de dados do Sistema constituem <strong>prova documental</strong> apta a embasar decisões disciplinares e, se necessário, processos judiciais;</li>
+      <li>Não é possível alterar retroativamente dados já submetidos sem autorização expressa de usuário com perfil de <em>coordenador</em> ou <em>comandante</em>, com registro do responsável pela alteração;</li>
+      <li>A exportação de dados do Sistema gera relatórios com metadados de autoria e data, assinados pelo Sistema, que poderão ser juntados como prova em qualquer instância.</li>
+    </ul>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2>Proteção de dados pessoais (LGPD)</h2>
+    <p>O tratamento de dados pessoais realizado pelo Sistema observa a <strong>Lei nº 13.709/2018 (LGPD)</strong>. Os dados coletados — nome, matrícula, registro de ações, endereço IP e timestamps — são utilizados exclusivamente para as finalidades disciplinares e administrativas inerentes ao CFO.</p>
+    <p>O usuário tem direito a:</p>
+    <ul>
+      <li>Confirmar a existência de tratamento e acessar seus dados pessoais registrados;</li>
+      <li>Solicitar correção de dados incompletos, inexatos ou desatualizados;</li>
+      <li>Obter informação sobre compartilhamento de dados com outras entidades públicas, quando aplicável.</li>
+    </ul>
+    <p>Solicitações relacionadas à LGPD devem ser encaminhadas ao responsável pelo Sistema por meio dos canais oficiais da ABM/CBMPA.</p>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <h2>Disponibilidade do sistema e notificações</h2>
+    <p>A ABM/CBMPA empenhará esforços razoáveis para manter o Sistema disponível, mas não garante disponibilidade ininterrupta. <strong>Indisponibilidade técnica devidamente comprovada</strong> poderá ser considerada como excludente de responsabilidade pelo descumprimento de prazo, desde que comunicada ao responsável pelo Sistema imediatamente após a restauração do serviço.</p>
+    <p>Notificações sobre anotações, memorandos e prazos são enviadas ao e-mail cadastrado. O usuário é responsável por manter seu endereço de e-mail atualizado e por verificar regularmente a caixa de entrada, incluindo a pasta de spam.</p>
+  </section>
+
+  <!-- 9 -->
+  <section>
+    <h2>Sanções pelo descumprimento</h2>
+    <p>O descumprimento de qualquer cláusula destes Termos sujeita o usuário a:</p>
+    <ul>
+      <li>Bloqueio imediato de acesso ao Sistema;</li>
+      <li>Abertura de procedimento disciplinar, nos termos do Regulamento Disciplinar do CBMPA;</li>
+      <li>Desconto adicional na Nota de Comportamento, conforme gravidade da infração apurada;</li>
+      <li>Responsabilização civil e/ou criminal, quando a conduta configurar ilícito previsto na legislação brasileira, em especial na Lei nº 12.737/2012 (Crimes Informáticos) e no Código Penal Militar.</li>
+    </ul>
+  </section>
+
+  <!-- 10 -->
+  <section>
+    <h2>Alterações dos termos</h2>
+    <p>A ABM/CBMPA reserva-se o direito de alterar estes Termos a qualquer tempo. Alterações serão comunicadas por meio de aviso exibido na tela de login do Sistema e/ou por e-mail. O uso continuado do Sistema após a comunicação implica aceitação das novas condições.</p>
+  </section>
+
+  <!-- 11 -->
+  <section>
+    <h2>Foro e legislação aplicável</h2>
+    <p>Estes Termos são regidos pela legislação brasileira. Para dirimir quaisquer controvérsias decorrentes de sua aplicação, fica eleito o <strong>Foro da Comarca de Belém, Estado do Pará</strong> — comarca à qual o município de Marituba, sede da ABM/CBMPA, é vinculado, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>
+    <p>Aplicam-se subsidiariamente:</p>
+    <ul>
+      <li>Lei nº 13.709/2018 — Lei Geral de Proteção de Dados (LGPD);</li>
+      <li>Lei nº 14.063/2020 — Assinaturas Eletrônicas em interações com entes públicos;</li>
+      <li>Decreto nº 10.278/2020 — Digitalização de documentos;</li>
+      <li>Lei nº 12.737/2012 — Crimes contra dispositivos informáticos;</li>
+      <li>Decreto-Lei nº 1.001/1969 — Código Penal Militar;</li>
+      <li>Regulamento Disciplinar do Corpo de Bombeiros Militar do Pará.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Academia Bombeiro Militar do Pará — Corpo de Bombeiros Militar do Pará</p>
+    <p>Sistema de Controle do Corpo de Alunos · Versão 1.0 · Vigência a partir de junho de 2026</p>
+    <p style="margin-top:8px; font-size:.75rem;">Este documento foi elaborado para uso interno institucional e não substitui assessoria jurídica especializada.</p>
+  </footer>
+
+</div>
+</body>
+</html>
