@@ -1221,7 +1221,17 @@
         <label>Senha</label>
         <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
       </div>
-      <button class="btn btn-primary btn-full" id="btn-login">ENTRAR NO SISTEMA</button>
+      <div class="field" style="margin-top:20px;margin-bottom:20px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.78rem;letter-spacing:.5px;text-transform:none;color:var(--text-dim);line-height:1.5;">
+          <input type="checkbox" id="chk-terms" style="width:16px;min-width:16px;height:16px;margin-top:2px;accent-color:var(--accent);cursor:pointer;" />
+          <span>
+            Li e aceito os
+            <a href="termos-de-uso.html" target="_blank" style="color:var(--accent);text-decoration:underline;">Termos de Uso</a>
+            do Sistema de Controle do Corpo de Alunos, reconhecendo que todas as ações realizadas com minhas credenciais são de minha exclusiva responsabilidade e produzem efeitos disciplinares.
+          </span>
+        </label>
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-login" disabled style="opacity:.45;cursor:not-allowed;">ENTRAR NO SISTEMA</button>
     </div>
   </div>
 </div>
@@ -3255,8 +3265,18 @@
 
   // ── INIT LISTENERS (DOM ready) ──────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
+    // Terms checkbox — habilita botão de login apenas após aceite
+    const chkTerms = $('chk-terms');
+    const btnLogin = $('btn-login');
+    chkTerms.addEventListener('change', () => {
+      const accepted = chkTerms.checked;
+      btnLogin.disabled = !accepted;
+      btnLogin.style.opacity = accepted ? '1' : '.45';
+      btnLogin.style.cursor  = accepted ? 'pointer' : 'not-allowed';
+    });
+
     $('btn-login').addEventListener('click', doLogin);
-    $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('chk-terms').checked) { showAlert('login-error', 'Você precisa aceitar os Termos de Uso para continuar.'); } else if (e.key === 'Enter') doLogin(); });
       $('btn-pw-submit').addEventListener('click', handleChangePw);
     document.getElementById('modal-anot').addEventListener('click', e => {
       if (e.target === document.getElementById('modal-anot')) closeAnotModal();
@@ -3297,6 +3317,10 @@
 
   async function doLogin() {
     hideAlert('login-error');
+    if (!$('chk-terms').checked) {
+      showAlert('login-error', 'Você precisa aceitar os Termos de Uso para continuar.');
+      return;
+    }
     const username = $('login-username').value.trim();
     const password = $('login-password').value;
 
