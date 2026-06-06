@@ -7319,7 +7319,7 @@
       cadeteMap[key].infracoes.push({ codigo: r.infracao_codigo, desconto: r.desconto, anotacao_id: r.anotacao_id });
     });
 
-    const tabelaRows = cadeteOrder.map((key, i) => {
+    const allTabelaRows = cadeteOrder.map((key, i) => {
       const c = cadeteMap[key];
       const nome = `CAD 1° ANO BM ${boldMatch(c.nome_completo || c.username, c.username)}`;
       // Agrupar em pares: 2 itens por linha, separados por " · ", linhas centralizadas
@@ -7338,7 +7338,10 @@
         <td style="padding:3px 5px;border:1px solid #bbb;font-size:9px;font-family:monospace;color:#c0392b;text-align:center;line-height:1.7;">${infHtml}</td>
         <td style="padding:3px 5px;border:1px solid #bbb;font-size:9px;font-family:monospace;font-weight:700;color:#c0392b;text-align:center;width:55px;">-${total}</td>
       </tr>`;
-    }).join('');
+    });
+    const tailCount = Math.min(3, allTabelaRows.length);
+    const mainTabelaRows = allTabelaRows.slice(0, allTabelaRows.length - tailCount).join('');
+    const tailTabelaRows = allTabelaRows.slice(allTabelaRows.length - tailCount).join('');
 
     const anoAtual = new Date().getFullYear();
     const html = `<!DOCTYPE html>
@@ -7380,15 +7383,19 @@
         <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:55px;font-size:9px;">TOTAL</th>
       </tr>
     </thead>
-    <tbody>${tabelaRows}</tbody>
+    <tbody>${mainTabelaRows}</tbody>
   </table>
-
-  <div style="margin-top:36px;display:flex;justify-content:center;">
-    <div style="text-align:center;width:320px;">
-      <div style="height:48px;"></div>
-      <div style="border-top:1.5px solid #111;padding-top:6px;font-size:11px;line-height:1.7;">
-        Matheus Barbosa <strong>Padilha</strong> - <strong>1º TEN QOBM</strong><br>
-        <strong>Chefe da Seção do Corpo de Alunos ABM</strong>
+  <div style="page-break-inside:avoid;">
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <tbody>${tailTabelaRows}</tbody>
+    </table>
+    <div style="margin-top:36px;display:flex;justify-content:center;">
+      <div style="text-align:center;width:320px;">
+        <div style="height:48px;"></div>
+        <div style="border-top:1.5px solid #111;padding-top:6px;font-size:11px;line-height:1.7;">
+          Matheus Barbosa <strong>Padilha</strong> - <strong>1º TEN QOBM</strong><br>
+          <strong>Chefe da Seção do Corpo de Alunos ABM</strong>
+        </div>
       </div>
     </div>
   </div>
@@ -7452,7 +7459,7 @@
       return { ...r, desconto, elogios, nota, nomeHtml };
     });
 
-    const tabelaRows = rows.map((r, i) => `
+    const allNotaRows = rows.map((r, i) => `
       <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:9px;">${r.numero_geral ?? '—'}</td>
         <td style="padding:2px 4px;border:1px solid #bbb;font-size:9px;">${r.nomeHtml}</td>
@@ -7460,7 +7467,10 @@
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:9px;color:#27ae60;">+${r.elogios}</td>
         <td style="padding:2px 4px;border:1px solid #bbb;text-align:center;font-weight:700;font-size:9px;">${r.nota.toFixed(2)}</td>
         <td style="padding:0;border:1px solid #bbb;height:20px;width:180px;"></td>
-      </tr>`).join('');
+      </tr>`);
+    const notaTailCount = Math.min(3, allNotaRows.length);
+    const mainNotaRows = allNotaRows.slice(0, allNotaRows.length - notaTailCount).join('');
+    const tailNotaRows = allNotaRows.slice(allNotaRows.length - notaTailCount).join('');
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -7512,17 +7522,19 @@
         <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;width:180px;">ASSINATURA</th>
       </tr>
     </thead>
-    <tbody>
-      ${tabelaRows}
-    </tbody>
+    <tbody>${mainNotaRows}</tbody>
   </table>
-
-  <div style="margin-top:36px;display:flex;justify-content:center;">
-    <div style="text-align:center;width:320px;">
-      <div style="height:48px;"></div>
-      <div style="border-top:1.5px solid #111;padding-top:6px;font-size:11px;line-height:1.7;">
-        Matheus Barbosa <strong>Padilha</strong> - <strong>1º TEN QOBM</strong><br>
-        <strong>Chefe da Seção do Corpo de Alunos ABM</strong>
+  <div style="page-break-inside:avoid;">
+    <table style="width:100%;border-collapse:collapse;font-size:9px;">
+      <tbody>${tailNotaRows}</tbody>
+    </table>
+    <div style="margin-top:36px;display:flex;justify-content:center;">
+      <div style="text-align:center;width:320px;">
+        <div style="height:48px;"></div>
+        <div style="border-top:1.5px solid #111;padding-top:6px;font-size:11px;line-height:1.7;">
+          Matheus Barbosa <strong>Padilha</strong> - <strong>1º TEN QOBM</strong><br>
+          <strong>Chefe da Seção do Corpo de Alunos ABM</strong>
+        </div>
       </div>
     </div>
   </div>
