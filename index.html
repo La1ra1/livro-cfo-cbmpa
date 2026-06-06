@@ -2736,10 +2736,24 @@
             </select>
           </div>
           <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Turma</label>
+            <input type="number" id="pun-filtro-turma" class="form-ctrl" placeholder="Turma" style="font-family:'IBM Plex Mono',monospace;font-size:13px;width:80px;" oninput="loadPunicoesList()" />
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Pelotão</label>
+            <select id="pun-filtro-pel" class="role-select" onchange="loadPunicoesList()">
+              <option value="">Todos</option>
+              <option value="1º">1º</option>
+              <option value="2º">2º</option>
+              <option value="3º">3º</option>
+              <option value="4º">4º</option>
+            </select>
+          </div>
+          <div>
             <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Data de Cumprimento</label>
             <input type="date" id="pun-filtro-data" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:160px;" oninput="loadPunicoesList()" />
           </div>
-          <button class="btn btn-ghost btn-sm" style="align-self:flex-end;" onclick="clearSd('sd-pun-cadete',()=>{});document.getElementById('pun-filtro-data').value='';document.getElementById('pun-filtro-tipo').value='';loadPunCalendario();loadPunicoesList()">✕ Limpar</button>
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-end;" onclick="clearSd('sd-pun-cadete',()=>{});document.getElementById('pun-filtro-data').value='';document.getElementById('pun-filtro-tipo').value='';document.getElementById('pun-filtro-turma').value='';document.getElementById('pun-filtro-pel').value='';loadPunCalendario();loadPunicoesList()">✕ Limpar</button>
         </div>
       </div>
 
@@ -7206,6 +7220,8 @@
   async function loadPunicoesList() {
     const data     = document.getElementById('pun-filtro-data').value;
     const tipo     = document.getElementById('pun-filtro-tipo').value;
+    const turma    = document.getElementById('pun-filtro-turma').value;
+    const pel      = document.getElementById('pun-filtro-pel').value;
     const tbody    = document.getElementById('tbody-punicoes');
     const titulo   = document.getElementById('pun-lista-titulo');
     const btnCsv   = document.getElementById('btn-pun-export-csv');
@@ -7226,6 +7242,8 @@
       if (tipo) params.set('resultado', tipo);
       const cadeteId = getSdValue('sd-pun-cadete');
       if (cadeteId) params.set('cadete_id', cadeteId);
+      if (turma) params.set('turma', turma);
+      if (pel) params.set('pel', pel);
       const res  = await fetch(`${API}/punicoes/lista?${params}`, {
         headers: { 'Authorization': `Bearer ${token()}` }
       });
@@ -7376,17 +7394,18 @@
   </div>
 
   <table style="width:100%;border-collapse:collapse;font-size:10px;">
+    <colgroup><col style="width:42%"><col><col style="width:55px"></colgroup>
     <thead>
       <tr style="background:#e8e8e8;">
-        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;width:42%;font-size:9px;">NOME</th>
+        <th style="text-align:left;padding:4px 5px;border:1px solid #bbb;font-size:9px;">NOME</th>
         <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;font-size:9px;">INFRAÇÕES E DESCONTOS</th>
-        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;width:55px;font-size:9px;">TOTAL</th>
+        <th style="text-align:center;padding:4px 5px;border:1px solid #bbb;font-size:9px;">TOTAL</th>
       </tr>
     </thead>
     <tbody>${mainTabelaRows}</tbody>
   </table>
   <div style="page-break-inside:avoid;">
-    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+    <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:-1px;">
       <colgroup><col style="width:42%"><col><col style="width:55px"></colgroup>
       <tbody>${tailTabelaRows}</tbody>
     </table>
@@ -7513,20 +7532,21 @@
 
   <!-- Tabela de notas e assinaturas -->
   <table style="width:100%;border-collapse:collapse;font-size:9px;">
+    <colgroup><col style="width:30px"><col><col style="width:52px"><col style="width:52px"><col style="width:60px"><col style="width:180px"></colgroup>
     <thead>
       <tr style="background:#e8e8e8;">
-        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;width:30px;">Nº</th>
+        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;">Nº</th>
         <th style="text-align:left;padding:3px 4px;border:1px solid #bbb;">NOME DE GUERRA</th>
-        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;width:52px;">DESCONTO</th>
-        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;width:52px;">ELOGIOS</th>
-        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;width:60px;">NOTA FINAL</th>
-        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;width:180px;">ASSINATURA</th>
+        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;">DESCONTO</th>
+        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;">ELOGIOS</th>
+        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;">NOTA FINAL</th>
+        <th style="text-align:center;padding:3px 4px;border:1px solid #bbb;">ASSINATURA</th>
       </tr>
     </thead>
     <tbody>${mainNotaRows}</tbody>
   </table>
   <div style="page-break-inside:avoid;">
-    <table style="width:100%;border-collapse:collapse;font-size:9px;">
+    <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:-1px;">
       <colgroup><col style="width:30px"><col><col style="width:52px"><col style="width:52px"><col style="width:60px"><col style="width:180px"></colgroup>
       <tbody>${tailNotaRows}</tbody>
     </table>
@@ -7622,7 +7642,7 @@
           <tbody>${mainRows}</tbody>
         </table>
         <div style="page-break-inside:avoid;">
-          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:-1px;">
             ${_punColgroup}
             <tbody>${tailRows}</tbody>
           </table>
