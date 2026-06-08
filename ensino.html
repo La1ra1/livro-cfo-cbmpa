@@ -411,7 +411,7 @@
       </div>
     </section>
 
-    <!-- ── LANÇAR DISCIPLINA (B4) ── -->
+    <!-- ── LANÇAR DISCIPLINA (B3) ── -->
     <section class="section" id="section-lancar">
       <div class="page-header">
         <div>
@@ -533,8 +533,8 @@
     $('top-name').textContent   = _user.username;
     $('top-role').textContent   = roleLabel(_user.role);
 
-    // Mostrar aba de lançamento apenas para B4
-    if (_user.sub_role === 'B4') {
+    // Mostrar aba de lançamento apenas para B3
+    if (_user.sub_role === 'B3') {
       $('nav-lancar').style.display = 'block';
     }
 
@@ -828,7 +828,7 @@
       </table>`;
   }
 
-  // ── LANÇAR DISCIPLINA (B4) ────────────────────────────────
+  // ── LANÇAR DISCIPLINA (B3) ────────────────────────────────
   let _disciplinaTypes  = [];
   let _disponiveisCache = [];
 
