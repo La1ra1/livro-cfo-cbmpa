@@ -446,7 +446,7 @@
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
               <label>Disciplina</label>
-              <select id="lancar-tipo" disabled>
+              <select id="lancar-tipo" disabled onchange="onTipoChange()">
                 <option value="">Selecione primeiro o curso</option>
               </select>
             </div>
@@ -829,7 +829,8 @@
   }
 
   // ── LANÇAR DISCIPLINA (B4) ────────────────────────────────
-  let _disciplinaTypes = [];
+  let _disciplinaTypes   = [];
+  let _disponiveisCache  = [];
 
   async function loadLancarForm() {
     const resTypes = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
@@ -838,6 +839,7 @@
   }
 
   function resetLancarForm() {
+    _disponiveisCache = [];
     $('lancar-turma').value     = '';
     $('lancar-curso').innerHTML = '<option value="">Selecione primeiro a turma</option>';
     $('lancar-curso').disabled  = true;
@@ -850,6 +852,7 @@
 
   async function onTurmaChange() {
     const id_turma = $('lancar-turma').value;
+    _disponiveisCache = [];
     $('lancar-curso').innerHTML = '<option value="">Selecione o curso...</option>';
     $('lancar-curso').disabled  = true;
     $('lancar-tipo').innerHTML  = '<option value="">Selecione primeiro o curso</option>';
@@ -857,17 +860,21 @@
     $('lancar-tipo-info').style.display = 'none';
     if (!id_turma) return;
 
-    // Buscar tipos disponíveis para esta turma e extrair cursos únicos
-    const res = await fetch(`${API}/disciplina_types/disponiveis?id_turma=${id_turma}`, { headers: { Authorization: `Bearer ${token()}` } });
-    if (!res.ok) return;
-    const disponiveis = await res.json();
+    const res = await fetch(`${API}/disciplina_types/disponiveis?id_turma=${id_turma}`, {
+      headers: { Authorization: `Bearer ${token()}` },
+    });
+    if (!res.ok) {
+      $('lancar-curso').innerHTML = '<option value="">Erro ao carregar</option>';
+      return;
+    }
+    _disponiveisCache = await res.json();
 
-    if (!disponiveis.length) {
+    if (!_disponiveisCache.length) {
       $('lancar-curso').innerHTML = '<option value="">Todas as disciplinas já cadastradas</option>';
       return;
     }
 
-    const cursos = [...new Set(disponiveis.map(t => t.curso).filter(Boolean))].sort();
+    const cursos = [...new Set(_disponiveisCache.map(t => t.curso).filter(Boolean))].sort();
     const sel = $('lancar-curso');
     sel.innerHTML = '<option value="">Selecione o curso...</option>';
     cursos.forEach(c => {
@@ -876,8 +883,6 @@
       sel.appendChild(o);
     });
     sel.disabled = false;
-    // Guardar os disponíveis para filtrar no próximo passo
-    sel._disponiveis = disponiveis;
   }
 
   function onCursoChange() {
@@ -887,23 +892,19 @@
     $('lancar-tipo-info').style.display = 'none';
     if (!curso) { sel.disabled = true; return; }
 
-    const disponiveis = $('lancar-curso')._disponiveis || [];
-    const filtrados   = disponiveis.filter(t => t.curso === curso);
+    const filtrados = _disponiveisCache.filter(t => t.curso === curso);
     filtrados.forEach(t => {
       const o = document.createElement('option');
       o.value = t.id;
       o.textContent = `${t.semestre}º · ${t.nome}`;
       sel.appendChild(o);
     });
-    sel.disabled  = false;
-    sel.onchange  = onTipoChange;
-    sel._tipos    = filtrados;
+    sel.disabled = false;
   }
 
   function onTipoChange() {
     const id   = parseInt($('lancar-tipo').value);
-    const sel  = $('lancar-tipo');
-    const tipo = (sel._tipos || _disciplinaTypes).find(t => t.id === id);
+    const tipo = _disponiveisCache.find(t => t.id === id) || _disciplinaTypes.find(t => t.id === id);
     if (!tipo) { $('lancar-tipo-info').style.display = 'none'; return; }
     $('lancar-info-semestre').textContent = `${tipo.semestre}º Semestre`;
     $('lancar-info-horas').textContent    = `${tipo.horas_aula} h/a`;
