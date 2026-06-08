@@ -660,6 +660,7 @@
       <a href="index.html"          class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
       <a href="requerimentos.html" class="topbar-nav-link" style="color:var(--accent);border-bottom:2px solid var(--accent);">Requerimentos</a>
       <a href="ordens_em_vigor.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
+      <a href="ensino.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ensino</a>
     </nav>
     <div class="topbar-user">
       <div style="text-align:right;">
@@ -1450,6 +1451,8 @@
         errEl.textContent = 'Data inválida. Use o formato DD/MM/AAAA.'; errEl.classList.add('show'); return;
       }
     }
+
+    if (!confirm('Confirma o envio deste requerimento?')) return;
 
     const body = { categoria_id: Number(catId), titulo, descricao: descricao || null };
     if (nome === 'dispensa') {
