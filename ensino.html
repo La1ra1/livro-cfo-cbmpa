@@ -619,16 +619,36 @@
     const res = await fetch(`${API}/turma`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) return;
     _turmas = await res.json();
-    ['filter-status-turma', 'filter-disc-turma', 'lancar-turma'].forEach(id => {
+
+    // Filtros de exibição usam todas as turmas
+    ['filter-status-turma', 'filter-disc-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
-      while (sel.options.length > (id === 'lancar-turma' ? 1 : 1)) sel.remove(1);
+      while (sel.options.length > 1) sel.remove(1);
       _turmas.forEach(t => {
         const o = document.createElement('option');
         o.value = t.id; o.textContent = t.nome;
         sel.appendChild(o);
       });
     });
+
+    // Seletor de turma no lançamento: cadete/dia_cfo/xerife só veem a própria turma
+    const selLancar = $('lancar-turma');
+    if (!selLancar) return;
+    while (selLancar.options.length > 1) selLancar.remove(1);
+    const turmasLancar = _RESTRITOS.has(_user?.role)
+      ? _turmas.filter(t => t.id == _user.turma)
+      : _turmas;
+    turmasLancar.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = t.nome;
+      selLancar.appendChild(o);
+    });
+    // Se só há uma turma disponível, pré-seleciona e dispara o change
+    if (turmasLancar.length === 1) {
+      selLancar.value = turmasLancar[0].id;
+      onTurmaChange();
+    }
   }
 
   // ── STATUS DAS DISCIPLINAS ────────────────────────────────
