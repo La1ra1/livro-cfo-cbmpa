@@ -862,54 +862,54 @@
     $('lancar-alert').className = 'alert';
   }
 
-  async function onTurmaChange() {
-    $('lancar-tipo').innerHTML = '<option value="">Selecione turma e curso</option>';
+  function _resetTipo(msg = 'Selecione turma e curso') {
+    $('lancar-tipo').innerHTML = `<option value="">${msg}</option>`;
     $('lancar-tipo').disabled  = true;
     $('lancar-tipo-info').style.display = 'none';
     _disponiveisCache = [];
+  }
+
+  async function onTurmaChange() {
+    _resetTipo();
     await _atualizarDisciplinas();
   }
 
   async function onCursoChange() {
-    $('lancar-tipo').innerHTML = '<option value="">Carregando...</option>';
-    $('lancar-tipo').disabled  = true;
-    $('lancar-tipo-info').style.display = 'none';
-    _disponiveisCache = [];
+    _resetTipo();
     await _atualizarDisciplinas();
   }
 
   async function _atualizarDisciplinas() {
     const id_turma = $('lancar-turma').value;
     const curso    = $('lancar-curso').value;
-    if (!id_turma || !curso) {
-      $('lancar-tipo').innerHTML = '<option value="">Selecione turma e curso</option>';
-      $('lancar-tipo').disabled  = true;
-      return;
-    }
+    if (!id_turma || !curso) return;
 
-    const res = await fetch(
-      `${API}/disciplina_types/disponiveis?id_turma=${id_turma}&curso=${encodeURIComponent(curso)}`,
-      { headers: { Authorization: `Bearer ${token()}` } },
-    );
-    if (!res.ok) {
-      $('lancar-tipo').innerHTML = '<option value="">Erro ao carregar</option>';
-      return;
-    }
-    _disponiveisCache = await res.json();
+    $('lancar-tipo').innerHTML = '<option value="">Carregando...</option>';
 
-    const sel = $('lancar-tipo');
-    if (!_disponiveisCache.length) {
-      sel.innerHTML = '<option value="">Todas já cadastradas para esta turma</option>';
-      return;
+    try {
+      const res = await fetch(
+        `${API}/disciplina_types/disponiveis?id_turma=${id_turma}&curso=${encodeURIComponent(curso)}`,
+        { headers: { Authorization: `Bearer ${token()}` } },
+      );
+      if (!res.ok) { _resetTipo('Erro ao carregar'); return; }
+
+      _disponiveisCache = await res.json();
+      const sel = $('lancar-tipo');
+      if (!_disponiveisCache.length) {
+        sel.innerHTML = '<option value="">Todas já cadastradas para esta turma</option>';
+        return;
+      }
+      sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
+      _disponiveisCache.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id;
+        o.textContent = `${t.semestre}º · ${t.nome}`;
+        sel.appendChild(o);
+      });
+      sel.disabled = false;
+    } catch {
+      _resetTipo('Erro de conexão');
     }
-    sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
-    _disponiveisCache.forEach(t => {
-      const o = document.createElement('option');
-      o.value = t.id;
-      o.textContent = `${t.semestre}º · ${t.nome}`;
-      sel.appendChild(o);
-    });
-    sel.disabled = false;
   }
 
   function onTipoChange() {
