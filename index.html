@@ -261,6 +261,10 @@
     .badge-silver { background: rgba(74,80,96,.15); color: var(--text-dim); border: 1px solid rgba(74,80,96,.3); }
     .badge-blue  { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(52,152,219,.25); }
     .badge-green { background: rgba(46,204,113,.1); color: var(--success); border: 1px solid rgba(46,204,113,.25); }
+    .badge-sub-b1 { background: rgba(155,89,182,.12); color: #9b59b6; border: 1px solid rgba(155,89,182,.3); }
+    .badge-sub-b3 { background: rgba(230,126,34,.12); color: #e67e22; border: 1px solid rgba(230,126,34,.3); }
+    .badge-sub-b4 { background: rgba(52,152,219,.12); color: #3498db; border: 1px solid rgba(52,152,219,.3); }
+    .badge-sub-b5 { background: rgba(231,76,60,.12); color: #e74c3c; border: 1px solid rgba(231,76,60,.3); }
 
     /* ── SIDEBAR ── */
     .sidebar {
@@ -1470,7 +1474,7 @@
           <div class="profile-avatar" id="pf-avatar">?</div>
           <div>
             <div class="profile-name" id="pf-name">—</div>
-            <div class="profile-role-label" id="pf-role">—</div>
+            <div class="profile-role-label"><span id="pf-role">—</span> <span id="pf-sub-role"></span></div>
           </div>
         </div>
         <div class="info-row">
@@ -1480,6 +1484,10 @@
         <div class="info-row">
           <span class="info-label">Número Geral</span>
           <span class="info-value" id="pf-numero">—</span>
+        </div>
+        <div class="info-row" id="pf-sub-role-row" style="display:none;">
+          <span class="info-label">Sub-Função</span>
+          <span class="info-value" id="pf-sub-role-value">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Nível de Acesso</span>
@@ -3251,6 +3259,15 @@
     return `<span class="badge ${cls}">${roleLabel(role)}</span>`;
   }
 
+  function subRoleBadgeCls(subRole) {
+    return subRole === 'B1' ? 'badge-sub-b1' : subRole === 'B3' ? 'badge-sub-b3' : subRole === 'B4' ? 'badge-sub-b4' : subRole === 'B5' ? 'badge-sub-b5' : '';
+  }
+
+  function subRoleBadgeHtml(subRole) {
+    if (!subRole) return '';
+    return `<span class="badge ${subRoleBadgeCls(subRole)}">${subRole}</span>`;
+  }
+
   // ── SECTIONS ──────────────────────────────────
   function showSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -3396,6 +3413,13 @@
       $('pf-turma-pel').textContent = u.turma != null ? `${u.turma}${u.pel ?? ''}` : '—';
       $('pf-numero').textContent = u.numero_geral ?? '—';
       $('pf-badge').innerHTML    = badgeHtml(u.role);
+      $('pf-sub-role').innerHTML = subRoleBadgeHtml(u.sub_role);
+      if (u.sub_role) {
+        $('pf-sub-role-row').style.display = '';
+        $('pf-sub-role-value').innerHTML = subRoleBadgeHtml(u.sub_role);
+      } else {
+        $('pf-sub-role-row').style.display = 'none';
+      }
 
       // Bottom nav mobile
       showMobileNav(u.role);
@@ -3810,7 +3834,7 @@
         <td class="td-mono">${numGeral}</td>
         <td class="td-name">${u.username}</td>
         <td class="td-mono">${u.pel ?? '—'}</td>
-        <td><span class="badge ${badgeCls}">${roleLabel(u.role)}</span></td>
+        <td><span class="badge ${badgeCls}">${roleLabel(u.role)}</span> ${subRoleBadgeHtml(u.sub_role)}</td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
             <select class="role-select" id="${selectId}" onchange="${onChange}">
