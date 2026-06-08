@@ -3779,6 +3779,7 @@
                     <th>Pel</th>
                     <th>Função Atual</th>
                     <th>Alterar Função</th>
+                    <th>Alterar Sub-Função</th>
                   </tr>
                 </thead>
                 <tbody>${cadetes.map(u => rowFn(u)).join('')}</tbody>
@@ -3798,6 +3799,12 @@
     const onChange = ctx === 'aux'
       ? `auxConfirmChangeRole(${u.id}, '${u.username}', this.value, this)`
       : `confirmChangeRole(${u.id}, '${u.username}', this.value, this)`;
+    const subRoleSelectId = ctx === 'aux' ? `aux-sub-role-select-${u.id}` : `sub-role-select-${u.id}`;
+    const subRoleStatusId = ctx === 'aux' ? `aux-sub-role-status-${u.id}` : `sub-role-status-${u.id}`;
+    const onSubRoleChange = ctx === 'aux'
+      ? `auxConfirmChangeSubRole(${u.id}, '${u.username}', this.value, this)`
+      : `confirmChangeSubRole(${u.id}, '${u.username}', this.value, this)`;
+    const subRoleVal = u.sub_role ?? '';
     return `
       <tr>
         <td class="td-mono">${numGeral}</td>
@@ -3812,6 +3819,18 @@
               <option value="xerife"  ${u.role==='xerife' ?'selected':''}>Xerife</option>
             </select>
             <span class="td-mono" id="${statusId}" style="font-size:10px;width:52px;display:inline-block;flex-shrink:0;"></span>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select class="role-select" id="${subRoleSelectId}" onchange="${onSubRoleChange}">
+              <option value=""   ${subRoleVal===''  ?'selected':''}>—</option>
+              <option value="B1" ${subRoleVal==='B1'?'selected':''}>B1</option>
+              <option value="B3" ${subRoleVal==='B3'?'selected':''}>B3</option>
+              <option value="B4" ${subRoleVal==='B4'?'selected':''}>B4</option>
+              <option value="B5" ${subRoleVal==='B5'?'selected':''}>B5</option>
+            </select>
+            <span class="td-mono" id="${subRoleStatusId}" style="font-size:10px;width:52px;display:inline-block;flex-shrink:0;"></span>
           </div>
         </td>
       </tr>`;
@@ -3845,6 +3864,42 @@
       }
     } catch {
       selectEl.value = usuario.role;
+      statusEl.textContent = '✗ falha';
+      statusEl.style.color = 'var(--danger)';
+      toast('Erro de conexão.', 'error');
+    } finally {
+      selectEl.disabled = false;
+    }
+  }
+
+  async function confirmChangeSubRole(userId, username, newSubRole, selectEl) {
+    const usuario = window._allUsuarios.find(u => u.id === userId);
+    if (!usuario || (usuario.sub_role ?? '') === newSubRole) return;
+    const statusEl = $(`sub-role-status-${userId}`);
+    statusEl.textContent = 'salvando...';
+    statusEl.style.color = 'var(--muted)';
+    selectEl.disabled = true;
+    try {
+      const res = await fetch(`${API}/coordenador/usuarios/sub_role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ target_username: username, new_sub_role: newSubRole || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        selectEl.value = usuario.sub_role ?? '';
+        statusEl.textContent = '✗ erro';
+        statusEl.style.color = 'var(--danger)';
+        toast(data.detail || 'Erro ao alterar sub-função.', 'error');
+      } else {
+        usuario.sub_role = newSubRole || null;
+        statusEl.textContent = '✓ salvo';
+        statusEl.style.color = 'var(--success)';
+        toast(`Sub-função de ${username} alterada para ${newSubRole || '—'}.`);
+        setTimeout(() => { statusEl.textContent = ''; renderUsuarios(); }, 1500);
+      }
+    } catch {
+      selectEl.value = usuario.sub_role ?? '';
       statusEl.textContent = '✗ falha';
       statusEl.style.color = 'var(--danger)';
       toast('Erro de conexão.', 'error');
@@ -5845,6 +5900,36 @@
       }
     } catch {
       selectEl.value = usuario.role;
+      statusEl.textContent = '✗ falha'; statusEl.style.color = 'var(--danger)';
+      toast('Erro de conexão.', 'error');
+    } finally { selectEl.disabled = false; }
+  }
+
+  async function auxConfirmChangeSubRole(userId, username, newSubRole, selectEl) {
+    const usuario = window._auxUsuarios.find(u => u.id === userId);
+    if (!usuario || (usuario.sub_role ?? '') === newSubRole) return;
+    const statusEl = document.getElementById(`aux-sub-role-status-${userId}`);
+    statusEl.textContent = 'salvando...'; statusEl.style.color = 'var(--muted)';
+    selectEl.disabled = true;
+    try {
+      const res = await fetch(`${API}/coordenador/usuarios/sub_role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ target_username: username, new_sub_role: newSubRole || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        selectEl.value = usuario.sub_role ?? '';
+        statusEl.textContent = '✗ erro'; statusEl.style.color = 'var(--danger)';
+        toast(data.detail || 'Erro.', 'error');
+      } else {
+        usuario.sub_role = newSubRole || null;
+        statusEl.textContent = '✓ salvo'; statusEl.style.color = 'var(--success)';
+        toast(`Sub-função de ${username} alterada para ${newSubRole || '—'}.`);
+        setTimeout(() => { statusEl.textContent = ''; renderAuxUsuarios(); }, 1500);
+      }
+    } catch {
+      selectEl.value = usuario.sub_role ?? '';
       statusEl.textContent = '✗ falha'; statusEl.style.color = 'var(--danger)';
       toast('Erro de conexão.', 'error');
     } finally { selectEl.disabled = false; }
