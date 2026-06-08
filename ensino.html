@@ -437,8 +437,8 @@
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
               <label>Curso</label>
-              <select id="lancar-curso" onchange="onCursoChange()" disabled>
-                <option value="">Selecione primeiro a turma</option>
+              <select id="lancar-curso" onchange="onCursoChange()">
+                <option value="">Carregando...</option>
               </select>
             </div>
           </div>
@@ -447,7 +447,7 @@
             <div class="form-group">
               <label>Disciplina</label>
               <select id="lancar-tipo" disabled onchange="onTipoChange()">
-                <option value="">Selecione primeiro o curso</option>
+                <option value="">Selecione turma e curso</option>
               </select>
             </div>
           </div>
@@ -829,21 +829,33 @@
   }
 
   // ── LANÇAR DISCIPLINA (B4) ────────────────────────────────
-  let _disciplinaTypes   = [];
-  let _disponiveisCache  = [];
+  let _disciplinaTypes  = [];
+  let _disponiveisCache = [];
 
   async function loadLancarForm() {
+    // Carregar todos os tipos para popular o curso imediatamente
     const resTypes = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
     if (resTypes.ok) _disciplinaTypes = await resTypes.json();
-    resetLancarForm();
+
+    const cursos = [...new Set(_disciplinaTypes.map(t => t.curso).filter(Boolean))].sort();
+    const selCurso = $('lancar-curso');
+    selCurso.innerHTML = '<option value="">Selecione o curso...</option>';
+    cursos.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      selCurso.appendChild(o);
+    });
+
+    resetLancarForm(false); // false = não resetar curso
   }
 
-  function resetLancarForm() {
+  function resetLancarForm(resetCurso = true) {
     _disponiveisCache = [];
     $('lancar-turma').value     = '';
-    $('lancar-curso').innerHTML = '<option value="">Selecione primeiro a turma</option>';
-    $('lancar-curso').disabled  = true;
-    $('lancar-tipo').innerHTML  = '<option value="">Selecione primeiro o curso</option>';
+    if (resetCurso) {
+      $('lancar-curso').value   = '';
+    }
+    $('lancar-tipo').innerHTML  = '<option value="">Selecione turma e curso</option>';
     $('lancar-tipo').disabled   = true;
     $('lancar-instrutor').value = '';
     $('lancar-tipo-info').style.display = 'none';
@@ -851,49 +863,47 @@
   }
 
   async function onTurmaChange() {
-    const id_turma = $('lancar-turma').value;
-    _disponiveisCache = [];
-    $('lancar-curso').innerHTML = '<option value="">Selecione o curso...</option>';
-    $('lancar-curso').disabled  = true;
-    $('lancar-tipo').innerHTML  = '<option value="">Selecione primeiro o curso</option>';
-    $('lancar-tipo').disabled   = true;
+    $('lancar-tipo').innerHTML = '<option value="">Selecione turma e curso</option>';
+    $('lancar-tipo').disabled  = true;
     $('lancar-tipo-info').style.display = 'none';
-    if (!id_turma) return;
+    _disponiveisCache = [];
+    await _atualizarDisciplinas();
+  }
 
-    const res = await fetch(`${API}/disciplina_types/disponiveis?id_turma=${id_turma}`, {
-      headers: { Authorization: `Bearer ${token()}` },
-    });
+  async function onCursoChange() {
+    $('lancar-tipo').innerHTML = '<option value="">Carregando...</option>';
+    $('lancar-tipo').disabled  = true;
+    $('lancar-tipo-info').style.display = 'none';
+    _disponiveisCache = [];
+    await _atualizarDisciplinas();
+  }
+
+  async function _atualizarDisciplinas() {
+    const id_turma = $('lancar-turma').value;
+    const curso    = $('lancar-curso').value;
+    if (!id_turma || !curso) {
+      $('lancar-tipo').innerHTML = '<option value="">Selecione turma e curso</option>';
+      $('lancar-tipo').disabled  = true;
+      return;
+    }
+
+    const res = await fetch(
+      `${API}/disciplina_types/disponiveis?id_turma=${id_turma}&curso=${encodeURIComponent(curso)}`,
+      { headers: { Authorization: `Bearer ${token()}` } },
+    );
     if (!res.ok) {
-      $('lancar-curso').innerHTML = '<option value="">Erro ao carregar</option>';
+      $('lancar-tipo').innerHTML = '<option value="">Erro ao carregar</option>';
       return;
     }
     _disponiveisCache = await res.json();
 
+    const sel = $('lancar-tipo');
     if (!_disponiveisCache.length) {
-      $('lancar-curso').innerHTML = '<option value="">Todas as disciplinas já cadastradas</option>';
+      sel.innerHTML = '<option value="">Todas já cadastradas para esta turma</option>';
       return;
     }
-
-    const cursos = [...new Set(_disponiveisCache.map(t => t.curso).filter(Boolean))].sort();
-    const sel = $('lancar-curso');
-    sel.innerHTML = '<option value="">Selecione o curso...</option>';
-    cursos.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c; o.textContent = c;
-      sel.appendChild(o);
-    });
-    sel.disabled = false;
-  }
-
-  function onCursoChange() {
-    const curso = $('lancar-curso').value;
-    const sel   = $('lancar-tipo');
     sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
-    $('lancar-tipo-info').style.display = 'none';
-    if (!curso) { sel.disabled = true; return; }
-
-    const filtrados = _disponiveisCache.filter(t => t.curso === curso);
-    filtrados.forEach(t => {
+    _disponiveisCache.forEach(t => {
       const o = document.createElement('option');
       o.value = t.id;
       o.textContent = `${t.semestre}º · ${t.nome}`;
@@ -904,7 +914,7 @@
 
   function onTipoChange() {
     const id   = parseInt($('lancar-tipo').value);
-    const tipo = _disponiveisCache.find(t => t.id === id) || _disciplinaTypes.find(t => t.id === id);
+    const tipo = _disponiveisCache.find(t => t.id === id);
     if (!tipo) { $('lancar-tipo-info').style.display = 'none'; return; }
     $('lancar-info-semestre').textContent = `${tipo.semestre}º Semestre`;
     $('lancar-info-horas').textContent    = `${tipo.horas_aula} h/a`;
@@ -934,7 +944,7 @@
       alertEl.className   = 'alert error show';
       return;
     }
-    resetLancarForm();
+    resetLancarForm(false);
     toast('Disciplina lançada com sucesso!');
   }
 
