@@ -1451,6 +1451,8 @@
       }
     }
 
+    if (!confirm('Confirma o envio deste requerimento?')) return;
+
     const body = { categoria_id: Number(catId), titulo, descricao: descricao || null };
     if (nome === 'dispensa') {
       body.data_afastamento_inicio = dataIni;

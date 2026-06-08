@@ -5133,6 +5133,8 @@
     if (!dataFato)  { showAlert('lanc-error', 'Informe a data do fato.'); return; }
     if (!_lancCadetes.length) { showAlert('lanc-error', 'Adicione ao menos um cadete.'); return; }
 
+    if (!confirm(`Confirma o lançamento desta anotação para ${_lancCadetes.length} cadete(s)?`)) return;
+
     const anexosInput = document.getElementById('lanc-anexos');
     const arquivos    = anexosInput ? Array.from(anexosInput.files) : [];
 
