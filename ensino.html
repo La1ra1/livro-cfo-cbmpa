@@ -427,9 +427,18 @@
 
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
+              <label>Turma</label>
+              <select id="lancar-turma" onchange="onTurmaChange()">
+                <option value="">Selecione a turma...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
               <label>Curso</label>
-              <select id="lancar-curso" onchange="onCursoChange()">
-                <option value="">Selecione um curso...</option>
+              <select id="lancar-curso" onchange="onCursoChange()" disabled>
+                <option value="">Selecione primeiro a turma</option>
               </select>
             </div>
           </div>
@@ -444,12 +453,6 @@
           </div>
 
           <div class="form-row" style="margin-bottom:16px;">
-            <div class="form-group">
-              <label>Turma</label>
-              <select id="lancar-turma">
-                <option value="">Selecione a turma...</option>
-              </select>
-            </div>
             <div class="form-group">
               <label>Nome do Instrutor</label>
               <input type="text" id="lancar-instrutor" placeholder="Nome completo" />
@@ -809,45 +812,78 @@
   let _disciplinaTypes = [];
 
   async function loadLancarForm() {
-    // Carregar cursos
-    const res = await fetch(`${API}/disciplina_types/cursos`, { headers: { Authorization: `Bearer ${token()}` } });
+    const resTypes = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (resTypes.ok) _disciplinaTypes = await resTypes.json();
+    resetLancarForm();
+  }
+
+  function resetLancarForm() {
+    $('lancar-turma').value     = '';
+    $('lancar-curso').innerHTML = '<option value="">Selecione primeiro a turma</option>';
+    $('lancar-curso').disabled  = true;
+    $('lancar-tipo').innerHTML  = '<option value="">Selecione primeiro o curso</option>';
+    $('lancar-tipo').disabled   = true;
+    $('lancar-instrutor').value = '';
+    $('lancar-tipo-info').style.display = 'none';
+    $('lancar-alert').className = 'alert';
+  }
+
+  async function onTurmaChange() {
+    const id_turma = $('lancar-turma').value;
+    $('lancar-curso').innerHTML = '<option value="">Selecione o curso...</option>';
+    $('lancar-curso').disabled  = true;
+    $('lancar-tipo').innerHTML  = '<option value="">Selecione primeiro o curso</option>';
+    $('lancar-tipo').disabled   = true;
+    $('lancar-tipo-info').style.display = 'none';
+    if (!id_turma) return;
+
+    // Buscar tipos disponíveis para esta turma e extrair cursos únicos
+    const res = await fetch(`${API}/disciplina_types/disponiveis?id_turma=${id_turma}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) return;
-    const cursos = await res.json();
+    const disponiveis = await res.json();
+
+    if (!disponiveis.length) {
+      $('lancar-curso').innerHTML = '<option value="">Todas as disciplinas já cadastradas</option>';
+      return;
+    }
+
+    const cursos = [...new Set(disponiveis.map(t => t.curso).filter(Boolean))].sort();
     const sel = $('lancar-curso');
-    while (sel.options.length > 1) sel.remove(1);
+    sel.innerHTML = '<option value="">Selecione o curso...</option>';
     cursos.forEach(c => {
       const o = document.createElement('option');
       o.value = c; o.textContent = c;
       sel.appendChild(o);
     });
-
-    // Carregar todos os tipos para lookup local
-    const resTypes = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
-    if (resTypes.ok) _disciplinaTypes = await resTypes.json();
+    sel.disabled = false;
+    // Guardar os disponíveis para filtrar no próximo passo
+    sel._disponiveis = disponiveis;
   }
 
-  async function onCursoChange() {
+  function onCursoChange() {
     const curso = $('lancar-curso').value;
     const sel   = $('lancar-tipo');
     sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
     $('lancar-tipo-info').style.display = 'none';
-
     if (!curso) { sel.disabled = true; return; }
 
-    const filtrados = _disciplinaTypes.filter(t => t.curso === curso);
+    const disponiveis = $('lancar-curso')._disponiveis || [];
+    const filtrados   = disponiveis.filter(t => t.curso === curso);
     filtrados.forEach(t => {
       const o = document.createElement('option');
       o.value = t.id;
       o.textContent = `${t.semestre}º · ${t.nome}`;
       sel.appendChild(o);
     });
-    sel.disabled = false;
-    sel.onchange = onTipoChange;
+    sel.disabled  = false;
+    sel.onchange  = onTipoChange;
+    sel._tipos    = filtrados;
   }
 
   function onTipoChange() {
     const id   = parseInt($('lancar-tipo').value);
-    const tipo = _disciplinaTypes.find(t => t.id === id);
+    const sel  = $('lancar-tipo');
+    const tipo = (sel._tipos || _disciplinaTypes).find(t => t.id === id);
     if (!tipo) { $('lancar-tipo-info').style.display = 'none'; return; }
     $('lancar-info-semestre').textContent = `${tipo.semestre}º Semestre`;
     $('lancar-info-horas').textContent    = `${tipo.horas_aula} h/a`;
@@ -856,15 +892,15 @@
   }
 
   async function lancarDisciplina() {
-    const id_tipo      = parseInt($('lancar-tipo').value);
-    const id_turma     = parseInt($('lancar-turma').value);
+    const id_tipo        = parseInt($('lancar-tipo').value);
+    const id_turma       = parseInt($('lancar-turma').value);
     const nome_instrutor = $('lancar-instrutor').value.trim();
-    const alertEl      = $('lancar-alert');
-    alertEl.className  = 'alert';
+    const alertEl        = $('lancar-alert');
+    alertEl.className    = 'alert';
 
-    if (!id_tipo)        { alertEl.textContent = 'Selecione a disciplina.';   alertEl.className = 'alert error show'; return; }
-    if (!id_turma)       { alertEl.textContent = 'Selecione a turma.';        alertEl.className = 'alert error show'; return; }
-    if (!nome_instrutor) { alertEl.textContent = 'Informe o nome do instrutor.'; alertEl.className = 'alert error show'; return; }
+    if (!id_turma)       { alertEl.textContent = 'Selecione a turma.';           alertEl.className = 'alert error show'; return; }
+    if (!id_tipo)        { alertEl.textContent = 'Selecione a disciplina.';       alertEl.className = 'alert error show'; return; }
+    if (!nome_instrutor) { alertEl.textContent = 'Informe o nome do instrutor.';  alertEl.className = 'alert error show'; return; }
 
     const res = await fetch(`${API}/disciplinas`, {
       method:  'POST',
@@ -877,12 +913,7 @@
       alertEl.className   = 'alert error show';
       return;
     }
-    alertEl.className = 'alert';
-    $('lancar-curso').value     = '';
-    $('lancar-tipo').value      = '';
-    $('lancar-tipo').disabled   = true;
-    $('lancar-instrutor').value = '';
-    $('lancar-tipo-info').style.display = 'none';
+    resetLancarForm();
     toast('Disciplina lançada com sucesso!');
   }
 
