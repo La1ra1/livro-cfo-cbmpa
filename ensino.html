@@ -627,7 +627,7 @@
       while (sel.options.length > 1) sel.remove(1);
       _turmas.forEach(t => {
         const o = document.createElement('option');
-        o.value = t.id; o.textContent = t.nome;
+        o.value = t.id; o.textContent = t.id;
         sel.appendChild(o);
       });
     });
@@ -641,7 +641,7 @@
       : _turmas;
     turmasLancar.forEach(t => {
       const o = document.createElement('option');
-      o.value = t.id; o.textContent = t.nome;
+      o.value = t.id; o.textContent = t.id;
       selLancar.appendChild(o);
     });
     // Se só há uma turma disponível, pré-seleciona e dispara o change
@@ -706,7 +706,7 @@
       lista.forEach(d => {
         const pct = Number(d.percentual_conclusao) || 0;
         const cls = progressCls(pct);
-        const turmaLabel = _turmas.find(t => t.id === d.id_turma)?.nome ?? d.id_turma ?? '—';
+        const turmaLabel = d.id_turma ?? '—';
         const canEditInstrutor = _user && (
           !_RESTRITOS.has(_user.role) ||
           (_RESTRITOS.has(_user.role) && _user.turma == d.id_turma)
@@ -807,7 +807,7 @@
           ${lista.map(d => {
             const pct = Number(d.percentual_conclusao) || 0;
             const cls = progressCls(pct);
-            const turmaLabel = _turmas.find(t => t.id === d.id_turma)?.nome ?? d.id_turma ?? '—';
+            const turmaLabel = d.id_turma ?? '—';
             return `<tr>
               <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
               <td class="td-mono">${d.curso ?? '—'}</td>
