@@ -832,19 +832,10 @@
         const pct = Number(d.percentual_conclusao) || 0;
         const cls = progressCls(pct);
         const turmaLabel = d.id_turma ?? '—';
-        const canEditInstrutor = _user && (
-          !_RESTRITOS.has(_user.role) ||
-          (_RESTRITOS.has(_user.role) && _user.turma == d.id_turma)
-        );
 
         html += `<tr>
           <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
-          <td>
-            <div class="inline-edit-wrap" id="instrutor-wrap-${d.id}">
-              <span id="instrutor-text-${d.id}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${d.nome_instrutor ?? '—'}</span>
-              ${canEditInstrutor ? `<button class="btn-icon" title="Editar instrutor" onclick="startEditInstrutor(${d.id}, '${(d.nome_instrutor||'').replace(/'/g,"\\'")}')">✎</button>` : ''}
-            </div>
-          </td>
+          <td class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</td>
           <td class="td-mono">${d.curso ?? '—'}</td>
           ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${turmaLabel}</td>` : ''}
           <td style="min-width:140px;">
@@ -871,7 +862,7 @@
     wrap.innerHTML = `
       <input type="text" value="${currentName}" id="instrutor-input-${discId}" style="width:160px;padding:4px 8px;font-size:11px;border-bottom-width:1px;" />
       <button class="btn-icon" title="Salvar" onclick="saveInstrutor(${discId})">✔</button>
-      <button class="btn-icon" title="Cancelar" onclick="loadStatus()">✕</button>
+      <button class="btn-icon" title="Cancelar" onclick="loadDisciplinas()">✕</button>
     `;
     $(`instrutor-input-${discId}`).focus();
   }
@@ -887,12 +878,12 @@
       body:    JSON.stringify({ nome_instrutor: nome }),
     });
     if (!res.ok) {
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       toast(d.detail || 'Erro ao salvar', 'error');
       return;
     }
     toast('Instrutor atualizado');
-    loadStatus();
+    loadDisciplinas();
   }
 
   // ── DISCIPLINAS CADASTRADAS ───────────────────────────────
@@ -931,15 +922,21 @@
         </tr></thead>
         <tbody>
           ${lista.map(d => {
-            const pct = Number(d.percentual_conclusao) || 0;
-            const cls = progressCls(pct);
-            const turmaLabel = d.id_turma ?? '—';
+            const pct      = Number(d.percentual_conclusao) || 0;
+            const cls      = progressCls(pct);
+            const canEdit  = _user?.sub_role === 'B3';
+            const instCell = canEdit
+              ? `<div class="inline-edit-wrap" id="instrutor-wrap-${d.id}">
+                   <span id="instrutor-text-${d.id}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${d.nome_instrutor ?? '—'}</span>
+                   <button class="btn-icon" title="Editar instrutor" onclick="startEditInstrutor(${d.id}, '${(d.nome_instrutor||'').replace(/'/g,"\\'")}')">✎</button>
+                 </div>`
+              : `<span class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</span>`;
             return `<tr>
               <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
               <td class="td-mono">${d.curso ?? '—'}</td>
               <td class="td-mono">${d.semestre ?? '—'}º</td>
-              ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${turmaLabel}</td>` : ''}
-              <td class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</td>
+              ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${d.id_turma ?? '—'}</td>` : ''}
+              <td>${instCell}</td>
               <td class="td-mono">${d.horas_aula}</td>
               <td class="td-mono">${d.peso}</td>
               <td style="min-width:120px;">
