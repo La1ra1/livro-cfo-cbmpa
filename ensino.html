@@ -439,18 +439,9 @@
 
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
-              <label>Curso</label>
-              <select id="lancar-curso" onchange="onCursoChange()">
-                <option value="">Carregando...</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row" style="margin-bottom:16px;">
-            <div class="form-group">
               <label>Disciplina</label>
               <select id="lancar-tipo" disabled onchange="onTipoChange()">
-                <option value="">Selecione turma e curso</option>
+                <option value="">Selecione a turma</option>
               </select>
             </div>
           </div>
@@ -749,6 +740,26 @@
       return;
     }
 
+    // Totais globais do curso
+    const totalHorasCurso     = disciplinas.reduce((a, d) => a + (d.horas_aula || 0), 0);
+    const totalRealizadasCurso = disciplinas.reduce((a, d) => a + (d.instrucoes_realizadas || 0), 0);
+    const pctCurso = totalHorasCurso > 0 ? Math.min(Math.round(totalRealizadasCurso / totalHorasCurso * 100), 100) : 0;
+    const clsCurso = progressCls(pctCurso);
+
+    let html = `
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header"><span class="card-title">Total do Curso</span></div>
+        <div style="padding:14px 18px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="progress-wrap" style="flex:1;height:8px;">
+              <div class="progress-bar ${clsCurso}" style="width:${pctCurso}%;height:8px;"></div>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--text);min-width:46px;text-align:right;">${pctCurso}%</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${totalRealizadasCurso}/${totalHorasCurso} h/a</span>
+          </div>
+        </div>
+      </div>`;
+
     // Agrupar por semestre
     const bySemestre = {};
     disciplinas.forEach(d => {
@@ -757,17 +768,21 @@
       bySemestre[s].push(d);
     });
 
-    let html = '';
     Object.keys(bySemestre).sort((a,b) => a-b).forEach(s => {
       const lista = bySemestre[s];
-      const totalHoras    = lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
+      const totalHoras      = lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
       const totalRealizadas = lista.reduce((acc, d) => acc + (d.instrucoes_realizadas || 0), 0);
-      const pctSemestre   = totalHoras > 0 ? Math.min(Math.round(totalRealizadas / totalHoras * 100), 100) : 0;
+      const pctSemestre     = totalHoras > 0 ? Math.min(Math.round(totalRealizadas / totalHoras * 100), 100) : 0;
+      const clsSem          = progressCls(pctSemestre);
 
       html += `
         <div class="semestre-header">
           <span>${s}º Semestre</span>
-          <span class="semestre-carga">${totalRealizadas}/${totalHoras} h/a &nbsp;·&nbsp; ${pctSemestre}% concluídas</span>
+          <span class="semestre-carga" style="display:flex;align-items:center;gap:10px;">
+            <span>${totalRealizadas}/${totalHoras} h/a</span>
+            <div class="progress-wrap" style="width:80px;"><div class="progress-bar ${clsSem}" style="width:${pctSemestre}%;"></div></div>
+            <span>${pctSemestre}%</span>
+          </span>
         </div>
         <div class="card" style="margin-bottom:24px;">
           <table>
@@ -816,6 +831,7 @@
     });
 
     container.innerHTML = html;
+
   }
 
   function startEditInstrutor(discId, currentName) {
@@ -907,40 +923,23 @@
   }
 
   // ── LANÇAR DISCIPLINA (B3) ────────────────────────────────
-  let _disciplinaTypes  = [];
   let _disponiveisCache = [];
 
   async function loadLancarForm() {
-    // Carregar todos os tipos para popular o curso imediatamente
-    const resTypes = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
-    if (resTypes.ok) _disciplinaTypes = await resTypes.json();
-
-    const cursos = [...new Set(_disciplinaTypes.map(t => t.curso).filter(Boolean))].sort();
-    const selCurso = $('lancar-curso');
-    selCurso.innerHTML = '<option value="">Selecione o curso...</option>';
-    cursos.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c; o.textContent = c;
-      selCurso.appendChild(o);
-    });
-
-    resetLancarForm(false); // false = não resetar curso
+    resetLancarForm();
   }
 
-  function resetLancarForm(resetCurso = true) {
+  function resetLancarForm() {
     _disponiveisCache = [];
     $('lancar-turma').value     = '';
-    if (resetCurso) {
-      $('lancar-curso').value   = '';
-    }
-    $('lancar-tipo').innerHTML  = '<option value="">Selecione turma e curso</option>';
+    $('lancar-tipo').innerHTML  = '<option value="">Selecione a turma</option>';
     $('lancar-tipo').disabled   = true;
     $('lancar-instrutor').value = '';
     $('lancar-tipo-info').style.display = 'none';
     $('lancar-alert').className = 'alert';
   }
 
-  function _resetTipo(msg = 'Selecione turma e curso') {
+  function _resetTipo(msg = 'Selecione a turma') {
     $('lancar-tipo').innerHTML = `<option value="">${msg}</option>`;
     $('lancar-tipo').disabled  = true;
     $('lancar-tipo-info').style.display = 'none';
@@ -952,21 +951,21 @@
     await _atualizarDisciplinas();
   }
 
-  async function onCursoChange() {
-    _resetTipo();
-    await _atualizarDisciplinas();
-  }
-
   async function _atualizarDisciplinas() {
     const id_turma = $('lancar-turma').value;
-    const curso    = $('lancar-curso').value;
-    if (!id_turma || !curso) return;
+    if (!id_turma) return;
+
+    // Detectar curso da turma selecionada
+    const turma = _turmas.find(t => t.id == id_turma);
+    const curso = turma?.curso;
 
     $('lancar-tipo').innerHTML = '<option value="">Carregando...</option>';
 
     try {
+      const params = new URLSearchParams({ id_turma });
+      if (curso) params.set('curso', curso);
       const res = await fetch(
-        `${API}/disciplina_types/disponiveis?id_turma=${id_turma}&curso=${encodeURIComponent(curso)}`,
+        `${API}/disciplina_types/disponiveis?${params}`,
         { headers: { Authorization: `Bearer ${token()}` } },
       );
       if (!res.ok) { _resetTipo('Erro ao carregar'); return; }
