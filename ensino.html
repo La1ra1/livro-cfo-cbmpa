@@ -1428,14 +1428,29 @@
     return 'falta-ok';
   }
 
+  // Escala: 25% de faltas = barra cheia (100%)
   function _faltaBarWidth(pct) {
     return Math.min(pct / 25 * 100, 100).toFixed(1);
   }
 
   function _faltaStatusBadge(pct) {
-    if (pct >= 25) return '<span class="badge badge-danger">REPROVADO POR FALTAS</span>';
-    if (pct >= 15) return '<span class="badge badge-warn">SEM DIREITO A VF</span>';
+    if (pct >= 25) return '<span class="badge badge-danger">REPROVADO</span>';
+    if (pct >= 15) return '<span class="badge badge-warn">SEM VF</span>';
     return '<span class="badge badge-green">REGULAR</span>';
+  }
+
+  function _faltaBarCell(pct) {
+    const cls  = _faltaProgressCls(pct);
+    const barW = _faltaBarWidth(pct);
+    return `<div style="display:flex;align-items:center;gap:8px;">
+      <div class="falta-bar-wrap">
+        <div class="progress-wrap">
+          <div class="progress-bar ${cls}" style="width:${barW}%;"></div>
+        </div>
+        <div class="falta-threshold" style="left:60%;background:var(--warn);"></div>
+      </div>
+      <span class="td-mono" style="font-size:10px;min-width:38px;text-align:right;">${pct}%</span>
+    </div>`;
   }
 
   async function loadFaltas() {
@@ -1454,7 +1469,7 @@
     const cadetes = await res.json();
 
     if (!cadetes.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum dado encontrado</div></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma falta registrada</div></div>';
       return;
     }
 
@@ -1465,86 +1480,40 @@
     }
   }
 
+  // Visão do cadete: tabela por disciplina + legenda
   function _renderFaltasCadete(c, container) {
-    const pct  = c.percentual;
-    const cls  = _faltaProgressCls(pct);
-    const barW = _faltaBarWidth(pct);
+    const rows = c.disciplinas.map(d => `
+      <tr>
+        <td style="font-weight:500;">${d.disciplina_nome}</td>
+        <td class="td-mono">${d.total_faltas}</td>
+        <td class="td-mono">${d.horas_aula}</td>
+        <td style="min-width:160px;">${_faltaBarCell(d.percentual)}</td>
+        <td>${_faltaStatusBadge(d.percentual)}</td>
+      </tr>`).join('');
 
     container.innerHTML = `
-      <div class="card" style="max-width:600px;margin-bottom:24px;">
-        <div class="card-header" style="gap:10px;">
-          <span class="card-title">Resumo de Faltas</span>
-          ${_faltaStatusBadge(pct)}
-        </div>
-        <div style="padding:18px;">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-            <div class="falta-bar-wrap" style="height:12px;">
-              <div class="progress-wrap" style="height:12px;">
-                <div class="progress-bar ${cls}" style="width:${barW}%;height:12px;"></div>
-              </div>
-              <div class="falta-threshold" style="left:60%;background:var(--warn);"></div>
-              <div class="falta-threshold" style="left:100%;background:var(--danger);"></div>
-            </div>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;min-width:52px;text-align:right;">${pct}%</span>
-          </div>
-          <div style="display:flex;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);padding:0 0 14px;gap:4px;">
-            <span>0%</span>
-            <span style="flex:1;text-align:center;padding-right:8%;">15%</span>
-            <span>25%</span>
-          </div>
-          <div style="display:flex;gap:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
-            <div><span style="color:var(--muted);">AULAS REALIZADAS: </span><span style="color:var(--text);">${c.total_instrucoes}</span></div>
-            <div><span style="color:var(--muted);">FALTAS: </span><span style="color:var(--text);">${c.total_faltas}</span></div>
-          </div>
-          <div style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;">
-            <span style="color:var(--warn);">▲ 15%</span> sem direito a verificações finais &nbsp;·&nbsp;
-            <span style="color:var(--danger);">▲ 25%</span> reprovado por faltas
-          </div>
-        </div>
-      </div>`;
-
-    _loadFaltasDetalhe(c.id, container);
-  }
-
-  async function _loadFaltasDetalhe(cadeteId, container) {
-    const res = await fetch(`${API}/faltas/detalhe/${cadeteId}`, { headers: { Authorization: `Bearer ${token()}` } });
-    if (!res.ok) return;
-    const faltas = await res.json();
-
-    if (!faltas.length) {
-      container.innerHTML += `
-        <div class="card">
-          <div class="card-body">
-            <div class="empty-state-text" style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">
-              Nenhuma falta registrada
-            </div>
-          </div>
-        </div>`;
-      return;
-    }
-
-    container.innerHTML += `
       <div class="card">
-        <div class="card-header"><span class="card-title">Detalhamento</span></div>
+        <div class="card-header">
+          <span class="card-title">Minhas Faltas por Disciplina</span>
+        </div>
         <table>
           <thead><tr>
-            <th>Data</th>
             <th>Disciplina</th>
-            <th>Aula Nº</th>
-            <th>Tipo</th>
+            <th>Faltas</th>
+            <th>H/A</th>
+            <th style="min-width:160px;">% Faltas</th>
+            <th>Status</th>
           </tr></thead>
-          <tbody>
-            ${faltas.map(f => `<tr>
-              <td class="td-mono">${f.data}</td>
-              <td style="font-size:13px;">${f.disciplina}</td>
-              <td class="td-mono">${f.numero_aula}</td>
-              <td><span class="badge badge-warn">${f.tipo}</span></td>
-            </tr>`).join('')}
-          </tbody>
+          <tbody>${rows}</tbody>
         </table>
+        <div style="padding:10px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);border-top:1px solid var(--border);letter-spacing:1px;">
+          <span style="color:var(--warn);">▲ 15%</span> sem direito a verificações finais &nbsp;·&nbsp;
+          <span style="color:var(--danger);">▲ 25%</span> reprovado por faltas
+        </div>
       </div>`;
   }
 
+  // Visão admin: agrupado por turma, uma linha por (cadete × disciplina)
   function _renderFaltasAdmin(cadetes, container) {
     const byTurma = {};
     cadetes.forEach(c => {
@@ -1556,51 +1525,52 @@
     let html = '';
     Object.keys(byTurma).sort().forEach(turma => {
       const lista = byTurma[turma];
+      // Contar total de linhas (uma por disciplina com falta por cadete)
+      const totalLinhas = lista.reduce((acc, c) => acc + c.disciplinas.length, 0);
+
+      let tbody = '';
+      lista.forEach(c => {
+        c.disciplinas.forEach((d, idx) => {
+          const isFirst = idx === 0;
+          const cadetelabel = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
+          tbody += `<tr>
+            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;">${c.numero_geral ?? '—'}</td>
+                         <td style="font-weight:500;vertical-align:middle;" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
+            <td style="font-size:13px;">${d.disciplina_nome}</td>
+            <td class="td-mono">${d.total_faltas}</td>
+            <td class="td-mono">${d.horas_aula}</td>
+            <td style="min-width:160px;">${_faltaBarCell(d.percentual)}</td>
+            <td>${_faltaStatusBadge(d.percentual)}</td>
+          </tr>`;
+        });
+      });
+
       html += `
         <div class="semestre-header">
           <span>Turma ${turma}</span>
-          <span class="semestre-carga">${lista.length} cadete(s)</span>
+          <span class="semestre-carga">${lista.length} cadete(s) com faltas</span>
         </div>
         <div class="card" style="margin-bottom:24px;">
           <table>
             <thead><tr>
               <th>Nº</th>
               <th>Cadete</th>
+              <th>Disciplina</th>
               <th>Faltas</th>
-              <th>Aulas</th>
-              <th style="min-width:180px;">% Faltas</th>
+              <th>H/A</th>
+              <th style="min-width:160px;">% Faltas</th>
               <th>Status</th>
             </tr></thead>
-            <tbody>
-              ${lista.map(c => {
-                const pct  = c.percentual;
-                const cls  = _faltaProgressCls(pct);
-                const barW = _faltaBarWidth(pct);
-                return `<tr>
-                  <td class="td-mono">${c.numero_geral ?? '—'}</td>
-                  <td style="font-weight:500;">${c.username}</td>
-                  <td class="td-mono">${c.total_faltas}</td>
-                  <td class="td-mono">${c.total_instrucoes}</td>
-                  <td>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <div class="falta-bar-wrap">
-                        <div class="progress-wrap">
-                          <div class="progress-bar ${cls}" style="width:${barW}%;"></div>
-                        </div>
-                        <div class="falta-threshold" style="left:60%;background:var(--warn);"></div>
-                      </div>
-                      <span class="td-mono" style="font-size:10px;min-width:38px;text-align:right;">${pct}%</span>
-                    </div>
-                  </td>
-                  <td>${_faltaStatusBadge(pct)}</td>
-                </tr>`;
-              }).join('')}
-            </tbody>
+            <tbody>${tbody}</tbody>
           </table>
+          <div style="padding:10px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);border-top:1px solid var(--border);letter-spacing:1px;">
+            <span style="color:var(--warn);">▲ 15%</span> sem direito a verificações finais &nbsp;·&nbsp;
+            <span style="color:var(--danger);">▲ 25%</span> reprovado por faltas
+          </div>
         </div>`;
     });
 
-    container.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum cadete encontrado</div></div>';
+    container.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma falta registrada</div></div>';
   }
 
   // ── BOOT ─────────────────────────────────────────────────
