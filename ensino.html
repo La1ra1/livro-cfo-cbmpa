@@ -505,22 +505,60 @@
         </div>
       </div>
 
-      <div id="inst-horarios-wrap" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px;">
+      <div id="inst-grid-wrap" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
           <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
             HORÁRIOS: <strong id="inst-count" style="color:var(--text);">0</strong>/6
           </span>
-          <button class="btn btn-ghost btn-sm" id="inst-add-btn" onclick="addHorario()">✚ Adicionar Horário</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="inst-add-btn" onclick="addHorario()">✚ Horário</button>
+            <button class="btn btn-primary btn-sm" onclick="lancarInstrucoes()">Lançar</button>
+          </div>
         </div>
 
-        <div id="inst-horarios-list"></div>
+        <div id="inst-alert" class="alert error"></div>
 
-        <div id="inst-alert" class="alert error" style="margin-top:8px;"></div>
-        <button class="btn btn-primary" style="margin-top:4px;" onclick="lancarInstrucoes()">Lançar Instruções</button>
+        <div style="overflow-x:auto;">
+          <table id="inst-table" style="width:auto;min-width:100%;"></table>
+        </div>
       </div>
     </section>
 
   </main>
+</div>
+
+<!-- ── MODAL HORÁRIO ── -->
+<div id="inst-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+  <div class="card" style="width:420px;max-width:95vw;">
+    <div class="card-header">
+      <span class="card-title" id="inst-modal-title">Horário</span>
+      <button class="btn-icon" onclick="closeInstModal()" style="font-size:16px;color:var(--muted);">✕</button>
+    </div>
+    <div class="card-body">
+      <input type="hidden" id="inst-modal-hid">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Data</label>
+        <input type="date" id="inst-modal-data">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Assunto</label>
+        <input type="text" id="inst-modal-assunto" placeholder="Tema da instrução">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Observações</label>
+        <input type="text" id="inst-modal-obs" placeholder="Opcional">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Xerife</label>
+        <input type="text" id="inst-modal-xerife-search" placeholder="Pesquisar cadete..." oninput="filterXerifeModal(this.value)" style="margin-bottom:4px;">
+        <select id="inst-modal-xerife"></select>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <button class="btn btn-danger btn-sm" id="inst-modal-remove-btn" onclick="removeHorarioModal()">✕ Remover</button>
+        <button class="btn btn-primary btn-sm" onclick="saveInstModal()">Salvar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -989,10 +1027,10 @@
   }
 
   // ── LANÇAR INSTRUÇÃO (B3) ────────────────────────────────
-  let _instCadetes      = [];
-  let _instDisciplina   = null;
-  let _instHorarioIds   = [];
-  let _nextHorarioId    = 0;
+  let _instCadetes    = [];
+  let _instDisciplina = null;
+  let _instHorarios   = []; // [{id, data, assunto, obs, xerife, faltas:{cid:tipo}}]
+  let _nextHorarioId  = 0;
 
   async function loadInstForm() {
     const sel = $('inst-disciplina');
@@ -1009,161 +1047,208 @@
         sel.appendChild(o);
       });
     } catch { sel.innerHTML = '<option value="">Erro de conexão</option>'; }
-    _instHorarioIds  = [];
-    _nextHorarioId   = 0;
-    _instDisciplina  = null;
-    _instCadetes     = [];
-    $('inst-horarios-list').innerHTML = '';
-    $('inst-horarios-wrap').style.display = 'none';
+    _instHorarios  = [];
+    _nextHorarioId = 0;
+    _instDisciplina = null;
+    _instCadetes    = [];
+    $('inst-grid-wrap').style.display = 'none';
   }
 
   async function onInstDisciplinaChange() {
     const val = $('inst-disciplina').value;
-    if (!val) { $('inst-horarios-wrap').style.display = 'none'; return; }
+    if (!val) { $('inst-grid-wrap').style.display = 'none'; return; }
     _instDisciplina = JSON.parse(val);
     try {
       const res = await fetch(`${API}/turma/${_instDisciplina.id_turma}/cadetes`, { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) { toast('Erro ao carregar cadetes', 'error'); return; }
       _instCadetes = await res.json();
     } catch { toast('Erro de conexão', 'error'); return; }
-    _instHorarioIds = [];
-    _nextHorarioId  = 0;
-    $('inst-horarios-list').innerHTML = '';
+    _instHorarios  = [];
+    _nextHorarioId = 0;
     $('inst-count').textContent = '0';
     $('inst-add-btn').disabled  = false;
     $('inst-alert').className   = 'alert';
-    $('inst-horarios-wrap').style.display = 'block';
+    $('inst-grid-wrap').style.display = 'block';
     addHorario();
   }
 
-  function addHorario() {
-    if (_instHorarioIds.length >= 6) return;
-    const id = _nextHorarioId++;
-    _instHorarioIds.push(id);
-    $('inst-horarios-list').insertAdjacentHTML('beforeend', _renderHorarioCard(id));
-    _renumberHorarios();
-    if (_instHorarioIds.length >= 6) $('inst-add-btn').disabled = true;
-  }
-
-  function removeHorario(id) {
-    if (_instHorarioIds.length <= 1) return;
-    _instHorarioIds = _instHorarioIds.filter(x => x !== id);
-    document.getElementById(`horario-${id}`)?.remove();
-    _renumberHorarios();
-    $('inst-add-btn').disabled = false;
-  }
-
-  function _renumberHorarios() {
-    $('inst-count').textContent = _instHorarioIds.length;
-    _instHorarioIds.forEach((hid, idx) => {
-      const el = document.getElementById(`horario-title-${hid}`);
-      if (el) el.textContent = `Horário ${idx + 1}`;
+  function _saveFaltaValues() {
+    _instHorarios.forEach(h => {
+      if (!h.faltas) h.faltas = {};
+      _instCadetes.forEach(c => {
+        const el = $(`h${h.id}-f${c.id}`);
+        if (el) h.faltas[c.id] = el.value;
+      });
     });
   }
 
-  function filterXerife(hid, q) {
-    const sel = $(`h${hid}-xerife`);
-    const q2  = q.toLowerCase();
-    sel.innerHTML = '<option value="">— Nenhum —</option>';
-    _instCadetes
-      .filter(c => !q2 || c.username.toLowerCase().includes(q2))
-      .forEach(c => {
-        const o = document.createElement('option');
-        o.value = c.id; o.textContent = c.username;
-        sel.appendChild(o);
+  function _renderInstTable() {
+    const table = $('inst-table');
+    if (!_instHorarios.length) { table.innerHTML = ''; return; }
+
+    const faltaOpts = `<option value="">—</option>
+      <option value="F">F</option><option value="LTSP">LTSP</option>
+      <option value="LL">LL</option><option value="LTFP">LTFP</option>
+      <option value="DCA">DCA</option>`;
+
+    // thead
+    let html = '<thead><tr>';
+    html += `<th style="min-width:130px;position:sticky;left:0;background:var(--surface);z-index:2;">CADETE</th>`;
+    _instHorarios.forEach((h, idx) => {
+      const dl = h.data ? h.data.split('-').reverse().slice(0,2).join('/') : '—';
+      const sub = h.assunto
+        ? `<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.assunto}</div>`
+        : `<div style="font-size:9px;font-weight:400;color:var(--border2);margin-top:3px;">clique para editar</div>`;
+      html += `<th id="inst-th-${h.id}" style="min-width:110px;cursor:pointer;text-align:center;" onclick="openInstModal(${h.id})">
+        <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
+          <span>${idx+1}º</span>
+          <span style="font-size:10px;font-weight:400;color:var(--muted);">${dl}</span>
+          <span style="color:var(--accent);font-size:10px;">✎</span>
+        </div>
+        ${sub}
+      </th>`;
+    });
+    html += '</tr></thead>';
+
+    // tbody
+    html += '<tbody>';
+    if (!_instCadetes.length) {
+      html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum cadete na turma.</td></tr>`;
+    } else {
+      _instCadetes.forEach(c => {
+        html += `<tr><td style="font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;">${c.username}</td>`;
+        _instHorarios.forEach(h => {
+          const saved = h.faltas?.[c.id] || '';
+          html += `<td style="text-align:center;padding:6px 8px;">
+            <select id="h${h.id}-f${c.id}" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
+          </td>`;
+        });
+        html += '</tr>';
       });
+    }
+    html += '</tbody>';
+
+    table.innerHTML = html;
+
+    // Restaurar valores salvos
+    _instHorarios.forEach(h => {
+      _instCadetes.forEach(c => {
+        const el = $(`h${h.id}-f${c.id}`);
+        if (el && h.faltas?.[c.id]) el.value = h.faltas[c.id];
+      });
+    });
   }
 
-  function _renderHorarioCard(id) {
-    const xOpts = '<option value="">— Nenhum —</option>' +
-      _instCadetes.map(c => `<option value="${c.id}">${c.username}</option>`).join('');
+  function _updateInstHeader(hid) {
+    const h   = _instHorarios.find(x => x.id === hid);
+    const th  = $(`inst-th-${hid}`);
+    const idx = _instHorarios.findIndex(x => x.id === hid);
+    if (!h || !th) return;
+    const dl  = h.data ? h.data.split('-').reverse().slice(0,2).join('/') : '—';
+    const sub = h.assunto
+      ? `<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.assunto}</div>`
+      : `<div style="font-size:9px;font-weight:400;color:var(--border2);margin-top:3px;">clique para editar</div>`;
+    th.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
+        <span>${idx+1}º</span>
+        <span style="font-size:10px;font-weight:400;color:var(--muted);">${dl}</span>
+        <span style="color:var(--accent);font-size:10px;">✎</span>
+      </div>${sub}`;
+  }
 
-    const cadeteRows = _instCadetes.map(c => `
-      <tr>
-        <td style="font-size:12px;padding:7px 10px;">${c.username}</td>
-        <td style="width:110px;padding:4px 10px;">
-          <select id="h${id}-falta-${c.id}" style="padding:3px 6px;font-size:11px;">
-            <option value="">—</option>
-            <option value="F">F</option>
-            <option value="LTSP">LTSP</option>
-            <option value="LL">LL</option>
-            <option value="LTFP">LTFP</option>
-            <option value="DCA">DCA</option>
-          </select>
-        </td>
-      </tr>`).join('');
+  function addHorario() {
+    if (_instHorarios.length >= 6) return;
+    _saveFaltaValues();
+    _instHorarios.push({ id: _nextHorarioId++, data: '', assunto: '', obs: '', xerife: null, faltas: {} });
+    $('inst-count').textContent = _instHorarios.length;
+    if (_instHorarios.length >= 6) $('inst-add-btn').disabled = true;
+    _renderInstTable();
+  }
 
-    return `
-<div class="card" id="horario-${id}" style="margin-bottom:14px;">
-  <div class="card-header">
-    <span class="card-title" id="horario-title-${id}">Horário</span>
-    <button class="btn btn-danger btn-sm" onclick="removeHorario(${id})">✕</button>
-  </div>
-  <div class="card-body">
-    <div class="form-row" style="margin-bottom:12px;">
-      <div class="form-group" style="min-width:140px;max-width:170px;">
-        <label>Data</label>
-        <input type="date" id="h${id}-data" />
-      </div>
-      <div class="form-group">
-        <label>Assunto</label>
-        <input type="text" id="h${id}-assunto" placeholder="Tema da instrução" />
-      </div>
-    </div>
-    <div class="form-row" style="margin-bottom:14px;">
-      <div class="form-group">
-        <label>Observações</label>
-        <input type="text" id="h${id}-obs" placeholder="Opcional" />
-      </div>
-      <div class="form-group" style="min-width:200px;max-width:260px;">
-        <label>Xerife</label>
-        <input type="text" placeholder="Pesquisar cadete..." oninput="filterXerife(${id}, this.value)"
-               style="margin-bottom:4px;" />
-        <select id="h${id}-xerife">${xOpts}</select>
-      </div>
-    </div>
-    ${_instCadetes.length ? `
-    <div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Faltas</div>
-      <table style="width:auto;">
-        <thead>
-          <tr>
-            <th style="padding:6px 10px;">Cadete</th>
-            <th style="padding:6px 10px;">Tipo</th>
-          </tr>
-        </thead>
-        <tbody>${cadeteRows}</tbody>
-      </table>
-    </div>` : '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--muted);">Nenhum cadete na turma.</div>'}
-  </div>
-</div>`;
+  // ── Modal ──
+  function _xerifeOpts(q = '') {
+    const q2 = q.toLowerCase();
+    return '<option value="">— Nenhum —</option>' +
+      _instCadetes
+        .filter(c => !q2 || c.username.toLowerCase().includes(q2))
+        .map(c => `<option value="${c.id}">${c.username}</option>`)
+        .join('');
+  }
+
+  function openInstModal(hid) {
+    const h   = _instHorarios.find(x => x.id === hid);
+    const idx = _instHorarios.findIndex(x => x.id === hid);
+    if (!h) return;
+    $('inst-modal-hid').value      = hid;
+    $('inst-modal-title').textContent = `Horário ${idx + 1}`;
+    $('inst-modal-data').value     = h.data    || '';
+    $('inst-modal-assunto').value  = h.assunto || '';
+    $('inst-modal-obs').value      = h.obs     || '';
+    $('inst-modal-xerife-search').value = '';
+    $('inst-modal-xerife').innerHTML    = _xerifeOpts();
+    if (h.xerife) $('inst-modal-xerife').value = h.xerife;
+    $('inst-modal-remove-btn').style.visibility = _instHorarios.length > 1 ? 'visible' : 'hidden';
+    const modal = $('inst-modal');
+    modal.style.display = 'flex';
+    setTimeout(() => $('inst-modal-assunto').focus(), 50);
+  }
+
+  function closeInstModal() {
+    $('inst-modal').style.display = 'none';
+  }
+
+  function filterXerifeModal(q) {
+    const cur = $('inst-modal-xerife').value;
+    $('inst-modal-xerife').innerHTML = _xerifeOpts(q);
+    if (cur) $('inst-modal-xerife').value = cur;
+  }
+
+  function saveInstModal() {
+    const hid = parseInt($('inst-modal-hid').value);
+    const h   = _instHorarios.find(x => x.id === hid);
+    if (!h) return;
+    h.data    = $('inst-modal-data').value;
+    h.assunto = $('inst-modal-assunto').value.trim();
+    h.obs     = $('inst-modal-obs').value.trim() || null;
+    const xv  = $('inst-modal-xerife').value;
+    h.xerife  = xv ? parseInt(xv) : null;
+    _updateInstHeader(hid);
+    closeInstModal();
+  }
+
+  function removeHorarioModal() {
+    if (_instHorarios.length <= 1) return;
+    _saveFaltaValues();
+    const hid = parseInt($('inst-modal-hid').value);
+    _instHorarios = _instHorarios.filter(x => x.id !== hid);
+    $('inst-count').textContent = _instHorarios.length;
+    $('inst-add-btn').disabled  = false;
+    _renderInstTable();
+    closeInstModal();
   }
 
   async function lancarInstrucoes() {
     const alertEl = $('inst-alert');
     alertEl.className = 'alert';
     if (!_instDisciplina) return;
+    _saveFaltaValues();
 
-    const erros    = [];
-    let   sucessos = 0;
+    const erros  = [];
+    let sucessos = 0;
 
-    for (const hid of _instHorarioIds) {
-      const n       = _instHorarioIds.indexOf(hid) + 1;
-      const data    = $(`h${hid}-data`)?.value;
-      const assunto = $(`h${hid}-assunto`)?.value?.trim();
-      const obs     = $(`h${hid}-obs`)?.value?.trim() || null;
-      const xVal    = $(`h${hid}-xerife`)?.value;
-      const xerife  = xVal ? parseInt(xVal) : null;
+    for (const h of _instHorarios) {
+      const n = _instHorarios.indexOf(h) + 1;
+      if (!h.data && !h.assunto) continue; // linha vazia — ignorar silenciosamente
 
-      if (!data)    { erros.push(`Horário ${n}: data obrigatória`);    continue; }
-      if (!assunto) { erros.push(`Horário ${n}: assunto obrigatório`); continue; }
+      if (!h.data)    { erros.push(`Horário ${n}: data obrigatória`);    continue; }
+      if (!h.assunto) { erros.push(`Horário ${n}: assunto obrigatório`); continue; }
 
       let resInst;
       try {
         resInst = await fetch(`${API}/instrucoes`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
-          body:    JSON.stringify({ data, assunto, observacoes: obs, xerife, id_disciplina: _instDisciplina.id }),
+          body:    JSON.stringify({ data: h.data, assunto: h.assunto, observacoes: h.obs || null, xerife: h.xerife, id_disciplina: _instDisciplina.id }),
         });
       } catch { erros.push(`Horário ${n}: erro de conexão`); continue; }
 
@@ -1177,12 +1262,12 @@
       sucessos++;
 
       for (const c of _instCadetes) {
-        const tipo = $(`h${hid}-falta-${c.id}`)?.value;
+        const tipo = h.faltas?.[c.id];
         if (!tipo) continue;
         await fetch(`${API}/faltas`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
-          body:    JSON.stringify({ tipo, data, id_instrucao: instrucaoId, id_cadete: c.id }),
+          body:    JSON.stringify({ tipo, data: h.data, id_instrucao: instrucaoId, id_cadete: c.id }),
         }).catch(() => {});
       }
     }
@@ -1193,16 +1278,19 @@
     }
     if (sucessos > 0) {
       toast(`${sucessos} instrução(ões) lançada(s) com sucesso!`);
-      _instHorarioIds = [];
-      $('inst-horarios-list').innerHTML = '';
+      _instHorarios  = [];
+      _nextHorarioId = 0;
       $('inst-count').textContent = '0';
       $('inst-add-btn').disabled  = false;
-      addHorario();
+      $('inst-table').innerHTML   = '';
+      $('inst-grid-wrap').style.display = 'none';
+      $('inst-disciplina').value  = '';
     }
   }
 
   // ── BOOT ─────────────────────────────────────────────────
   (async () => {
+    $('inst-modal').addEventListener('click', e => { if (e.target === $('inst-modal')) closeInstModal(); });
     if (token()) { await initApp(); }
   })();
 </script>
