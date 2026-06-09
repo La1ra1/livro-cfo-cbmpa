@@ -585,34 +585,15 @@
   </main>
 </div>
 
-<!-- ── MODAL HORÁRIO ── -->
-<div id="inst-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
-  <div class="card" style="width:420px;max-width:95vw;">
-    <div class="card-header">
-      <span class="card-title" id="inst-modal-title">Aula</span>
-      <button class="btn-icon" onclick="closeInstModal()" style="font-size:16px;color:var(--muted);">✕</button>
-    </div>
+<!-- ── MODAL CONFIRMAÇÃO INSTRUÇÃO ── -->
+<div id="inst-confirm-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+  <div class="card" style="width:380px;max-width:95vw;">
+    <div class="card-header"><span class="card-title">Confirmar Lançamento</span></div>
     <div class="card-body">
-      <input type="hidden" id="inst-modal-hid">
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="display:flex;align-items:center;gap:6px;">
-          Assunto
-          <span id="inst-modal-assunto-check" style="color:var(--success);font-size:11px;display:none;">✔</span>
-        </label>
-        <input type="text" id="inst-modal-assunto" placeholder="Tema da instrução"
-               oninput="$('inst-modal-assunto-check').style.display=this.value.trim()?'inline':'none'">
-      </div>
-      <div class="form-group" style="margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:6px;">
-          Observações
-          <span id="inst-modal-obs-check" style="color:var(--success);font-size:11px;display:none;">✔</span>
-        </label>
-        <input type="text" id="inst-modal-obs" placeholder="Opcional"
-               oninput="$('inst-modal-obs-check').style.display=this.value.trim()?'inline':'none'">
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <button class="btn btn-danger btn-sm" id="inst-modal-remove-btn" onclick="removeHorarioModal()">✕ Remover</button>
-        <button class="btn btn-primary btn-sm" onclick="saveInstModal()">Salvar</button>
+      <p id="inst-confirm-msg" style="font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;"></p>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="$('inst-confirm-modal').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="inst-confirm-ok" onclick="_confirmarLancamento()">Confirmar</button>
       </div>
     </div>
   </div>
@@ -1220,6 +1201,10 @@
         const el = $(`h${h.id}-f${c.id}`);
         if (el) h.faltas[c.id] = el.value;
       });
+      const assEl = $(`h${h.id}-assunto`);
+      const obsEl = $(`h${h.id}-obs`);
+      if (assEl) h.assunto = assEl.value.trim();
+      if (obsEl) h.obs     = obsEl.value.trim() || null;
     });
   }
 
@@ -1234,18 +1219,19 @@
 
     // thead
     let html = '<thead><tr>';
-    html += `<th style="min-width:130px;position:sticky;left:0;background:var(--surface);z-index:2;">CADETE</th>`;
+    html += `<th style="min-width:140px;position:sticky;left:0;background:var(--surface);z-index:2;">CADETE</th>`;
     _instHorarios.forEach((h, idx) => {
       const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
-      const sub = h.assunto
-        ? `<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.assunto}</div>`
-        : `<div style="font-size:9px;font-weight:400;color:var(--border2);margin-top:3px;">clique para editar</div>`;
-      html += `<th id="inst-th-${h.id}" style="min-width:110px;cursor:pointer;text-align:center;" onclick="openInstModal(${h.id})">
-        <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
-          <span>Aula ${aulaNum}</span>
-          <span style="color:var(--accent);font-size:10px;">✎</span>
+      const canRemove = _instHorarios.length > 1;
+      html += `<th style="min-width:150px;text-align:center;vertical-align:top;padding:6px 8px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:5px;">
+          <span style="font-size:11px;">Aula ${aulaNum}</span>
+          ${canRemove ? `<button onclick="removeHorarioById(${h.id})" style="background:none;border:none;color:var(--danger,#e55);cursor:pointer;font-size:13px;line-height:1;padding:0;" title="Remover">✕</button>` : ''}
         </div>
-        ${sub}
+        <input id="h${h.id}-assunto" type="text" placeholder="Assunto*" value="${(h.assunto||'').replace(/"/g,'&quot;')}"
+          style="width:100%;padding:3px 5px;font-size:11px;margin-bottom:3px;box-sizing:border-box;" />
+        <input id="h${h.id}-obs" type="text" placeholder="Observações" value="${(h.obs||'').replace(/"/g,'&quot;')}"
+          style="width:100%;padding:3px 5px;font-size:11px;box-sizing:border-box;" />
       </th>`;
     });
     html += '</tr></thead>';
@@ -1256,9 +1242,9 @@
       html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum cadete na turma.</td></tr>`;
     } else {
       _instCadetes.forEach(c => {
-        html += `<tr><td style="font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;">${c.username}</td>`;
+        const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
+        html += `<tr><td style="font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;">${label}</td>`;
         _instHorarios.forEach(h => {
-          const saved = h.faltas?.[c.id] || '';
           html += `<td style="text-align:center;padding:6px 8px;">
             <select id="h${h.id}-f${c.id}" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
           </td>`;
@@ -1279,78 +1265,64 @@
     });
   }
 
-  function _updateInstHeader(hid) {
-    const h       = _instHorarios.find(x => x.id === hid);
-    const th      = $(`inst-th-${hid}`);
-    const idx     = _instHorarios.findIndex(x => x.id === hid);
-    if (!h || !th) return;
-    const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
-    const sub = h.assunto
-      ? `<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.assunto}</div>`
-      : `<div style="font-size:9px;font-weight:400;color:var(--border2);margin-top:3px;">clique para editar</div>`;
-    th.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
-        <span>Aula ${aulaNum}</span>
-        <span style="color:var(--accent);font-size:10px;">✎</span>
-      </div>${sub}`;
+  function removeHorarioById(hid) {
+    if (_instHorarios.length <= 1) return;
+    _saveFaltaValues();
+    _instHorarios = _instHorarios.filter(x => x.id !== hid);
+    $('inst-count').textContent = _instHorarios.length;
+    $('inst-add-btn').disabled  = false;
+    _renderInstTable();
   }
 
   function addHorario() {
     if (_instHorarios.length >= 6) return;
     _saveFaltaValues();
-    _instHorarios.push({ id: _nextHorarioId++, data: '', assunto: '', obs: '', xerife: null, faltas: {} });
+    _instHorarios.push({ id: _nextHorarioId++, assunto: '', obs: null, faltas: {} });
     $('inst-count').textContent = _instHorarios.length;
     if (_instHorarios.length >= 6) $('inst-add-btn').disabled = true;
     _renderInstTable();
   }
 
-  // ── Modal ──
-  function openInstModal(hid) {
-    const h   = _instHorarios.find(x => x.id === hid);
-    const idx = _instHorarios.findIndex(x => x.id === hid);
-    if (!h) return;
-    const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
-    $('inst-modal-hid').value             = hid;
-    $('inst-modal-title').textContent     = `Aula ${aulaNum}`;
-    $('inst-modal-assunto').value         = h.assunto || '';
-    $('inst-modal-obs').value             = h.obs     || '';
-    $('inst-modal-assunto-check').style.display = h.assunto ? 'inline' : 'none';
-    $('inst-modal-obs-check').style.display     = h.obs     ? 'inline' : 'none';
-    $('inst-modal-remove-btn').style.visibility = _instHorarios.length > 1 ? 'visible' : 'hidden';
-    $('inst-modal').style.display = 'flex';
-    setTimeout(() => $('inst-modal-assunto').focus(), 50);
-  }
-
-  function closeInstModal() {
-    $('inst-modal').style.display = 'none';
-  }
-
-  function saveInstModal() {
-    const hid = parseInt($('inst-modal-hid').value);
-    const h   = _instHorarios.find(x => x.id === hid);
-    if (!h) return;
-    h.assunto = $('inst-modal-assunto').value.trim();
-    h.obs     = $('inst-modal-obs').value.trim() || null;
-    _updateInstHeader(hid);
-    closeInstModal();
-  }
-
-  function removeHorarioModal() {
-    if (_instHorarios.length <= 1) return;
-    _saveFaltaValues();
-    const hid = parseInt($('inst-modal-hid').value);
-    _instHorarios = _instHorarios.filter(x => x.id !== hid);
-    $('inst-count').textContent = _instHorarios.length;
-    $('inst-add-btn').disabled  = false;
-    _renderInstTable();
-    closeInstModal();
-  }
-
-  async function lancarInstrucoes() {
+  function lancarInstrucoes() {
     const alertEl = $('inst-alert');
     alertEl.className = 'alert';
     if (!_instDisciplina) return;
     _saveFaltaValues();
+
+    const dataGlobal = $('inst-data-global').value;
+    if (!dataGlobal) {
+      alertEl.textContent = 'Informe a data antes de lançar.';
+      alertEl.className   = 'alert error show';
+      return;
+    }
+
+    const errosVal = [];
+    _instHorarios.forEach((h, idx) => {
+      if (!h.assunto) errosVal.push(`Aula ${(_instDisciplina?.instrucoes_realizadas||0)+idx+1}: assunto obrigatório`);
+    });
+    if (errosVal.length) {
+      alertEl.textContent = errosVal.join(' · ');
+      alertEl.className   = 'alert error show';
+      return;
+    }
+
+    const aulaBase = (_instDisciplina?.instrucoes_realizadas || 0) + 1;
+    const xerifeLabel = _instXerifeValue
+      ? ($('inst-xerife-sd-trigger').textContent || 'selecionado')
+      : 'nenhum';
+    const lines = _instHorarios.map((h, idx) =>
+      `• Aula ${aulaBase + idx}: ${h.assunto}`
+    ).join('\n');
+    $('inst-confirm-msg').textContent =
+      `Data: ${dataGlobal}   Xerife: ${xerifeLabel}\n\n${lines}`;
+    $('inst-confirm-msg').style.whiteSpace = 'pre-wrap';
+    $('inst-confirm-modal').style.display = 'flex';
+  }
+
+  async function _confirmarLancamento() {
+    $('inst-confirm-modal').style.display = 'none';
+    const alertEl = $('inst-alert');
+    alertEl.className = 'alert';
 
     const btn = $('inst-lancar-btn');
     btn.disabled = true;
@@ -1358,20 +1330,11 @@
 
     const dataGlobal   = $('inst-data-global').value;
     const xerifeGlobal = _instXerifeValue;
-
     const erros  = [];
     let sucessos = 0;
 
-    if (!dataGlobal) {
-      alertEl.textContent = 'Informe a data antes de lançar.';
-      alertEl.className   = 'alert error show';
-      return;
-    }
-
     for (const h of _instHorarios) {
       const n = _instHorarios.indexOf(h) + 1;
-      if (!h.assunto) { erros.push(`Aula ${n}: assunto obrigatório`); continue; }
-
       let resInst;
       try {
         resInst = await fetch(`${API}/instrucoes`, {
@@ -1429,7 +1392,6 @@
   });
 
   (async () => {
-    $('inst-modal').addEventListener('click', e => { if (e.target === $('inst-modal')) closeInstModal(); });
     if (token()) { await initApp(); }
   })();
 </script>
