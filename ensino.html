@@ -740,11 +740,38 @@
       return;
     }
 
-    // Totais globais do curso
-    const totalHorasCurso     = disciplinas.reduce((a, d) => a + (d.horas_aula || 0), 0);
+    // Detectar curso para buscar total curricular
+    let cursoParam = '';
+    const turmaFiltro = $('filter-status-turma')?.value;
+    if (turmaFiltro) {
+      const t = _turmas.find(t => t.id == turmaFiltro);
+      if (t?.curso) cursoParam = t.curso;
+    } else if (_RESTRITOS.has(_user?.role)) {
+      const t = _turmas.find(t => t.id == _user.turma);
+      if (t?.curso) cursoParam = t.curso;
+    }
+    if (!cursoParam && disciplinas.length) {
+      const cursos = [...new Set(disciplinas.map(d => d.curso).filter(Boolean))];
+      if (cursos.length === 1) cursoParam = cursos[0];
+    }
+
+    // Buscar total de h/a do currículo (disciplina_types)
+    const typesUrl = cursoParam
+      ? `${API}/disciplina_types?curso=${encodeURIComponent(cursoParam)}`
+      : `${API}/disciplina_types`;
+    const resTypes = await fetch(typesUrl, { headers: { Authorization: `Bearer ${token()}` } });
+    const allTypes = resTypes.ok ? await resTypes.json() : [];
+
+    // h/a total do currículo por semestre
+    const horasCurriculoBySem = {};
+    allTypes.forEach(t => {
+      const s = t.semestre ?? 0;
+      horasCurriculoBySem[s] = (horasCurriculoBySem[s] || 0) + (t.horas_aula || 0);
+    });
+    const totalHorasCurriculo  = allTypes.reduce((a, t) => a + (t.horas_aula || 0), 0);
     const totalRealizadasCurso = disciplinas.reduce((a, d) => a + (d.instrucoes_realizadas || 0), 0);
-    const pctCurso = totalHorasCurso > 0 ? Math.min(Math.round(totalRealizadasCurso / totalHorasCurso * 100), 100) : 0;
-    const clsCurso = progressCls(pctCurso);
+    const pctCurso  = totalHorasCurriculo > 0 ? Math.min(Math.round(totalRealizadasCurso / totalHorasCurriculo * 100), 100) : 0;
+    const clsCurso  = progressCls(pctCurso);
 
     let html = `
       <div class="card" style="margin-bottom:24px;">
@@ -755,7 +782,7 @@
               <div class="progress-bar ${clsCurso}" style="width:${pctCurso}%;height:8px;"></div>
             </div>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--text);min-width:46px;text-align:right;">${pctCurso}%</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${totalRealizadasCurso}/${totalHorasCurso} h/a</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${totalRealizadasCurso}/${totalHorasCurriculo} h/a</span>
           </div>
         </div>
       </div>`;
@@ -768,9 +795,14 @@
       bySemestre[s].push(d);
     });
 
+    // Incluir semestres que existem no currículo mas sem disciplinas lançadas ainda
+    Object.keys(horasCurriculoBySem).forEach(s => {
+      if (!bySemestre[s]) bySemestre[s] = [];
+    });
+
     Object.keys(bySemestre).sort((a,b) => a-b).forEach(s => {
-      const lista = bySemestre[s];
-      const totalHoras      = lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
+      const lista           = bySemestre[s];
+      const totalHoras      = horasCurriculoBySem[s] || lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
       const totalRealizadas = lista.reduce((acc, d) => acc + (d.instrucoes_realizadas || 0), 0);
       const pctSemestre     = totalHoras > 0 ? Math.min(Math.round(totalRealizadas / totalHoras * 100), 100) : 0;
       const clsSem          = progressCls(pctSemestre);
