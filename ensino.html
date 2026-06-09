@@ -1068,7 +1068,7 @@
       if (!res.ok) { sel.innerHTML = '<option value="">Erro ao carregar</option>'; return; }
       const discs = await res.json();
       sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
-      discs.forEach(d => {
+      discs.filter(d => (d.instrucoes_realizadas || 0) < (d.horas_aula || 0)).forEach(d => {
         const o = document.createElement('option');
         o.value = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome, instrucoes_realizadas: d.instrucoes_realizadas || 0 });
         o.textContent = `${d.semestre}º · ${d.tipo_nome} — Turma ${d.id_turma}`;
