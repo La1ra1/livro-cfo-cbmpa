@@ -570,7 +570,7 @@
           </span>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-ghost btn-sm" id="inst-add-btn" onclick="addHorario()">✚ Horário</button>
-            <button class="btn btn-primary btn-sm" onclick="lancarInstrucoes()">Lançar</button>
+            <button class="btn btn-primary btn-sm" id="inst-lancar-btn" onclick="lancarInstrucoes()">Lançar</button>
           </div>
         </div>
 
@@ -595,12 +595,20 @@
     <div class="card-body">
       <input type="hidden" id="inst-modal-hid">
       <div class="form-group" style="margin-bottom:12px;">
-        <label>Assunto</label>
-        <input type="text" id="inst-modal-assunto" placeholder="Tema da instrução">
+        <label style="display:flex;align-items:center;gap:6px;">
+          Assunto
+          <span id="inst-modal-assunto-check" style="color:var(--success);font-size:11px;display:none;">✔</span>
+        </label>
+        <input type="text" id="inst-modal-assunto" placeholder="Tema da instrução"
+               oninput="$('inst-modal-assunto-check').style.display=this.value.trim()?'inline':'none'">
       </div>
       <div class="form-group" style="margin-bottom:16px;">
-        <label>Observações</label>
-        <input type="text" id="inst-modal-obs" placeholder="Opcional">
+        <label style="display:flex;align-items:center;gap:6px;">
+          Observações
+          <span id="inst-modal-obs-check" style="color:var(--success);font-size:11px;display:none;">✔</span>
+        </label>
+        <input type="text" id="inst-modal-obs" placeholder="Opcional"
+               oninput="$('inst-modal-obs-check').style.display=this.value.trim()?'inline':'none'">
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <button class="btn btn-danger btn-sm" id="inst-modal-remove-btn" onclick="removeHorarioModal()">✕ Remover</button>
@@ -1306,6 +1314,8 @@
     $('inst-modal-title').textContent     = `Aula ${aulaNum}`;
     $('inst-modal-assunto').value         = h.assunto || '';
     $('inst-modal-obs').value             = h.obs     || '';
+    $('inst-modal-assunto-check').style.display = h.assunto ? 'inline' : 'none';
+    $('inst-modal-obs-check').style.display     = h.obs     ? 'inline' : 'none';
     $('inst-modal-remove-btn').style.visibility = _instHorarios.length > 1 ? 'visible' : 'hidden';
     $('inst-modal').style.display = 'flex';
     setTimeout(() => $('inst-modal-assunto').focus(), 50);
@@ -1341,6 +1351,10 @@
     alertEl.className = 'alert';
     if (!_instDisciplina) return;
     _saveFaltaValues();
+
+    const btn = $('inst-lancar-btn');
+    btn.disabled = true;
+    btn.textContent = 'Lançando...';
 
     const dataGlobal   = $('inst-data-global').value;
     const xerifeGlobal = _instXerifeValue;
@@ -1386,6 +1400,9 @@
         }).catch(() => {});
       }
     }
+
+    btn.disabled = false;
+    btn.textContent = 'Lançar';
 
     if (erros.length) {
       alertEl.textContent = erros.join(' · ');
