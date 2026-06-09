@@ -477,6 +477,10 @@
       </div>
 
       <div class="filters-bar" id="faltas-filters">
+        <label>Semestre</label>
+        <select id="filter-faltas-semestre" onchange="loadFaltas()">
+          <option value="">Todos</option>
+        </select>
         <span id="filter-faltas-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-faltas-turma" onchange="loadFaltas()">
@@ -755,7 +759,7 @@
     if (!res.ok) return;
     const types = await res.json();
     const semestres = [...new Set(types.map(t => t.semestre).filter(Boolean))].sort((a,b) => a-b);
-    ['filter-status-semestre', 'filter-disc-semestre'].forEach(id => {
+    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre'].forEach(id => {
       const sel = $(id);
       const cur = sel.value;
       while (sel.options.length > 1) sel.remove(1);
@@ -1458,8 +1462,10 @@
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
 
     const params = new URLSearchParams();
-    const turma = $('filter-faltas-turma')?.value;
-    if (turma) params.set('id_turma', turma);
+    const semestre = $('filter-faltas-semestre')?.value;
+    const turma    = $('filter-faltas-turma')?.value;
+    if (semestre) params.set('semestre', semestre);
+    if (turma)    params.set('id_turma', turma);
 
     const res = await fetch(`${API}/faltas/resumo?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) {
