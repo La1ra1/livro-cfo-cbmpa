@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="ABM.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CFO — Ensino e Instrução</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:              #0a0c0f;
+      --surface:         #111318;
+      --surface2:        #181c22;
+      --border:          #1e2229;
+      --border2:         #2a3040;
+      --accent:          #c8a84b;
+      --accent2:         #8b6f2e;
+      --accent-dim:      rgba(200,168,75,.08);
+      --danger:          #c0392b;
+      --danger-dim:      rgba(192,57,43,.12);
+      --text:            #e8e4d9;
+      --text-dim:        #c8cdd8;
+      --muted:           #7a8394;
+      --success:         #2ecc71;
+      --success-dim:     rgba(46,204,113,.1);
+      --blue:            #3498db;
+      --blue-dim:        rgba(52,152,219,.1);
+      --warn:            #e07b2a;
+      --warn-dim:        rgba(224,123,42,.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── LOGIN ── */
+    #screen-login {
+      position: fixed; inset: 0; background: var(--bg); z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #screen-login.hidden { display: none; }
+
+    .login-wrap { position: relative; z-index: 1; width: 100%; max-width: 400px; padding: 16px; }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-top: 3px solid var(--accent); padding: 44px 40px;
+    }
+    .login-emblem { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
+    .login-hex {
+      width: 52px; height: 52px; background: var(--bg); border: 1px solid var(--border2);
+      clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent);
+    }
+    .login-brand { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: 4px; color: var(--accent); line-height: 1; }
+    .login-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
+    .field { margin-bottom: 18px; }
+    label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; }
+
+    input, select, textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border); color: var(--text);
+      padding: 10px 13px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px; outline: none; transition: border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); border-bottom-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    select { cursor: pointer; } select option { background: var(--surface2); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 10px 20px; border: none; cursor: pointer;
+      font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase; transition: all .15s;
+    }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn-primary { background: var(--accent); color: var(--bg); border-left: 3px solid var(--accent2); }
+    .btn-primary:hover { background: #d4b45a; }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(192,57,43,.3); }
+    .btn-danger:hover { background: rgba(192,57,43,.22); }
+    .btn-sm { padding: 5px 12px; font-size: 11px; letter-spacing: 1px; }
+    .btn-loading { opacity: .55; pointer-events: none; }
+
+    .alert { padding: 10px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; margin-bottom: 16px; display: none; }
+    .alert.show { display: block; }
+    .alert.error { background: rgba(192,57,43,.12); border: 1px solid rgba(192,57,43,.25); color: #e74c3c; }
+    .alert.success { background: var(--success-dim); border: 1px solid rgba(46,204,113,.25); color: var(--success); }
+
+    /* ── APP SHELL ── */
+    #app { display: none; }
+    #app.visible { display: block; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 48px;
+      background: rgba(17,19,24,.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--accent2);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 200;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 10px; }
+    .topbar-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .topbar-user { display: flex; align-items: center; gap: 10px; }
+    .topbar-name { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--text); line-height: 1.2; }
+    .topbar-role { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .topbar-avatar {
+      width: 30px; height: 30px; background: var(--accent-dim);
+      border: 1px solid var(--accent2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent);
+    }
+    #btn-hamburger { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; background: none; border: none; cursor: pointer; color: var(--accent); font-size: 18px; flex-shrink: 0; margin-right: 8px; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed; top: 48px; left: 0; bottom: 0; width: 210px;
+      background: var(--surface); border-right: 1px solid var(--border);
+      overflow-y: auto; z-index: 100;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-section { padding: 20px 0 8px; }
+    .sidebar-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; padding: 0 16px 8px; }
+    .sidebar-divider { height: 1px; background: var(--border); margin: 6px 14px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 16px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; letter-spacing: 1px; color: var(--text-dim);
+      cursor: pointer; transition: all .15s; border-left: 2px solid transparent;
+    }
+    .nav-item:hover { color: var(--text); background: var(--accent-dim); border-left-color: var(--accent2); }
+    .nav-item.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+    .nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; background: rgba(192,57,43,.8); color: #fff;
+      font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: 700;
+    }
+
+    /* ── MAIN ── */
+    .main { margin-left: 210px; margin-top: 48px; padding: 28px 32px; min-height: calc(100vh - 48px); position: relative; z-index: 1; }
+
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeUp .25s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; }
+    .page-title { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: 2px; color: var(--text); text-transform: uppercase; }
+    .page-title span { color: var(--accent); }
+    .page-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+
+    /* ── CARD ── */
+    .card { background: var(--surface); border: 1px solid var(--border); margin-bottom: 20px; }
+    .card-header { padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); }
+    .card-body { padding: 18px; }
+
+    /* ── INFO ROW ── */
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 20px; border-bottom: 1px solid var(--border); }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .info-value { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 2px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+    .badge-gold   { background: rgba(200,168,75,.12); color: var(--accent); border: 1px solid rgba(200,168,75,.25); }
+    .badge-silver { background: rgba(74,80,96,.15); color: var(--text-dim); border: 1px solid rgba(74,80,96,.3); }
+    .badge-blue   { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(52,152,219,.25); }
+    .badge-green  { background: rgba(46,204,113,.1); color: var(--success); border: 1px solid rgba(46,204,113,.25); }
+    .badge-warn   { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(224,123,42,.3); }
+    .badge-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(192,57,43,.3); }
+
+    /* ── TABLE ── */
+    table { width: 100%; border-collapse: collapse; }
+    th { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(200,168,75,.03); }
+    .td-mono { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap { height: 6px; background: var(--border2); width: 100%; min-width: 80px; }
+    .progress-bar  { height: 6px; background: var(--accent); transition: width .4s ease; }
+    .progress-bar.done { background: var(--success); }
+    .progress-bar.mid  { background: var(--warn); }
+
+    /* ── SEMESTRE BLOCK ── */
+    .semestre-header {
+      font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+      padding: 16px 0 10px; border-bottom: 1px solid var(--border2);
+      margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .semestre-carga {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+    }
+
+    /* ── FORM ROW ── */
+    .form-row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .form-group { flex: 1; min-width: 180px; }
+    .form-group label { margin-bottom: 7px; }
+
+    /* ── SEARCHABLE DROPDOWN (sd) ── */
+    .sd-wrap { position: relative; display: inline-block; width: 100%; }
+    .sd-trigger {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border); color: var(--text);
+      padding: 10px 28px 10px 13px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px; cursor: pointer; white-space: nowrap;
+      position: relative; user-select: none; text-align: left;
+      transition: border-color .2s;
+    }
+    .sd-trigger:hover, .sd-trigger:focus { border-color: var(--accent); border-bottom-color: var(--accent); outline: none; }
+    .sd-trigger::after {
+      content: '▾'; position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%); color: var(--muted); font-size: 11px;
+    }
+    .sd-panel {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border2);
+      z-index: 350; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+    .sd-panel.open { display: block; }
+    .sd-search {
+      width: 100%; background: var(--bg); border: none;
+      border-bottom: 1px solid var(--border); color: var(--text);
+      padding: 9px 12px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; outline: none;
+    }
+    .sd-search::placeholder { color: var(--muted); }
+    .sd-list { max-height: 200px; overflow-y: auto; }
+    .sd-option {
+      padding: 8px 12px; font-size: 12px; cursor: pointer;
+      border-bottom: 1px solid rgba(30,34,41,.6); transition: background .1s;
+    }
+    .sd-option:hover { background: rgba(200,168,75,.08); }
+    .sd-option.sd-selected { background: rgba(200,168,75,.12); color: var(--accent); }
+    .sd-clear {
+      padding: 7px 12px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted); cursor: pointer;
+      border-top: 1px solid var(--border); text-align: center;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .sd-clear:hover { color: var(--text); background: rgba(200,168,75,.05); }
+    .inline-edit-wrap { display: flex; align-items: center; gap: 6px; }
+    .inline-edit-wrap input { padding: 4px 8px; font-size: 11px; width: 180px; border-bottom-width: 1px; }
+    .btn-icon { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 2px 4px; transition: color .15s; }
+    .btn-icon:hover { color: var(--accent); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px;
+      padding: 10px 20px; z-index: 999; opacity: 0; pointer-events: none;
+      transition: opacity .25s; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+    #toast.success { border-color: var(--success); color: var(--success); }
+    #toast.error   { border-color: var(--danger);  color: var(--danger);  }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 48px 20px; }
+    .empty-state-icon { font-size: 28px; color: var(--border2); margin-bottom: 12px; }
+    .empty-state-text { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+    /* ── FILTERS BAR ── */
+    .filters-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filters-bar label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 0; white-space: nowrap; }
+    .filters-bar select, .filters-bar input { width: auto; padding: 5px 10px; font-size: 11px; }
+
+    /* ── OVERLAY ── */
+    #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
+    #sidebar-overlay.show { display: block; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      #btn-hamburger { display: flex; }
+      .topbar-role { display: none; }
+      #topbar-page-nav { display: none; }
+      .sidebar { transform: translateX(-100%); transition: transform .25s ease; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; padding: 14px; }
+      .page-header { flex-direction: column; gap: 10px; margin-bottom: 18px; }
+      .page-title { font-size: 20px; }
+      .form-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="screen-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-emblem">
+        <div class="login-hex">CFO</div>
+        <div>
+          <div class="login-brand">CFO</div>
+          <div class="login-sub">Academia Bombeiro Militar</div>
+        </div>
+      </div>
+      <div id="login-alert" class="alert error"></div>
+      <div class="field">
+        <label>Nome de Guerra</label>
+        <input type="text" id="login-user" placeholder="NOME.SOBRENOME" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-brand">
+      <button id="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <img src="ABM.png" alt="Brasão ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
+      <div class="topbar-sub">Academia Bombeiro Militar</div>
+    </div>
+    <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;display:flex;">
+      <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
+      <a href="requerimentos.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Requerimentos</a>
+      <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
+      <a href="ensino.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Ensino</a>
+    </nav>
+    <div class="topbar-user">
+      <div style="text-align:right;">
+        <div class="topbar-name" id="top-name">—</div>
+        <div class="topbar-role" id="top-role">—</div>
+      </div>
+      <div class="topbar-avatar" id="top-avatar">?</div>
+    </div>
+  </header>
+
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Ensino</div>
+      <div class="nav-item active" data-section="status" onclick="showSection('status')">
+        <span class="nav-icon">◉</span> Status das Disciplinas
+      </div>
+      <div class="nav-item" data-section="disciplinas" onclick="showSection('disciplinas')">
+        <span class="nav-icon">▣</span> Disciplinas
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="nav-lancar" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Lançamento</div>
+      <div class="nav-item" data-section="lancar" onclick="showSection('lancar')">
+        <span class="nav-icon">✚</span> Lançar Disciplina
+      </div>
+      <div class="nav-item" data-section="instrucao" onclick="showSection('instrucao')">
+        <span class="nav-icon">◎</span> Lançar Instrução
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Navegação</div>
+      <a href="index.html" class="nav-item" style="text-decoration:none;color:inherit;">
+        <span class="nav-icon">◧</span> Fatos Observados
+      </a>
+      <a href="requerimentos.html" class="nav-item" style="text-decoration:none;color:inherit;">
+        <span class="nav-icon">◈</span> Requerimentos
+      </a>
+      <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;color:inherit;">
+        <span class="nav-icon">◆</span> Ordens em Vigor
+      </a>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ── STATUS DAS DISCIPLINAS ── -->
+    <section class="section active" id="section-status">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Status das <span>Disciplinas</span></div>
+        </div>
+      </div>
+
+      <div class="filters-bar" id="status-filters">
+        <label>Semestre</label>
+        <select id="filter-status-semestre" onchange="loadStatus()">
+          <option value="">Todos</option>
+        </select>
+        <span id="filter-turma-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Turma</label>
+          <select id="filter-status-turma" onchange="loadStatus()">
+            <option value="">Todas</option>
+          </select>
+        </span>
+      </div>
+
+      <div id="status-container">
+        <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
+      </div>
+    </section>
+
+    <!-- ── DISCIPLINAS ── -->
+    <section class="section" id="section-disciplinas">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title"><span>Disciplinas</span> Cadastradas</div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <label>Semestre</label>
+        <select id="filter-disc-semestre" onchange="loadDisciplinas()">
+          <option value="">Todos</option>
+        </select>
+        <span id="filter-disc-turma-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Turma</label>
+          <select id="filter-disc-turma" onchange="loadDisciplinas()">
+            <option value="">Todas</option>
+          </select>
+        </span>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Disciplinas</span>
+          <span id="disc-meta" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
+        </div>
+        <div id="disc-container">
+          <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LANÇAR DISCIPLINA (B3) ── -->
+    <section class="section" id="section-lancar">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Lançar <span>Disciplina</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:560px;">
+        <div class="card-header"><span class="card-title">Nova Disciplina</span></div>
+        <div class="card-body">
+          <div id="lancar-alert" class="alert error"></div>
+
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>Turma</label>
+              <select id="lancar-turma" onchange="onTurmaChange()">
+                <option value="">Selecione a turma...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>Disciplina</label>
+              <select id="lancar-tipo" disabled onchange="onTipoChange()">
+                <option value="">Selecione a turma</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>Nome do Instrutor</label>
+              <input type="text" id="lancar-instrutor" placeholder="Nome completo" />
+            </div>
+          </div>
+
+          <div id="lancar-tipo-info" style="display:none;margin-bottom:16px;">
+            <div class="card" style="margin-bottom:0;background:var(--surface2);">
+              <div class="info-row" style="padding:10px 16px;">
+                <span class="info-label">Semestre</span>
+                <span class="info-value" id="lancar-info-semestre">—</span>
+              </div>
+              <div class="info-row" style="padding:10px 16px;">
+                <span class="info-label">Carga Horária</span>
+                <span class="info-value" id="lancar-info-horas">—</span>
+              </div>
+              <div class="info-row" style="padding:10px 16px;border-bottom:none;">
+                <span class="info-label">Peso</span>
+                <span class="info-value" id="lancar-info-peso">—</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="lancarDisciplina()">✚ Lançar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LANÇAR INSTRUÇÃO (B3) ── -->
+    <section class="section" id="section-instrucao">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Lançar <span>Instrução</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:560px;">
+        <div class="card-header"><span class="card-title">Disciplina</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Selecione a disciplina</label>
+            <select id="inst-disciplina" onchange="onInstDisciplinaChange()">
+              <option value="">Carregando...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="inst-grid-wrap" style="display:none;">
+
+        <div class="card" style="max-width:560px;margin-bottom:20px;">
+          <div class="card-header"><span class="card-title">Data e Xerife</span></div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group" style="min-width:160px;max-width:200px;">
+                <label>Data</label>
+                <input type="date" id="inst-data-global">
+              </div>
+              <div class="form-group">
+                <label>Xerife</label>
+                <div class="sd-wrap" id="inst-xerife-sd">
+                  <button type="button" class="sd-trigger" id="inst-xerife-sd-trigger"
+                          onclick="toggleInstXerifeSd()" data-placeholder="— Nenhum —">— Nenhum —</button>
+                  <div class="sd-panel" id="inst-xerife-sd-panel">
+                    <input class="sd-search" placeholder="Pesquisar cadete..."
+                           oninput="filterInstXerifeSd(this.value)">
+                    <div class="sd-list" id="inst-xerife-sd-list"></div>
+                    <div class="sd-clear" onclick="clearInstXerifeSd()">✕ Limpar</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
+            HORÁRIOS: <strong id="inst-count" style="color:var(--text);">0</strong>/6
+          </span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="inst-add-btn" onclick="addHorario()">✚ Horário</button>
+            <button class="btn btn-primary btn-sm" id="inst-lancar-btn" onclick="lancarInstrucoes()">Lançar</button>
+          </div>
+        </div>
+
+        <div id="inst-alert" class="alert error"></div>
+
+        <div style="overflow-x:auto;">
+          <table id="inst-table" style="width:auto;min-width:100%;"></table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── MODAL CONFIRMAÇÃO INSTRUÇÃO ── -->
+<div id="inst-confirm-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+  <div class="card" style="width:380px;max-width:95vw;">
+    <div class="card-header"><span class="card-title">Confirmar Lançamento</span></div>
+    <div class="card-body">
+      <p id="inst-confirm-msg" style="font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;"></p>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="$('inst-confirm-modal').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="inst-confirm-ok" onclick="_confirmarLancamento()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'https://api.cfo-cbmpa.com.br';
+  const $   = id => document.getElementById(id);
+
+  function token() { return localStorage.getItem('token'); }
+
+  function toast(msg, type = 'success') {
+    const el = $('toast');
+    el.textContent = msg;
+    el.className = `${type} show`;
+    setTimeout(() => el.className = '', 3000);
+  }
+
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    $(`section-${name}`).classList.add('active');
+    document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
+
+    if (name === 'status')      loadStatus();
+    if (name === 'disciplinas') loadDisciplinas();
+    if (name === 'lancar')      loadLancarForm();
+    if (name === 'instrucao')   loadInstForm();
+  }
+
+  function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('open');
+    $('sidebar-overlay').classList.toggle('show');
+  }
+  function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('open');
+    $('sidebar-overlay').classList.remove('show');
+  }
+
+  // ── AUTH ──────────────────────────────────────────────────
+  let _user = null;
+  const _RESTRITOS = new Set(['cadete', 'dia_cfo', 'xerife']);
+
+  async function initApp() {
+    const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { doLogout(); return; }
+    _user = await res.json();
+
+    const initial = (_user.username || '?')[0].toUpperCase();
+    $('top-avatar').textContent = initial;
+    $('top-name').textContent   = _user.username;
+    $('top-role').textContent   = roleLabel(_user.role);
+
+    // Mostrar aba de lançamento apenas para B3
+    if (_user.sub_role === 'B3') {
+      $('nav-lancar').style.display = 'block';
+    }
+
+    // Mostrar filtro de turma para coord/auxiliar/comandante
+    if (!_RESTRITOS.has(_user.role)) {
+      $('filter-turma-wrap').style.display      = 'flex';
+      $('filter-disc-turma-wrap').style.display = 'flex';
+    }
+
+    await Promise.all([loadSemestreOptions(), loadTurmaOptions()]);
+
+    $('screen-login').classList.add('hidden');
+    $('app').classList.add('visible');
+    loadStatus();
+  }
+
+  function doLogout() {
+    localStorage.removeItem('token');
+    $('screen-login').classList.remove('hidden');
+    $('app').classList.remove('visible');
+    _user = null;
+  }
+
+  async function doLogin() {
+    const username = $('login-user').value.trim().toUpperCase();
+    const password = $('login-pass').value;
+    const alert    = $('login-alert');
+    alert.className = 'alert'; alert.textContent = '';
+
+    const res = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert.textContent = data.detail || 'Credenciais inválidas.';
+      alert.className = 'alert error show';
+      return;
+    }
+    localStorage.setItem('token', data.access_token);
+    await initApp();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !$('screen-login').classList.contains('hidden')) doLogin();
+  });
+
+  // ── HELPERS ───────────────────────────────────────────────
+  function roleLabel(role) {
+    return { coordenador: 'Coordenador', auxiliar: 'Auxiliar', dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete', comandante: 'Comandante' }[role] || role;
+  }
+
+  function progressCls(pct) {
+    if (pct >= 100) return 'done';
+    if (pct >= 50)  return 'mid';
+    return '';
+  }
+
+  // ── SEMESTRE / TURMA OPTIONS ──────────────────────────────
+  let _turmas = [];
+
+  async function loadSemestreOptions() {
+    const res = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) return;
+    const types = await res.json();
+    const semestres = [...new Set(types.map(t => t.semestre).filter(Boolean))].sort((a,b) => a-b);
+    ['filter-status-semestre', 'filter-disc-semestre'].forEach(id => {
+      const sel = $(id);
+      const cur = sel.value;
+      while (sel.options.length > 1) sel.remove(1);
+      semestres.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s; o.textContent = `${s}º Semestre`;
+        sel.appendChild(o);
+      });
+      if (cur) sel.value = cur;
+    });
+  }
+
+  async function loadTurmaOptions() {
+    const res = await fetch(`${API}/turma`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) return;
+    _turmas = await res.json();
+
+    // Filtros de exibição usam todas as turmas
+    ['filter-status-turma', 'filter-disc-turma'].forEach(id => {
+      const sel = $(id);
+      if (!sel) return;
+      while (sel.options.length > 1) sel.remove(1);
+      _turmas.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id; o.textContent = t.id;
+        sel.appendChild(o);
+      });
+    });
+
+    // Seletor de turma no lançamento: cadete/dia_cfo/xerife só veem a própria turma
+    const selLancar = $('lancar-turma');
+    if (!selLancar) return;
+    while (selLancar.options.length > 1) selLancar.remove(1);
+    const turmasLancar = _RESTRITOS.has(_user?.role)
+      ? _turmas.filter(t => t.id == _user.turma)
+      : _turmas;
+    turmasLancar.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = t.id;
+      selLancar.appendChild(o);
+    });
+    // Se só há uma turma disponível, pré-seleciona e dispara o change
+    if (turmasLancar.length === 1) {
+      selLancar.value = turmasLancar[0].id;
+      onTurmaChange();
+    }
+  }
+
+  // ── STATUS DAS DISCIPLINAS ────────────────────────────────
+  async function loadStatus() {
+    const container = $('status-container');
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+
+    const params = new URLSearchParams();
+    const semestre = $('filter-status-semestre').value;
+    const turma    = $('filter-status-turma').value;
+    if (semestre) params.set('semestre', semestre);
+    if (turma)    params.set('id_turma', turma);
+
+    const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    const disciplinas = await res.json();
+
+    if (!disciplinas.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma disciplina cadastrada</div></div>';
+      return;
+    }
+
+    // Detectar curso para buscar total curricular
+    let cursoParam = '';
+    const turmaFiltro = $('filter-status-turma')?.value;
+    if (turmaFiltro) {
+      const t = _turmas.find(t => t.id == turmaFiltro);
+      if (t?.curso) cursoParam = t.curso;
+    } else if (_RESTRITOS.has(_user?.role)) {
+      const t = _turmas.find(t => t.id == _user.turma);
+      if (t?.curso) cursoParam = t.curso;
+    }
+    if (!cursoParam && disciplinas.length) {
+      const cursos = [...new Set(disciplinas.map(d => d.curso).filter(Boolean))];
+      if (cursos.length === 1) cursoParam = cursos[0];
+    }
+
+    // Buscar total de h/a do currículo (disciplina_types)
+    const typesUrl = cursoParam
+      ? `${API}/disciplina_types?curso=${encodeURIComponent(cursoParam)}`
+      : `${API}/disciplina_types`;
+    const resTypes = await fetch(typesUrl, { headers: { Authorization: `Bearer ${token()}` } });
+    const allTypes = resTypes.ok ? await resTypes.json() : [];
+
+    // h/a total do currículo por semestre
+    const horasCurriculoBySem = {};
+    allTypes.forEach(t => {
+      const s = t.semestre ?? 0;
+      horasCurriculoBySem[s] = (horasCurriculoBySem[s] || 0) + (t.horas_aula || 0);
+    });
+    const totalHorasCurriculo  = allTypes.reduce((a, t) => a + (t.horas_aula || 0), 0);
+    const totalRealizadasCurso = disciplinas.reduce((a, d) => a + (d.instrucoes_realizadas || 0), 0);
+    const pctCurso  = totalHorasCurriculo > 0 ? Math.min(+(totalRealizadasCurso / totalHorasCurriculo * 100).toFixed(2), 100) : 0;
+    const clsCurso  = progressCls(pctCurso);
+
+    let html = `
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header"><span class="card-title">Total do Curso</span></div>
+        <div style="padding:14px 18px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="progress-wrap" style="flex:1;height:8px;">
+              <div class="progress-bar ${clsCurso}" style="width:${pctCurso}%;height:8px;"></div>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--text);min-width:46px;text-align:right;">${pctCurso}%</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${totalRealizadasCurso}/${totalHorasCurriculo} h/a</span>
+          </div>
+        </div>
+      </div>`;
+
+    // Agrupar por semestre
+    const bySemestre = {};
+    disciplinas.forEach(d => {
+      const s = d.semestre ?? 0;
+      if (!bySemestre[s]) bySemestre[s] = [];
+      bySemestre[s].push(d);
+    });
+
+    // Incluir semestres que existem no currículo mas sem disciplinas lançadas ainda
+    Object.keys(horasCurriculoBySem).forEach(s => {
+      if (!bySemestre[s]) bySemestre[s] = [];
+    });
+
+    Object.keys(bySemestre).sort((a,b) => a-b).forEach(s => {
+      const lista           = bySemestre[s];
+      const totalHoras      = horasCurriculoBySem[s] || lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
+      const totalRealizadas = lista.reduce((acc, d) => acc + (d.instrucoes_realizadas || 0), 0);
+      const pctSemestre     = totalHoras > 0 ? Math.min(+(totalRealizadas / totalHoras * 100).toFixed(2), 100) : 0;
+      const clsSem          = progressCls(pctSemestre);
+
+      html += `
+        <div class="semestre-header">
+          <span>${s}º Semestre</span>
+          <span class="semestre-carga" style="display:flex;align-items:center;gap:10px;">
+            <span>${totalRealizadas}/${totalHoras} h/a</span>
+            <div class="progress-wrap" style="width:80px;"><div class="progress-bar ${clsSem}" style="width:${pctSemestre}%;"></div></div>
+            <span>${pctSemestre}%</span>
+          </span>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+          <table>
+            <thead><tr>
+              <th>Disciplina</th>
+              <th>Instrutor</th>
+              <th>Curso</th>
+              ${!_RESTRITOS.has(_user?.role) ? '<th>Turma</th>' : ''}
+              <th>Progresso</th>
+              <th>H/A</th>
+            </tr></thead>
+            <tbody>`;
+
+      lista.forEach(d => {
+        const pct = +(Number(d.percentual_conclusao) || 0).toFixed(2);
+        const cls = progressCls(pct);
+        const turmaLabel = d.id_turma ?? '—';
+
+        html += `<tr>
+          <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
+          <td class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</td>
+          <td class="td-mono">${d.curso ?? '—'}</td>
+          ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${turmaLabel}</td>` : ''}
+          <td style="min-width:140px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="progress-wrap" style="flex:1;">
+                <div class="progress-bar ${cls}" style="width:${pct}%;"></div>
+              </div>
+              <span class="td-mono" style="font-size:10px;min-width:38px;text-align:right;">${pct}%</span>
+            </div>
+          </td>
+          <td class="td-mono">${d.instrucoes_realizadas}/${d.horas_aula}</td>
+        </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
+    });
+
+    container.innerHTML = html;
+
+  }
+
+  function startEditInstrutor(discId, currentName) {
+    const wrap = $(`instrutor-wrap-${discId}`);
+    wrap.innerHTML = `
+      <input type="text" value="${currentName}" id="instrutor-input-${discId}" style="width:160px;padding:4px 8px;font-size:11px;border-bottom-width:1px;" />
+      <button class="btn-icon" title="Salvar" onclick="saveInstrutor(${discId})">✔</button>
+      <button class="btn-icon" title="Cancelar" onclick="loadDisciplinas()">✕</button>
+    `;
+    $(`instrutor-input-${discId}`).focus();
+  }
+
+  async function saveInstrutor(discId) {
+    const input = $(`instrutor-input-${discId}`);
+    const nome  = input.value.trim();
+    if (!nome) { toast('Nome não pode ser vazio', 'error'); return; }
+
+    const res = await fetch(`${API}/disciplinas/${discId}/instrutor`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+      body:    JSON.stringify({ nome_instrutor: nome }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      toast(d.detail || 'Erro ao salvar', 'error');
+      return;
+    }
+    toast('Instrutor atualizado');
+    loadDisciplinas();
+  }
+
+  // ── DISCIPLINAS CADASTRADAS ───────────────────────────────
+  async function loadDisciplinas() {
+    const container = $('disc-container');
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+
+    const params = new URLSearchParams();
+    const semestre = $('filter-disc-semestre').value;
+    const turma    = $('filter-disc-turma').value;
+    if (semestre) params.set('semestre', semestre);
+    if (turma)    params.set('id_turma', turma);
+
+    const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    const lista = await res.json();
+
+    $('disc-meta').textContent = `${lista.length} disciplina(s)`;
+
+    if (!lista.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma disciplina cadastrada</div></div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Disciplina</th>
+          <th>Curso</th>
+          <th>Semestre</th>
+          ${!_RESTRITOS.has(_user?.role) ? '<th>Turma</th>' : ''}
+          <th>Instrutor</th>
+          <th>H/A</th>
+          <th>Peso</th>
+          <th>Progresso</th>
+        </tr></thead>
+        <tbody>
+          ${lista.map(d => {
+            const pct      = Number(d.percentual_conclusao) || 0;
+            const cls      = progressCls(pct);
+            const canEdit  = _user?.sub_role === 'B3';
+            const instCell = canEdit
+              ? `<div class="inline-edit-wrap" id="instrutor-wrap-${d.id}">
+                   <span id="instrutor-text-${d.id}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${d.nome_instrutor ?? '—'}</span>
+                   <button class="btn-icon" title="Editar instrutor" onclick="startEditInstrutor(${d.id}, '${(d.nome_instrutor||'').replace(/'/g,"\\'")}')">✎</button>
+                 </div>`
+              : `<span class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</span>`;
+            return `<tr>
+              <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
+              <td class="td-mono">${d.curso ?? '—'}</td>
+              <td class="td-mono">${d.semestre ?? '—'}º</td>
+              ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${d.id_turma ?? '—'}</td>` : ''}
+              <td>${instCell}</td>
+              <td class="td-mono">${d.horas_aula}</td>
+              <td class="td-mono">${d.peso}</td>
+              <td style="min-width:120px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="progress-wrap" style="flex:1;"><div class="progress-bar ${cls}" style="width:${pct}%;"></div></div>
+                  <span class="td-mono" style="font-size:10px;">${pct}%</span>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── LANÇAR DISCIPLINA (B3) ────────────────────────────────
+  let _disponiveisCache = [];
+
+  async function loadLancarForm() {
+    resetLancarForm();
+  }
+
+  function resetLancarForm() {
+    _disponiveisCache = [];
+    $('lancar-turma').value     = '';
+    $('lancar-tipo').innerHTML  = '<option value="">Selecione a turma</option>';
+    $('lancar-tipo').disabled   = true;
+    $('lancar-instrutor').value = '';
+    $('lancar-tipo-info').style.display = 'none';
+    $('lancar-alert').className = 'alert';
+  }
+
+  function _resetTipo(msg = 'Selecione a turma') {
+    $('lancar-tipo').innerHTML = `<option value="">${msg}</option>`;
+    $('lancar-tipo').disabled  = true;
+    $('lancar-tipo-info').style.display = 'none';
+    _disponiveisCache = [];
+  }
+
+  async function onTurmaChange() {
+    _resetTipo();
+    await _atualizarDisciplinas();
+  }
+
+  async function _atualizarDisciplinas() {
+    const id_turma = $('lancar-turma').value;
+    if (!id_turma) return;
+
+    // Detectar curso da turma selecionada
+    const turma = _turmas.find(t => t.id == id_turma);
+    const curso = turma?.curso;
+
+    $('lancar-tipo').innerHTML = '<option value="">Carregando...</option>';
+
+    try {
+      const params = new URLSearchParams({ id_turma });
+      if (curso) params.set('curso', curso);
+      const res = await fetch(
+        `${API}/disciplina_types/disponiveis?${params}`,
+        { headers: { Authorization: `Bearer ${token()}` } },
+      );
+      if (!res.ok) { _resetTipo('Erro ao carregar'); return; }
+
+      _disponiveisCache = await res.json();
+      const sel = $('lancar-tipo');
+      if (!_disponiveisCache.length) {
+        sel.innerHTML = '<option value="">Todas já cadastradas para esta turma</option>';
+        return;
+      }
+      sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
+      _disponiveisCache.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id;
+        o.textContent = `${t.semestre}º · ${t.nome}`;
+        sel.appendChild(o);
+      });
+      sel.disabled = false;
+    } catch {
+      _resetTipo('Erro de conexão');
+    }
+  }
+
+  function onTipoChange() {
+    const id   = parseInt($('lancar-tipo').value);
+    const tipo = _disponiveisCache.find(t => t.id === id);
+    if (!tipo) { $('lancar-tipo-info').style.display = 'none'; return; }
+    $('lancar-info-semestre').textContent = `${tipo.semestre}º Semestre`;
+    $('lancar-info-horas').textContent    = `${tipo.horas_aula} h/a`;
+    $('lancar-info-peso').textContent     = tipo.peso;
+    $('lancar-tipo-info').style.display   = 'block';
+  }
+
+  async function lancarDisciplina() {
+    const id_tipo        = parseInt($('lancar-tipo').value);
+    const id_turma       = parseInt($('lancar-turma').value);
+    const nome_instrutor = $('lancar-instrutor').value.trim();
+    const alertEl        = $('lancar-alert');
+    alertEl.className    = 'alert';
+
+    if (!id_turma)       { alertEl.textContent = 'Selecione a turma.';           alertEl.className = 'alert error show'; return; }
+    if (!id_tipo)        { alertEl.textContent = 'Selecione a disciplina.';       alertEl.className = 'alert error show'; return; }
+    if (!nome_instrutor) { alertEl.textContent = 'Informe o nome do instrutor.';  alertEl.className = 'alert error show'; return; }
+
+    const res = await fetch(`${API}/disciplinas`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+      body:    JSON.stringify({ id_tipo, id_turma, nome_instrutor }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alertEl.textContent = data.detail || 'Erro ao lançar disciplina.';
+      alertEl.className   = 'alert error show';
+      return;
+    }
+    resetLancarForm(false);
+    toast('Disciplina lançada com sucesso!');
+  }
+
+  // ── LANÇAR INSTRUÇÃO (B3) ────────────────────────────────
+  let _instCadetes      = [];
+  let _instDisciplina   = null;
+  let _instHorarios     = []; // [{id, assunto, obs, faltas:{cid:tipo}}]
+  let _nextHorarioId    = 0;
+  let _instXerifeValue  = null; // valor global de xerife
+
+  // ── Xerife sd helpers ──
+  function _populateInstXerifeSd() {
+    const list = $('inst-xerife-sd-list');
+    list.innerHTML = _instCadetes.map(c =>
+      `<div class="sd-option" data-value="${c.id}" data-search="${c.username.toLowerCase()}"
+            onclick="selectInstXerife(${c.id},'${c.username.replace(/'/g,"\\'")}')">${c.username}</div>`
+    ).join('');
+  }
+
+  function toggleInstXerifeSd() {
+    const panel = $('inst-xerife-sd-panel');
+    const isOpen = panel.classList.contains('open');
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+    if (!isOpen) {
+      panel.classList.add('open');
+      const s = panel.querySelector('.sd-search');
+      s.value = ''; filterInstXerifeSd(''); s.focus();
+    }
+  }
+
+  function filterInstXerifeSd(q) {
+    $('inst-xerife-sd-list').querySelectorAll('.sd-option').forEach(o => {
+      o.style.display = o.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function selectInstXerife(id, label) {
+    _instXerifeValue = id;
+    $('inst-xerife-sd-trigger').textContent = label;
+    $('inst-xerife-sd-list').querySelectorAll('.sd-option').forEach(o =>
+      o.classList.toggle('sd-selected', o.dataset.value === String(id))
+    );
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+  }
+
+  function clearInstXerifeSd() {
+    _instXerifeValue = null;
+    $('inst-xerife-sd-trigger').textContent = '— Nenhum —';
+    $('inst-xerife-sd-list').querySelectorAll('.sd-option').forEach(o => o.classList.remove('sd-selected'));
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+  }
+
+  async function loadInstForm() {
+    const sel = $('inst-disciplina');
+    sel.innerHTML = '<option value="">Carregando...</option>';
+    try {
+      const res = await fetch(`${API}/disciplinas`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) { sel.innerHTML = '<option value="">Erro ao carregar</option>'; return; }
+      const discs = await res.json();
+      sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
+      discs.filter(d => (d.instrucoes_realizadas || 0) < (d.horas_aula || 0)).forEach(d => {
+        const o = document.createElement('option');
+        o.value = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome, instrucoes_realizadas: d.instrucoes_realizadas || 0 });
+        o.textContent = `${d.semestre}º · ${d.tipo_nome} — Turma ${d.id_turma}`;
+        sel.appendChild(o);
+      });
+    } catch { sel.innerHTML = '<option value="">Erro de conexão</option>'; }
+    _instHorarios  = [];
+    _nextHorarioId = 0;
+    _instDisciplina = null;
+    _instCadetes    = [];
+    $('inst-grid-wrap').style.display = 'none';
+  }
+
+  async function onInstDisciplinaChange() {
+    const val = $('inst-disciplina').value;
+    if (!val) { $('inst-grid-wrap').style.display = 'none'; return; }
+    _instDisciplina = JSON.parse(val);
+    try {
+      const res = await fetch(`${API}/turma/${_instDisciplina.id_turma}/cadetes`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) { toast('Erro ao carregar cadetes', 'error'); return; }
+      _instCadetes = await res.json();
+    } catch { toast('Erro de conexão', 'error'); return; }
+    _instHorarios    = [];
+    _nextHorarioId   = 0;
+    _instXerifeValue = null;
+    $('inst-data-global').value         = '';
+    $('inst-xerife-sd-trigger').textContent = '— Nenhum —';
+    $('inst-count').textContent = '0';
+    $('inst-add-btn').disabled  = false;
+    $('inst-alert').className   = 'alert';
+    _populateInstXerifeSd();
+    $('inst-grid-wrap').style.display = 'block';
+    addHorario();
+  }
+
+  function _saveFaltaValues() {
+    _instHorarios.forEach(h => {
+      if (!h.faltas) h.faltas = {};
+      _instCadetes.forEach(c => {
+        const el = $(`h${h.id}-f${c.id}`);
+        if (el) h.faltas[c.id] = el.value;
+      });
+      const assEl = $(`h${h.id}-assunto`);
+      const obsEl = $(`h${h.id}-obs`);
+      if (assEl) h.assunto = assEl.value.trim();
+      if (obsEl) h.obs     = obsEl.value.trim() || null;
+    });
+  }
+
+  function _renderInstTable() {
+    const table = $('inst-table');
+    if (!_instHorarios.length) { table.innerHTML = ''; return; }
+
+    const faltaOpts = `<option value="">—</option>
+      <option value="F">F</option><option value="LTSP">LTSP</option>
+      <option value="LL">LL</option><option value="LTFP">LTFP</option>
+      <option value="DCA">DCA</option>`;
+
+    // thead
+    let html = '<thead><tr>';
+    html += `<th style="min-width:140px;position:sticky;left:0;background:var(--surface);z-index:2;">CADETE</th>`;
+    _instHorarios.forEach((h, idx) => {
+      const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
+      const canRemove = _instHorarios.length > 1;
+      html += `<th style="min-width:150px;text-align:center;vertical-align:top;padding:6px 8px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:5px;">
+          <span style="font-size:11px;">Aula ${aulaNum}</span>
+          ${canRemove ? `<button onclick="removeHorarioById(${h.id})" style="background:none;border:none;color:var(--danger,#e55);cursor:pointer;font-size:13px;line-height:1;padding:0;" title="Remover">✕</button>` : ''}
+        </div>
+        <input id="h${h.id}-assunto" type="text" placeholder="Assunto*" value="${(h.assunto||'').replace(/"/g,'&quot;')}"
+          style="width:100%;padding:3px 5px;font-size:11px;margin-bottom:3px;box-sizing:border-box;" />
+        <input id="h${h.id}-obs" type="text" placeholder="Observações" value="${(h.obs||'').replace(/"/g,'&quot;')}"
+          style="width:100%;padding:3px 5px;font-size:11px;box-sizing:border-box;" />
+      </th>`;
+    });
+    html += '</tr></thead>';
+
+    // tbody
+    html += '<tbody>';
+    if (!_instCadetes.length) {
+      html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum cadete na turma.</td></tr>`;
+    } else {
+      _instCadetes.forEach(c => {
+        const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
+        html += `<tr><td style="font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;">${label}</td>`;
+        _instHorarios.forEach(h => {
+          html += `<td style="text-align:center;padding:6px 8px;">
+            <select id="h${h.id}-f${c.id}" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
+          </td>`;
+        });
+        html += '</tr>';
+      });
+    }
+    html += '</tbody>';
+
+    table.innerHTML = html;
+
+    // Restaurar valores salvos
+    _instHorarios.forEach(h => {
+      _instCadetes.forEach(c => {
+        const el = $(`h${h.id}-f${c.id}`);
+        if (el && h.faltas?.[c.id]) el.value = h.faltas[c.id];
+      });
+    });
+  }
+
+  function removeHorarioById(hid) {
+    if (_instHorarios.length <= 1) return;
+    _saveFaltaValues();
+    _instHorarios = _instHorarios.filter(x => x.id !== hid);
+    $('inst-count').textContent = _instHorarios.length;
+    $('inst-add-btn').disabled  = false;
+    _renderInstTable();
+  }
+
+  function addHorario() {
+    if (_instHorarios.length >= 6) return;
+    _saveFaltaValues();
+    _instHorarios.push({ id: _nextHorarioId++, assunto: '', obs: null, faltas: {} });
+    $('inst-count').textContent = _instHorarios.length;
+    if (_instHorarios.length >= 6) $('inst-add-btn').disabled = true;
+    _renderInstTable();
+  }
+
+  function lancarInstrucoes() {
+    const alertEl = $('inst-alert');
+    alertEl.className = 'alert';
+    if (!_instDisciplina) return;
+    _saveFaltaValues();
+
+    const dataGlobal = $('inst-data-global').value;
+    if (!dataGlobal) {
+      alertEl.textContent = 'Informe a data antes de lançar.';
+      alertEl.className   = 'alert error show';
+      return;
+    }
+
+    const errosVal = [];
+    _instHorarios.forEach((h, idx) => {
+      if (!h.assunto) errosVal.push(`Aula ${(_instDisciplina?.instrucoes_realizadas||0)+idx+1}: assunto obrigatório`);
+    });
+    if (errosVal.length) {
+      alertEl.textContent = errosVal.join(' · ');
+      alertEl.className   = 'alert error show';
+      return;
+    }
+
+    const aulaBase = (_instDisciplina?.instrucoes_realizadas || 0) + 1;
+    const xerifeLabel = _instXerifeValue
+      ? ($('inst-xerife-sd-trigger').textContent || 'selecionado')
+      : 'nenhum';
+    const lines = _instHorarios.map((h, idx) =>
+      `• Aula ${aulaBase + idx}: ${h.assunto}`
+    ).join('\n');
+    $('inst-confirm-msg').textContent =
+      `Data: ${dataGlobal}   Xerife: ${xerifeLabel}\n\n${lines}`;
+    $('inst-confirm-msg').style.whiteSpace = 'pre-wrap';
+    $('inst-confirm-modal').style.display = 'flex';
+  }
+
+  async function _confirmarLancamento() {
+    $('inst-confirm-modal').style.display = 'none';
+    const alertEl = $('inst-alert');
+    alertEl.className = 'alert';
+
+    const btn = $('inst-lancar-btn');
+    btn.disabled = true;
+    btn.textContent = 'Lançando...';
+
+    const dataGlobal   = $('inst-data-global').value;
+    const xerifeGlobal = _instXerifeValue;
+    const erros  = [];
+    let sucessos = 0;
+
+    for (const h of _instHorarios) {
+      const n = _instHorarios.indexOf(h) + 1;
+      let resInst;
+      try {
+        resInst = await fetch(`${API}/instrucoes`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+          body:    JSON.stringify({ data: dataGlobal, assunto: h.assunto, observacoes: h.obs || null, xerife: xerifeGlobal, id_disciplina: _instDisciplina.id }),
+        });
+      } catch { erros.push(`Aula ${n}: erro de conexão`); continue; }
+
+      if (!resInst.ok) {
+        const err = await resInst.json().catch(() => ({}));
+        erros.push(`Aula ${n}: ${err.detail || 'Erro'}`);
+        continue;
+      }
+
+      const { id: instrucaoId } = await resInst.json();
+      sucessos++;
+
+      for (const c of _instCadetes) {
+        const tipo = h.faltas?.[c.id];
+        if (!tipo) continue;
+        await fetch(`${API}/faltas`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+          body:    JSON.stringify({ tipo, data: dataGlobal, id_instrucao: instrucaoId, id_cadete: c.id }),
+        }).catch(() => {});
+      }
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Lançar';
+
+    if (erros.length) {
+      alertEl.textContent = erros.join(' · ');
+      alertEl.className   = 'alert error show';
+    }
+    if (sucessos > 0) {
+      toast(`${sucessos} instrução(ões) lançada(s) com sucesso!`);
+      _instHorarios    = [];
+      _nextHorarioId   = 0;
+      _instXerifeValue = null;
+      $('inst-count').textContent = '0';
+      $('inst-add-btn').disabled  = false;
+      $('inst-table').innerHTML   = '';
+      $('inst-grid-wrap').style.display = 'none';
+      $('inst-disciplina').value  = '';
+    }
+  }
+
+  // ── BOOT ─────────────────────────────────────────────────
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.sd-wrap')) {
+      document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+    }
+  });
+
+  (async () => {
+    if (token()) { await initApp(); }
+  })();
+</script>
+</body>
+</html>
