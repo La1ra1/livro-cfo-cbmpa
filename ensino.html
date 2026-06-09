@@ -282,6 +282,15 @@
     .empty-state-icon { font-size: 28px; color: var(--border2); margin-bottom: 12px; }
     .empty-state-text { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
 
+    /* ── FALTAS PROGRESS ── */
+    .progress-bar.falta-ok     { background: var(--success); }
+    .progress-bar.falta-warn   { background: var(--warn); }
+    .progress-bar.falta-danger { background: var(--danger); }
+    .falta-bar-wrap { position: relative; flex: 1; min-width: 80px; }
+    .falta-threshold {
+      position: absolute; top: 0; width: 1px; height: 6px; opacity: .8;
+    }
+
     /* ── FILTERS BAR ── */
     .filters-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
     .filters-bar label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 0; white-space: nowrap; }
@@ -364,6 +373,9 @@
       </div>
       <div class="nav-item" data-section="disciplinas" onclick="showSection('disciplinas')">
         <span class="nav-icon">▣</span> Disciplinas
+      </div>
+      <div class="nav-item" data-section="faltas" onclick="showSection('faltas')">
+        <span class="nav-icon">⚑</span> Faltas
       </div>
     </div>
 
@@ -452,6 +464,29 @@
         <div id="disc-container">
           <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
         </div>
+      </div>
+    </section>
+
+    <!-- ── FALTAS ── -->
+    <section class="section" id="section-faltas">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Controle de <span>Faltas</span></div>
+        </div>
+      </div>
+
+      <div class="filters-bar" id="faltas-filters">
+        <span id="filter-faltas-turma-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Turma</label>
+          <select id="filter-faltas-turma" onchange="loadFaltas()">
+            <option value="">Todas</option>
+          </select>
+        </span>
+      </div>
+
+      <div id="faltas-container">
+        <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
       </div>
     </section>
 
@@ -622,6 +657,7 @@
 
     if (name === 'status')      loadStatus();
     if (name === 'disciplinas') loadDisciplinas();
+    if (name === 'faltas')      loadFaltas();
     if (name === 'lancar')      loadLancarForm();
     if (name === 'instrucao')   loadInstForm();
   }
@@ -656,8 +692,9 @@
 
     // Mostrar filtro de turma para coord/auxiliar/comandante
     if (!_RESTRITOS.has(_user.role)) {
-      $('filter-turma-wrap').style.display      = 'flex';
-      $('filter-disc-turma-wrap').style.display = 'flex';
+      $('filter-turma-wrap').style.display          = 'flex';
+      $('filter-disc-turma-wrap').style.display     = 'flex';
+      $('filter-faltas-turma-wrap').style.display   = 'flex';
     }
 
     await Promise.all([loadSemestreOptions(), loadTurmaOptions()]);
@@ -737,7 +774,7 @@
     _turmas = await res.json();
 
     // Filtros de exibição usam todas as turmas
-    ['filter-status-turma', 'filter-disc-turma'].forEach(id => {
+    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
       while (sel.options.length > 1) sel.remove(1);
@@ -1382,6 +1419,188 @@
       $('inst-grid-wrap').style.display = 'none';
       $('inst-disciplina').value  = '';
     }
+  }
+
+  // ── FALTAS ───────────────────────────────────────────────
+  function _faltaProgressCls(pct) {
+    if (pct >= 25) return 'falta-danger';
+    if (pct >= 15) return 'falta-warn';
+    return 'falta-ok';
+  }
+
+  function _faltaBarWidth(pct) {
+    return Math.min(pct / 25 * 100, 100).toFixed(1);
+  }
+
+  function _faltaStatusBadge(pct) {
+    if (pct >= 25) return '<span class="badge badge-danger">REPROVADO POR FALTAS</span>';
+    if (pct >= 15) return '<span class="badge badge-warn">SEM DIREITO A VF</span>';
+    return '<span class="badge badge-green">REGULAR</span>';
+  }
+
+  async function loadFaltas() {
+    const container = $('faltas-container');
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+
+    const params = new URLSearchParams();
+    const turma = $('filter-faltas-turma')?.value;
+    if (turma) params.set('id_turma', turma);
+
+    const res = await fetch(`${API}/faltas/resumo?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>';
+      return;
+    }
+    const cadetes = await res.json();
+
+    if (!cadetes.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum dado encontrado</div></div>';
+      return;
+    }
+
+    if (_RESTRITOS.has(_user?.role)) {
+      _renderFaltasCadete(cadetes[0], container);
+    } else {
+      _renderFaltasAdmin(cadetes, container);
+    }
+  }
+
+  function _renderFaltasCadete(c, container) {
+    const pct  = c.percentual;
+    const cls  = _faltaProgressCls(pct);
+    const barW = _faltaBarWidth(pct);
+
+    container.innerHTML = `
+      <div class="card" style="max-width:600px;margin-bottom:24px;">
+        <div class="card-header" style="gap:10px;">
+          <span class="card-title">Resumo de Faltas</span>
+          ${_faltaStatusBadge(pct)}
+        </div>
+        <div style="padding:18px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+            <div class="falta-bar-wrap" style="height:12px;">
+              <div class="progress-wrap" style="height:12px;">
+                <div class="progress-bar ${cls}" style="width:${barW}%;height:12px;"></div>
+              </div>
+              <div class="falta-threshold" style="left:60%;background:var(--warn);"></div>
+              <div class="falta-threshold" style="left:100%;background:var(--danger);"></div>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;min-width:52px;text-align:right;">${pct}%</span>
+          </div>
+          <div style="display:flex;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);padding:0 0 14px;gap:4px;">
+            <span>0%</span>
+            <span style="flex:1;text-align:center;padding-right:8%;">15%</span>
+            <span>25%</span>
+          </div>
+          <div style="display:flex;gap:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+            <div><span style="color:var(--muted);">AULAS REALIZADAS: </span><span style="color:var(--text);">${c.total_instrucoes}</span></div>
+            <div><span style="color:var(--muted);">FALTAS: </span><span style="color:var(--text);">${c.total_faltas}</span></div>
+          </div>
+          <div style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;">
+            <span style="color:var(--warn);">▲ 15%</span> sem direito a verificações finais &nbsp;·&nbsp;
+            <span style="color:var(--danger);">▲ 25%</span> reprovado por faltas
+          </div>
+        </div>
+      </div>`;
+
+    _loadFaltasDetalhe(c.id, container);
+  }
+
+  async function _loadFaltasDetalhe(cadeteId, container) {
+    const res = await fetch(`${API}/faltas/detalhe/${cadeteId}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) return;
+    const faltas = await res.json();
+
+    if (!faltas.length) {
+      container.innerHTML += `
+        <div class="card">
+          <div class="card-body">
+            <div class="empty-state-text" style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">
+              Nenhuma falta registrada
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML += `
+      <div class="card">
+        <div class="card-header"><span class="card-title">Detalhamento</span></div>
+        <table>
+          <thead><tr>
+            <th>Data</th>
+            <th>Disciplina</th>
+            <th>Aula Nº</th>
+            <th>Tipo</th>
+          </tr></thead>
+          <tbody>
+            ${faltas.map(f => `<tr>
+              <td class="td-mono">${f.data}</td>
+              <td style="font-size:13px;">${f.disciplina}</td>
+              <td class="td-mono">${f.numero_aula}</td>
+              <td><span class="badge badge-warn">${f.tipo}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function _renderFaltasAdmin(cadetes, container) {
+    const byTurma = {};
+    cadetes.forEach(c => {
+      const t = c.turma ?? '—';
+      if (!byTurma[t]) byTurma[t] = [];
+      byTurma[t].push(c);
+    });
+
+    let html = '';
+    Object.keys(byTurma).sort().forEach(turma => {
+      const lista = byTurma[turma];
+      html += `
+        <div class="semestre-header">
+          <span>Turma ${turma}</span>
+          <span class="semestre-carga">${lista.length} cadete(s)</span>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+          <table>
+            <thead><tr>
+              <th>Nº</th>
+              <th>Cadete</th>
+              <th>Faltas</th>
+              <th>Aulas</th>
+              <th style="min-width:180px;">% Faltas</th>
+              <th>Status</th>
+            </tr></thead>
+            <tbody>
+              ${lista.map(c => {
+                const pct  = c.percentual;
+                const cls  = _faltaProgressCls(pct);
+                const barW = _faltaBarWidth(pct);
+                return `<tr>
+                  <td class="td-mono">${c.numero_geral ?? '—'}</td>
+                  <td style="font-weight:500;">${c.username}</td>
+                  <td class="td-mono">${c.total_faltas}</td>
+                  <td class="td-mono">${c.total_instrucoes}</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div class="falta-bar-wrap">
+                        <div class="progress-wrap">
+                          <div class="progress-bar ${cls}" style="width:${barW}%;"></div>
+                        </div>
+                        <div class="falta-threshold" style="left:60%;background:var(--warn);"></div>
+                      </div>
+                      <span class="td-mono" style="font-size:10px;min-width:38px;text-align:right;">${pct}%</span>
+                    </div>
+                  </td>
+                  <td>${_faltaStatusBadge(pct)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    });
+
+    container.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum cadete encontrado</div></div>';
   }
 
   // ── BOOT ─────────────────────────────────────────────────
