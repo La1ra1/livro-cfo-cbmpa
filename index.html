@@ -5809,7 +5809,7 @@
           ? `<span class="pill" style="color:var(--success);border-color:rgba(46,204,113,.3);background:var(--success-dim);">Deferido</span>`
           : a.recurso_status === 'indeferido'
           ? `<span class="pill" style="color:var(--danger);border-color:rgba(192,57,43,.3);background:var(--danger-dim);">Indeferido</span>`
-          : a.veredito === 'perda_de_ponto' && a.veredito_decidido_em && ((Date.now() - new Date(a.veredito_decidido_em)) / 3600000) <= 720
+          : a.veredito === 'perda_de_ponto' && a.veredito_decidido_em && ((Date.now() - new Date(a.veredito_decidido_em)) / 3600000) <= 48
           ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px;" onclick="event.stopPropagation();openRecursoModal(${a.id})">Requerer</button>`
           : '—';
         return `
