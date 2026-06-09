@@ -1070,7 +1070,7 @@
       sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
       discs.forEach(d => {
         const o = document.createElement('option');
-        o.value = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome });
+        o.value = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome, instrucoes_realizadas: d.instrucoes_realizadas || 0 });
         o.textContent = `${d.semestre}º · ${d.tipo_nome} — Turma ${d.id_turma}`;
         sel.appendChild(o);
       });
@@ -1123,13 +1123,14 @@
     let html = '<thead><tr>';
     html += `<th style="min-width:130px;position:sticky;left:0;background:var(--surface);z-index:2;">CADETE</th>`;
     _instHorarios.forEach((h, idx) => {
-      const dl = h.data ? h.data.split('-').reverse().slice(0,2).join('/') : '—';
+      const dl      = h.data ? h.data.split('-').reverse().slice(0,2).join('/') : '—';
+      const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
       const sub = h.assunto
         ? `<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.assunto}</div>`
         : `<div style="font-size:9px;font-weight:400;color:var(--border2);margin-top:3px;">clique para editar</div>`;
       html += `<th id="inst-th-${h.id}" style="min-width:110px;cursor:pointer;text-align:center;" onclick="openInstModal(${h.id})">
         <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
-          <span>${idx+1}º</span>
+          <span>Aula ${aulaNum}</span>
           <span style="font-size:10px;font-weight:400;color:var(--muted);">${dl}</span>
           <span style="color:var(--accent);font-size:10px;">✎</span>
         </div>
@@ -1168,17 +1169,18 @@
   }
 
   function _updateInstHeader(hid) {
-    const h   = _instHorarios.find(x => x.id === hid);
-    const th  = $(`inst-th-${hid}`);
-    const idx = _instHorarios.findIndex(x => x.id === hid);
+    const h       = _instHorarios.find(x => x.id === hid);
+    const th      = $(`inst-th-${hid}`);
+    const idx     = _instHorarios.findIndex(x => x.id === hid);
     if (!h || !th) return;
-    const dl  = h.data ? h.data.split('-').reverse().slice(0,2).join('/') : '—';
+    const dl      = h.data ? h.data.split('-').reverse().slice(0,2).join('/') : '—';
+    const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
     const sub = h.assunto
       ? `<div style="font-size:9px;font-weight:400;color:var(--muted);margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.assunto}</div>`
       : `<div style="font-size:9px;font-weight:400;color:var(--border2);margin-top:3px;">clique para editar</div>`;
     th.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
-        <span>${idx+1}º</span>
+        <span>Aula ${aulaNum}</span>
         <span style="font-size:10px;font-weight:400;color:var(--muted);">${dl}</span>
         <span style="color:var(--accent);font-size:10px;">✎</span>
       </div>${sub}`;
@@ -1208,7 +1210,8 @@
     const idx = _instHorarios.findIndex(x => x.id === hid);
     if (!h) return;
     $('inst-modal-hid').value      = hid;
-    $('inst-modal-title').textContent = `Horário ${idx + 1}`;
+    const aulaNum = (_instDisciplina?.instrucoes_realizadas || 0) + idx + 1;
+    $('inst-modal-title').textContent = `Aula ${aulaNum}`;
     $('inst-modal-data').value     = h.data    || '';
     $('inst-modal-assunto').value  = h.assunto || '';
     $('inst-modal-obs').value      = h.obs     || '';
