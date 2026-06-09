@@ -836,7 +836,7 @@
     });
     const totalHorasCurriculo  = allTypes.reduce((a, t) => a + (t.horas_aula || 0), 0);
     const totalRealizadasCurso = disciplinas.reduce((a, d) => a + (d.instrucoes_realizadas || 0), 0);
-    const pctCurso  = totalHorasCurriculo > 0 ? Math.min(+(totalRealizadasCurso / totalHorasCurriculo * 100).toFixed(1), 100) : 0;
+    const pctCurso  = totalHorasCurriculo > 0 ? Math.min(+(totalRealizadasCurso / totalHorasCurriculo * 100).toFixed(2), 100) : 0;
     const clsCurso  = progressCls(pctCurso);
 
     let html = `
@@ -870,7 +870,7 @@
       const lista           = bySemestre[s];
       const totalHoras      = horasCurriculoBySem[s] || lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
       const totalRealizadas = lista.reduce((acc, d) => acc + (d.instrucoes_realizadas || 0), 0);
-      const pctSemestre     = totalHoras > 0 ? Math.min(+(totalRealizadas / totalHoras * 100).toFixed(1), 100) : 0;
+      const pctSemestre     = totalHoras > 0 ? Math.min(+(totalRealizadas / totalHoras * 100).toFixed(2), 100) : 0;
       const clsSem          = progressCls(pctSemestre);
 
       html += `
@@ -895,7 +895,7 @@
             <tbody>`;
 
       lista.forEach(d => {
-        const pct = +(Number(d.percentual_conclusao) || 0).toFixed(1);
+        const pct = +(Number(d.percentual_conclusao) || 0).toFixed(2);
         const cls = progressCls(pct);
         const turmaLabel = d.id_turma ?? '—';
 
