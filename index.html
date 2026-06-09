@@ -261,10 +261,6 @@
     .badge-silver { background: rgba(74,80,96,.15); color: var(--text-dim); border: 1px solid rgba(74,80,96,.3); }
     .badge-blue  { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(52,152,219,.25); }
     .badge-green { background: rgba(46,204,113,.1); color: var(--success); border: 1px solid rgba(46,204,113,.25); }
-    .badge-sub-b1 { background: rgba(155,89,182,.12); color: #9b59b6; border: 1px solid rgba(155,89,182,.3); }
-    .badge-sub-b3 { background: rgba(230,126,34,.12); color: #e67e22; border: 1px solid rgba(230,126,34,.3); }
-    .badge-sub-b4 { background: rgba(52,152,219,.12); color: #3498db; border: 1px solid rgba(52,152,219,.3); }
-    .badge-sub-b5 { background: rgba(231,76,60,.12); color: #e74c3c; border: 1px solid rgba(231,76,60,.3); }
 
     /* ── SIDEBAR ── */
     .sidebar {
@@ -1247,7 +1243,6 @@
       <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Fatos Observados</a>
       <a href="requerimentos.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Requerimentos</a>
       <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
-      <a href="ensino.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ensino</a>
     </nav>
     <div class="topbar-user">
       <div style="text-align:right;">
@@ -1449,9 +1444,6 @@
       <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;color:inherit;">
         <span class="nav-icon">📋</span> Ordens em Vigor
       </a>
-      <a href="ensino.html" class="nav-item" style="text-decoration:none;color:inherit;">
-        <span class="nav-icon">◉</span> Ensino
-      </a>
       <div class="nav-item" onclick="handleLogout()">
         <span class="nav-icon">↩</span> Sair
       </div>
@@ -1478,7 +1470,7 @@
           <div class="profile-avatar" id="pf-avatar">?</div>
           <div>
             <div class="profile-name" id="pf-name">—</div>
-            <div class="profile-role-label"><span id="pf-role">—</span> <span id="pf-sub-role"></span></div>
+            <div class="profile-role-label" id="pf-role">—</div>
           </div>
         </div>
         <div class="info-row">
@@ -1488,10 +1480,6 @@
         <div class="info-row">
           <span class="info-label">Número Geral</span>
           <span class="info-value" id="pf-numero">—</span>
-        </div>
-        <div class="info-row" id="pf-sub-role-row" style="display:none;">
-          <span class="info-label">Sub-Função</span>
-          <span class="info-value" id="pf-sub-role-value">—</span>
         </div>
         <div class="info-row">
           <span class="info-label">Nível de Acesso</span>
@@ -3263,15 +3251,6 @@
     return `<span class="badge ${cls}">${roleLabel(role)}</span>`;
   }
 
-  function subRoleBadgeCls(subRole) {
-    return subRole === 'B1' ? 'badge-sub-b1' : subRole === 'B3' ? 'badge-sub-b3' : subRole === 'B4' ? 'badge-sub-b4' : subRole === 'B5' ? 'badge-sub-b5' : '';
-  }
-
-  function subRoleBadgeHtml(subRole) {
-    if (!subRole) return '';
-    return `<span class="badge ${subRoleBadgeCls(subRole)}">${subRole}</span>`;
-  }
-
   // ── SECTIONS ──────────────────────────────────
   function showSection(name) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -3417,13 +3396,6 @@
       $('pf-turma-pel').textContent = u.turma != null ? `${u.turma}${u.pel ?? ''}` : '—';
       $('pf-numero').textContent = u.numero_geral ?? '—';
       $('pf-badge').innerHTML    = badgeHtml(u.role);
-      $('pf-sub-role').innerHTML = subRoleBadgeHtml(u.sub_role);
-      if (u.sub_role) {
-        $('pf-sub-role-row').style.display = '';
-        $('pf-sub-role-value').innerHTML = subRoleBadgeHtml(u.sub_role);
-      } else {
-        $('pf-sub-role-row').style.display = 'none';
-      }
 
       // Bottom nav mobile
       showMobileNav(u.role);
@@ -3807,7 +3779,6 @@
                     <th>Pel</th>
                     <th>Função Atual</th>
                     <th>Alterar Função</th>
-                    <th>Alterar Sub-Função</th>
                   </tr>
                 </thead>
                 <tbody>${cadetes.map(u => rowFn(u)).join('')}</tbody>
@@ -3827,18 +3798,12 @@
     const onChange = ctx === 'aux'
       ? `auxConfirmChangeRole(${u.id}, '${u.username}', this.value, this)`
       : `confirmChangeRole(${u.id}, '${u.username}', this.value, this)`;
-    const subRoleSelectId = ctx === 'aux' ? `aux-sub-role-select-${u.id}` : `sub-role-select-${u.id}`;
-    const subRoleStatusId = ctx === 'aux' ? `aux-sub-role-status-${u.id}` : `sub-role-status-${u.id}`;
-    const onSubRoleChange = ctx === 'aux'
-      ? `auxConfirmChangeSubRole(${u.id}, '${u.username}', this.value, this)`
-      : `confirmChangeSubRole(${u.id}, '${u.username}', this.value, this)`;
-    const subRoleVal = u.sub_role ?? '';
     return `
       <tr>
         <td class="td-mono">${numGeral}</td>
         <td class="td-name">${u.username}</td>
         <td class="td-mono">${u.pel ?? '—'}</td>
-        <td><span class="badge ${badgeCls}">${roleLabel(u.role)}</span> ${subRoleBadgeHtml(u.sub_role)}</td>
+        <td><span class="badge ${badgeCls}">${roleLabel(u.role)}</span></td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
             <select class="role-select" id="${selectId}" onchange="${onChange}">
@@ -3847,18 +3812,6 @@
               <option value="xerife"  ${u.role==='xerife' ?'selected':''}>Xerife</option>
             </select>
             <span class="td-mono" id="${statusId}" style="font-size:10px;width:52px;display:inline-block;flex-shrink:0;"></span>
-          </div>
-        </td>
-        <td>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <select class="role-select" id="${subRoleSelectId}" onchange="${onSubRoleChange}">
-              <option value=""   ${subRoleVal===''  ?'selected':''}>—</option>
-              <option value="B1" ${subRoleVal==='B1'?'selected':''}>B1</option>
-              <option value="B3" ${subRoleVal==='B3'?'selected':''}>B3</option>
-              <option value="B4" ${subRoleVal==='B4'?'selected':''}>B4</option>
-              <option value="B5" ${subRoleVal==='B5'?'selected':''}>B5</option>
-            </select>
-            <span class="td-mono" id="${subRoleStatusId}" style="font-size:10px;width:52px;display:inline-block;flex-shrink:0;"></span>
           </div>
         </td>
       </tr>`;
@@ -3892,42 +3845,6 @@
       }
     } catch {
       selectEl.value = usuario.role;
-      statusEl.textContent = '✗ falha';
-      statusEl.style.color = 'var(--danger)';
-      toast('Erro de conexão.', 'error');
-    } finally {
-      selectEl.disabled = false;
-    }
-  }
-
-  async function confirmChangeSubRole(userId, username, newSubRole, selectEl) {
-    const usuario = window._allUsuarios.find(u => u.id === userId);
-    if (!usuario || (usuario.sub_role ?? '') === newSubRole) return;
-    const statusEl = $(`sub-role-status-${userId}`);
-    statusEl.textContent = 'salvando...';
-    statusEl.style.color = 'var(--muted)';
-    selectEl.disabled = true;
-    try {
-      const res = await fetch(`${API}/coordenador/usuarios/sub_role`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-        body: JSON.stringify({ target_username: username, new_sub_role: newSubRole || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        selectEl.value = usuario.sub_role ?? '';
-        statusEl.textContent = '✗ erro';
-        statusEl.style.color = 'var(--danger)';
-        toast(data.detail || 'Erro ao alterar sub-função.', 'error');
-      } else {
-        usuario.sub_role = newSubRole || null;
-        statusEl.textContent = '✓ salvo';
-        statusEl.style.color = 'var(--success)';
-        toast(`Sub-função de ${username} alterada para ${newSubRole || '—'}.`);
-        setTimeout(() => { statusEl.textContent = ''; renderUsuarios(); }, 1500);
-      }
-    } catch {
-      selectEl.value = usuario.sub_role ?? '';
       statusEl.textContent = '✗ falha';
       statusEl.style.color = 'var(--danger)';
       toast('Erro de conexão.', 'error');
@@ -5216,8 +5133,6 @@
     if (!dataFato)  { showAlert('lanc-error', 'Informe a data do fato.'); return; }
     if (!_lancCadetes.length) { showAlert('lanc-error', 'Adicione ao menos um cadete.'); return; }
 
-    if (!confirm(`Confirma o lançamento desta anotação para ${_lancCadetes.length} cadete(s)?`)) return;
-
     const anexosInput = document.getElementById('lanc-anexos');
     const arquivos    = anexosInput ? Array.from(anexosInput.files) : [];
 
@@ -5935,36 +5850,6 @@
     } finally { selectEl.disabled = false; }
   }
 
-  async function auxConfirmChangeSubRole(userId, username, newSubRole, selectEl) {
-    const usuario = window._auxUsuarios.find(u => u.id === userId);
-    if (!usuario || (usuario.sub_role ?? '') === newSubRole) return;
-    const statusEl = document.getElementById(`aux-sub-role-status-${userId}`);
-    statusEl.textContent = 'salvando...'; statusEl.style.color = 'var(--muted)';
-    selectEl.disabled = true;
-    try {
-      const res = await fetch(`${API}/coordenador/usuarios/sub_role`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
-        body: JSON.stringify({ target_username: username, new_sub_role: newSubRole || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        selectEl.value = usuario.sub_role ?? '';
-        statusEl.textContent = '✗ erro'; statusEl.style.color = 'var(--danger)';
-        toast(data.detail || 'Erro.', 'error');
-      } else {
-        usuario.sub_role = newSubRole || null;
-        statusEl.textContent = '✓ salvo'; statusEl.style.color = 'var(--success)';
-        toast(`Sub-função de ${username} alterada para ${newSubRole || '—'}.`);
-        setTimeout(() => { statusEl.textContent = ''; renderAuxUsuarios(); }, 1500);
-      }
-    } catch {
-      selectEl.value = usuario.sub_role ?? '';
-      statusEl.textContent = '✗ falha'; statusEl.style.color = 'var(--danger)';
-      toast('Erro de conexão.', 'error');
-    } finally { selectEl.disabled = false; }
-  }
-
   // ══════════════════════════════════════════════════
   // AUXILIAR — COM VEREDITO (same as coordenador)
   // ══════════════════════════════════════════════════
@@ -6371,23 +6256,23 @@
       }
 
       const json = await res.json();
-      _expData = (json.data || []).filter(r => r.numero_geral != null);
+      _expData = json.data;
 
       document.getElementById('exp-titulo').textContent =
         `Turma ${turma} — ${mesesNomes[mes]}/${ano}`;
       document.getElementById('exp-subtitulo').textContent =
-        `${_expData.length} cadete(s)`;
+        `${json.data.length} cadete(s)`;
 
-      const totalDesc = _expData.reduce((s, r) => s + Number(r.desconto_total), 0);
+      const totalDesc = json.data.reduce((s, r) => s + Number(r.desconto_total), 0);
 
-      if (!_expData.length) {
+      if (!json.data.length) {
         document.getElementById('tbody-exportar').innerHTML =
           '<tr><td colspan="6" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM RESULTADO</td></tr>';
         document.getElementById('exp-total-bar').textContent = '';
         return;
       }
 
-      document.getElementById('tbody-exportar').innerHTML = _expData.map(r => {
+      document.getElementById('tbody-exportar').innerHTML = json.data.map(r => {
         const desconto   = Number(r.desconto_total) || 0;
         const elogios    = Number(r.pontos_elogios) || 0;
         const notaFinal  = Math.min(10, Math.max(0, 8 - desconto + elogios));
@@ -6404,9 +6289,9 @@
 
       // fix empty state colspan handled above
 
-      const totalElogios = _expData.reduce((s, r) => s + (Number(r.pontos_elogios) || 0), 0);
-      const mediaNotas   = _expData.length
-        ? (_expData.reduce((s, r) => s + Math.min(10, Math.max(0, 8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0))), 0) / _expData.length).toFixed(2)
+      const totalElogios = json.data.reduce((s, r) => s + (Number(r.pontos_elogios) || 0), 0);
+      const mediaNotas   = json.data.length
+        ? (json.data.reduce((s, r) => s + Math.min(10, Math.max(0, 8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0))), 0) / json.data.length).toFixed(2)
         : '—';
       document.getElementById('exp-total-bar').innerHTML =
         `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
@@ -7510,9 +7395,8 @@
     );
     if (!res.ok) { alert('Erro ao buscar descontos.'); return; }
     const json = await res.json();
-    const dataFiltrada = (json.data || []).filter(r => r.numero_geral != null);
 
-    if (!dataFiltrada.length) { alert('Nenhum desconto encontrado para os filtros selecionados.'); return; }
+    if (!json.data.length) { alert('Nenhum desconto encontrado para os filtros selecionados.'); return; }
 
     const boldMatch = (nomeCompleto, nomeGuerra) => {
       if (!nomeCompleto) return nomeGuerra || '';
@@ -7527,7 +7411,7 @@
     // Agrupar por cadete, preservando a ordem de numero_geral
     const cadeteMap = {};
     const cadeteOrder = [];
-    dataFiltrada.forEach(r => {
+    json.data.forEach(r => {
       const key = r.numero_geral ?? r.username;
       if (!cadeteMap[key]) {
         cadeteMap[key] = { numero_geral: r.numero_geral, username: r.username, nome_completo: r.nome_completo, infracoes: [] };
@@ -7587,7 +7471,7 @@
         DESCONTOS DE NOTA DE COMPORTAMENTO REFERENCIADOS PELO ANEXO I DO CÓDIGO DE ÉTICA DO CBMPA<br>
         <span style="font-size:11px;">${mesNome} DE ${ano} — TURMA ${turma}</span>
       </div>
-      <div style="font-size:10px;color:#444;margin-top:2px;">${cadeteOrder.length} cadete(s) · ${dataFiltrada.length} desconto(s)</div>
+      <div style="font-size:10px;color:#444;margin-top:2px;">${cadeteOrder.length} cadete(s) · ${json.data.length} desconto(s)</div>
     </div>
     <div style="flex-shrink:0;">${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:52px;width:auto;display:block;" />` : ''}</div>
   </div>
@@ -8969,33 +8853,6 @@
     _recursoAnotId = null;
   }
 
-  function preConfirmarRecurso() {
-    const motivo = document.getElementById('recurso-motivo').value.trim();
-    if (!motivo) {
-      const el = document.getElementById('recurso-error');
-      el.textContent = 'Descreva o motivo do recurso.';
-      el.style.display = 'block';
-      return;
-    }
-    document.getElementById('recurso-confirm-check').checked = false;
-    document.getElementById('modal-recurso-confirm').classList.add('open');
-  }
-
-  function closeRecursoConfirm() {
-    document.getElementById('modal-recurso-confirm').classList.remove('open');
-  }
-
-  function confirmarRecurso() {
-    if (!document.getElementById('recurso-confirm-check').checked) {
-      document.getElementById('btn-recurso-confirm-ok').style.animation = 'none';
-      document.getElementById('btn-recurso-confirm-ok').textContent = 'Marque a caixa para confirmar';
-      setTimeout(() => { document.getElementById('btn-recurso-confirm-ok').textContent = 'Confirmar e Enviar'; }, 2000);
-      return;
-    }
-    closeRecursoConfirm();
-    submitRecurso();
-  }
-
   async function submitRecurso() {
     if (!_recursoAnotId) return;
     const motivo = document.getElementById('recurso-motivo').value.trim();
@@ -9303,30 +9160,7 @@
         </div>
         <div class="alert error" id="recurso-error" style="display:none;margin-bottom:10px;"></div>
         <div class="alert success" id="recurso-success" style="display:none;margin-bottom:10px;"></div>
-        <button class="btn btn-primary btn-full" id="btn-recurso-enviar" onclick="preConfirmarRecurso()">ENVIAR PEDIDO DE RECURSO</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── MODAL: CONFIRMAR RECURSO ── -->
-  <div class="modal-overlay" id="modal-recurso-confirm" onclick="if(event.target===this)closeRecursoConfirm()" style="z-index:500;">
-    <div class="modal" style="max-width:420px;">
-      <div class="modal-header">
-        <div class="modal-title">Confirmar Envio</div>
-        <button class="modal-close-btn" onclick="closeRecursoConfirm()">✕</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.7;">
-          Você está prestes a interpor um pedido de revisão de veredito. Lembre-se de que pedidos sem fundamento sujeitam o cadete à anotação por <strong>G15 (−1 pt)</strong>.
-        </p>
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:20px;">
-          <input type="checkbox" id="recurso-confirm-check" style="margin-top:3px;accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;" />
-          Confirmo que li o aviso acima e que meu pedido de revisão possui fundamento.
-        </label>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="closeRecursoConfirm()">Cancelar</button>
-          <button class="btn btn-primary btn-sm" style="flex:2;" id="btn-recurso-confirm-ok" onclick="confirmarRecurso()">Confirmar e Enviar</button>
-        </div>
+        <button class="btn btn-primary btn-full" id="btn-recurso-enviar" onclick="submitRecurso()">ENVIAR PEDIDO DE RECURSO</button>
       </div>
     </div>
   </div>
