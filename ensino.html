@@ -817,7 +817,7 @@
     const semestre = $('filter-status-semestre').value;
     const pelotao = $('filter-status-pelotao').value;
     if (semestre) params.set('semestre', semestre);
-    if (pelotao) params.set('id_pelotao', turma);
+    if (pelotao) params.set('id_pelotao', pelotao);
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
@@ -983,7 +983,7 @@
     const semestre = $('filter-disc-semestre').value;
     const pelotao = $('filter-disc-pelotao').value;
     if (semestre) params.set('semestre', semestre);
-    if (pelotao) params.set('id_pelotao', turma);
+    if (pelotao) params.set('id_pelotao', pelotao);
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
@@ -1118,7 +1118,7 @@
 
   async function lancarDisciplina() {
     const id_tipo        = parseInt($('lancar-tipo').value);
-    const id_pelotao = parseInt($('lancar-pelotao').value);
+    const id_pelotao = $('lancar-pelotao').value;
     const nome_instrutor = $('lancar-instrutor').value.trim();
     const alertEl        = $('lancar-alert');
     alertEl.className    = 'alert';
@@ -1465,7 +1465,7 @@
     const semestre = $('filter-faltas-semestre')?.value;
     const pelotao = $('filter-faltas-pelotao')?.value;
     if (semestre) params.set('semestre', semestre);
-    if (pelotao) params.set('id_pelotao', turma);
+    if (pelotao) params.set('id_pelotao', pelotao);
 
     const res = await fetch(`${API}/faltas/resumo?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) {
@@ -1553,7 +1553,7 @@
 
       html += `
         <div class="semestre-header">
-          <span>Pelotão ${pelotao}</span>
+          <span>Pelotão ${turma}</span>
           <span class="semestre-carga">${lista.length} cadete(s) com faltas</span>
         </div>
         <div class="card" style="margin-bottom:24px;">
