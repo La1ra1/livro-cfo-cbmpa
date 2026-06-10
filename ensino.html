@@ -624,6 +624,19 @@
   </main>
 </div>
 
+<!-- ── MODAL DETALHE FALTAS POR INSTRUÇÃO ── -->
+<div id="falta-detalhe-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);align-items:center;justify-content:center;" onclick="if(event.target===this)$('falta-detalhe-modal').style.display='none'">
+  <div class="card" style="width:560px;max-width:96vw;max-height:82vh;display:flex;flex-direction:column;">
+    <div class="card-header" style="flex-shrink:0;">
+      <span class="card-title" id="falta-detalhe-title">Instruções com Falta</span>
+      <button class="btn btn-ghost btn-sm" onclick="$('falta-detalhe-modal').style.display='none'">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;" id="falta-detalhe-body">
+      <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL INSTRUÇÕES DA DISCIPLINA ── -->
 <div id="disc-inst-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;" onclick="if(event.target===this)closeDiscInstModal()">
   <div class="card" style="width:680px;max-width:96vw;max-height:85vh;display:flex;flex-direction:column;">
@@ -1656,7 +1669,7 @@
   // Visão do cadete: tabela por disciplina + legenda
   function _renderFaltasCadete(c, container) {
     const rows = c.disciplinas.map(d => `
-      <tr>
+      <tr style="cursor:pointer;" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
         <td style="font-weight:500;">${d.disciplina_nome}</td>
         <td class="td-mono">${d.total_faltas}</td>
         <td class="td-mono">${d.horas_aula}</td>
@@ -1706,7 +1719,7 @@
         c.disciplinas.forEach((d, idx) => {
           const isFirst = idx === 0;
           const cadetelabel = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
-          tbody += `<tr>
+          tbody += `<tr style="cursor:pointer;" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
             ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;">${c.numero_geral ?? '—'}</td>
                          <td style="font-weight:500;vertical-align:middle;" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
             <td style="font-size:13px;">${d.disciplina_nome}</td>
@@ -1744,6 +1757,55 @@
     });
 
     container.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma falta registrada</div></div>';
+  }
+
+  // ── MODAL DETALHE FALTAS POR INSTRUÇÃO ───────────────────
+  async function openFaltaDetalhe(idCadete, nomeCadete, idDiscType, nomeDisc) {
+    const modal = $('falta-detalhe-modal');
+    const body  = $('falta-detalhe-body');
+    $('falta-detalhe-title').textContent = `${nomeCadete} · ${nomeDisc}`;
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+    modal.style.display = 'flex';
+
+    const res = await fetch(
+      `${API}/faltas/instrucoes?id_cadete=${idCadete}&id_disciplina_type=${idDiscType}`,
+      { headers: { Authorization: `Bearer ${token()}` } }
+    );
+    if (!res.ok) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>';
+      return;
+    }
+    const lista = await res.json();
+
+    if (!lista.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma falta registrada</div></div>';
+      return;
+    }
+
+    const tipoBadge = tipo => {
+      const cores = { F: 'badge-danger', LTSP: 'badge-warn', LL: 'badge-warn', LTFP: 'badge-warn', DCA: 'badge-warn' };
+      return `<span class="badge ${cores[tipo] || ''}">${tipo}</span>`;
+    };
+
+    const rows = lista.map(i => `
+      <tr>
+        <td class="td-mono" style="font-size:12px;">${i.numero_aula}</td>
+        <td class="td-mono" style="font-size:12px;">${(i.data || '—').substring(0, 10)}</td>
+        <td style="font-size:13px;">${i.assunto ?? '—'}</td>
+        <td class="td-mono" style="font-size:12px;">${i.xerife_nome ?? '—'}</td>
+        <td>${tipoBadge(i.tipo)}</td>
+      </tr>`).join('');
+
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th style="width:48px;">Aula</th>
+        <th style="width:96px;">Data</th>
+        <th>Tema</th>
+        <th style="width:110px;">Xerife</th>
+        <th style="width:64px;">Tipo</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
   }
 
   // ── BOOT ─────────────────────────────────────────────────
