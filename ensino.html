@@ -1118,7 +1118,7 @@
 
   async function lancarDisciplina() {
     const id_tipo        = parseInt($('lancar-tipo').value);
-    const id_turma       = parseInt($('lancar-turma').value);
+    const id_turma       = $('lancar-turma').value;
     const nome_instrutor = $('lancar-instrutor').value.trim();
     const alertEl        = $('lancar-alert');
     alertEl.className    = 'alert';
