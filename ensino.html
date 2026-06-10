@@ -421,9 +421,9 @@
         <select id="filter-status-semestre" onchange="loadStatus()">
           <option value="">Todos</option>
         </select>
-        <span id="filter-turma-wrap" style="display:none;align-items:center;gap:8px;">
-          <label>Turma</label>
-          <select id="filter-status-turma" onchange="loadStatus()">
+        <span id="filter-pelotao-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Pelotão</label>
+          <select id="filter-status-pelotao" onchange="loadStatus()">
             <option value="">Todas</option>
           </select>
         </span>
@@ -448,9 +448,9 @@
         <select id="filter-disc-semestre" onchange="loadDisciplinas()">
           <option value="">Todos</option>
         </select>
-        <span id="filter-disc-turma-wrap" style="display:none;align-items:center;gap:8px;">
-          <label>Turma</label>
-          <select id="filter-disc-turma" onchange="loadDisciplinas()">
+        <span id="filter-disc-pelotao-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Pelotão</label>
+          <select id="filter-disc-pelotao" onchange="loadDisciplinas()">
             <option value="">Todas</option>
           </select>
         </span>
@@ -481,9 +481,9 @@
         <select id="filter-faltas-semestre" onchange="loadFaltas()">
           <option value="">Todos</option>
         </select>
-        <span id="filter-faltas-turma-wrap" style="display:none;align-items:center;gap:8px;">
-          <label>Turma</label>
-          <select id="filter-faltas-turma" onchange="loadFaltas()">
+        <span id="filter-faltas-pelotao-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Pelotão</label>
+          <select id="filter-faltas-pelotao" onchange="loadFaltas()">
             <option value="">Todas</option>
           </select>
         </span>
@@ -510,9 +510,9 @@
 
           <div class="form-row" style="margin-bottom:16px;">
             <div class="form-group">
-              <label>Turma</label>
-              <select id="lancar-turma" onchange="onTurmaChange()">
-                <option value="">Selecione a turma...</option>
+              <label>Pelotão</label>
+              <select id="lancar-pelotao" onchange="onPelotaoChange()">
+                <option value="">Selecione o pelotão...</option>
               </select>
             </div>
           </div>
@@ -521,7 +521,7 @@
             <div class="form-group">
               <label>Disciplina</label>
               <select id="lancar-tipo" disabled onchange="onTipoChange()">
-                <option value="">Selecione a turma</option>
+                <option value="">Selecione o pelotão</option>
               </select>
             </div>
           </div>
@@ -694,14 +694,14 @@
       $('nav-lancar').style.display = 'block';
     }
 
-    // Mostrar filtro de turma para coord/auxiliar/comandante
+    // Mostrar filtro de pelotão para coord/auxiliar/comandante
     if (!_RESTRITOS.has(_user.role)) {
-      $('filter-turma-wrap').style.display          = 'flex';
-      $('filter-disc-turma-wrap').style.display     = 'flex';
-      $('filter-faltas-turma-wrap').style.display   = 'flex';
+      $('filter-pelotao-wrap').style.display          = 'flex';
+      $('filter-disc-pelotao-wrap').style.display     = 'flex';
+      $('filter-faltas-pelotao-wrap').style.display   = 'flex';
     }
 
-    await Promise.all([loadSemestreOptions(), loadTurmaOptions()]);
+    await Promise.all([loadSemestreOptions(), loadPelotaoOptions()]);
 
     $('screen-login').classList.add('hidden');
     $('app').classList.add('visible');
@@ -752,7 +752,7 @@
   }
 
   // ── SEMESTRE / TURMA OPTIONS ──────────────────────────────
-  let _turmas = [];
+  let _pelotoes = [];
 
   async function loadSemestreOptions() {
     const res = await fetch(`${API}/disciplina_types`, { headers: { Authorization: `Bearer ${token()}` } });
@@ -772,39 +772,39 @@
     });
   }
 
-  async function loadTurmaOptions() {
-    const res = await fetch(`${API}/turma`, { headers: { Authorization: `Bearer ${token()}` } });
+  async function loadPelotaoOptions() {
+    const res = await fetch(`${API}/pelotao`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) return;
-    _turmas = await res.json();
+    _pelotoes = await res.json();
 
-    // Filtros de exibição usam todas as turmas
-    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma'].forEach(id => {
+    // Filtros de exibição usam todos os pelotões
+    ['filter-status-pelotao', 'filter-disc-pelotao', 'filter-faltas-pelotao'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
       while (sel.options.length > 1) sel.remove(1);
-      _turmas.forEach(t => {
+      _pelotoes.forEach(t => {
         const o = document.createElement('option');
         o.value = t.id; o.textContent = t.id;
         sel.appendChild(o);
       });
     });
 
-    // Seletor de turma no lançamento: cadete/dia_cfo/xerife só veem a própria turma
-    const selLancar = $('lancar-turma');
+    // Seletor de pelotão no lançamento: cadete/dia_cfo/xerife só veem o próprio pelotão
+    const selLancar = $('lancar-pelotao');
     if (!selLancar) return;
     while (selLancar.options.length > 1) selLancar.remove(1);
-    const turmasLancar = _RESTRITOS.has(_user?.role)
-      ? _turmas.filter(t => t.id == _user.turma)
-      : _turmas;
-    turmasLancar.forEach(t => {
+    const pelotoesLancar = _RESTRITOS.has(_user?.role)
+      ? _pelotoes.filter(t => t.id == _user.pelotao)
+      : _pelotoes;
+    pelotoesLancar.forEach(t => {
       const o = document.createElement('option');
       o.value = t.id; o.textContent = t.id;
       selLancar.appendChild(o);
     });
-    // Se só há uma turma disponível, pré-seleciona e dispara o change
-    if (turmasLancar.length === 1) {
-      selLancar.value = turmasLancar[0].id;
-      onTurmaChange();
+    // Se só há um pelotão disponível, pré-seleciona e dispara o change
+    if (pelotoesLancar.length === 1) {
+      selLancar.value = pelotoesLancar[0].id;
+      onPelotaoChange();
     }
   }
 
@@ -815,9 +815,9 @@
 
     const params = new URLSearchParams();
     const semestre = $('filter-status-semestre').value;
-    const turma    = $('filter-status-turma').value;
+    const pelotao = $('filter-status-pelotao').value;
     if (semestre) params.set('semestre', semestre);
-    if (turma)    params.set('id_turma', turma);
+    if (pelotao) params.set('id_pelotao', turma);
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
@@ -830,12 +830,12 @@
 
     // Detectar curso para buscar total curricular
     let cursoParam = '';
-    const turmaFiltro = $('filter-status-turma')?.value;
-    if (turmaFiltro) {
-      const t = _turmas.find(t => t.id == turmaFiltro);
+    const pelotaoFiltro = $('filter-status-pelotao')?.value;
+    if (pelotaoFiltro) {
+      const t = _pelotoes.find(t => t.id == pelotaoFiltro);
       if (t?.curso) cursoParam = t.curso;
     } else if (_RESTRITOS.has(_user?.role)) {
-      const t = _turmas.find(t => t.id == _user.turma);
+      const t = _pelotoes.find(t => t.id == _user.pelotao);
       if (t?.curso) cursoParam = t.curso;
     }
     if (!cursoParam && disciplinas.length) {
@@ -910,7 +910,7 @@
               <th>Disciplina</th>
               <th>Instrutor</th>
               <th>Curso</th>
-              ${!_RESTRITOS.has(_user?.role) ? '<th>Turma</th>' : ''}
+              ${!_RESTRITOS.has(_user?.role) ? '<th>Pelotão</th>' : ''}
               <th>Progresso</th>
               <th>H/A</th>
             </tr></thead>
@@ -919,13 +919,13 @@
       lista.forEach(d => {
         const pct = +(Number(d.percentual_conclusao) || 0).toFixed(2);
         const cls = progressCls(pct);
-        const turmaLabel = d.id_turma ?? '—';
+        const pelotaoLabel = d.id_pelotao ?? '—';
 
         html += `<tr>
           <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
           <td class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</td>
           <td class="td-mono">${d.curso ?? '—'}</td>
-          ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${turmaLabel}</td>` : ''}
+          ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${pelotaoLabel}</td>` : ''}
           <td style="min-width:140px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <div class="progress-wrap" style="flex:1;">
@@ -981,9 +981,9 @@
 
     const params = new URLSearchParams();
     const semestre = $('filter-disc-semestre').value;
-    const turma    = $('filter-disc-turma').value;
+    const pelotao = $('filter-disc-pelotao').value;
     if (semestre) params.set('semestre', semestre);
-    if (turma)    params.set('id_turma', turma);
+    if (pelotao) params.set('id_pelotao', turma);
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
@@ -1002,7 +1002,7 @@
           <th>Disciplina</th>
           <th>Curso</th>
           <th>Semestre</th>
-          ${!_RESTRITOS.has(_user?.role) ? '<th>Turma</th>' : ''}
+          ${!_RESTRITOS.has(_user?.role) ? '<th>Pelotão</th>' : ''}
           <th>Instrutor</th>
           <th>H/A</th>
           <th>Peso</th>
@@ -1023,7 +1023,7 @@
               <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
               <td class="td-mono">${d.curso ?? '—'}</td>
               <td class="td-mono">${d.semestre ?? '—'}º</td>
-              ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${d.id_turma ?? '—'}</td>` : ''}
+              ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${d.id_pelotao ?? '—'}</td>` : ''}
               <td>${instCell}</td>
               <td class="td-mono">${d.horas_aula}</td>
               <td class="td-mono">${d.peso}</td>
@@ -1048,38 +1048,38 @@
 
   function resetLancarForm() {
     _disponiveisCache = [];
-    $('lancar-turma').value     = '';
-    $('lancar-tipo').innerHTML  = '<option value="">Selecione a turma</option>';
+    $('lancar-pelotao').value = '';
+    $('lancar-tipo').innerHTML  = '<option value="">Selecione o pelotão</option>';
     $('lancar-tipo').disabled   = true;
     $('lancar-instrutor').value = '';
     $('lancar-tipo-info').style.display = 'none';
     $('lancar-alert').className = 'alert';
   }
 
-  function _resetTipo(msg = 'Selecione a turma') {
+  function _resetTipo(msg = 'Selecione o pelotão') {
     $('lancar-tipo').innerHTML = `<option value="">${msg}</option>`;
     $('lancar-tipo').disabled  = true;
     $('lancar-tipo-info').style.display = 'none';
     _disponiveisCache = [];
   }
 
-  async function onTurmaChange() {
+  async function onPelotaoChange() {
     _resetTipo();
     await _atualizarDisciplinas();
   }
 
   async function _atualizarDisciplinas() {
-    const id_turma = $('lancar-turma').value;
-    if (!id_turma) return;
+    const id_pelotao = $('lancar-pelotao').value;
+    if (!id_pelotao) return;
 
-    // Detectar curso da turma selecionada
-    const turma = _turmas.find(t => t.id == id_turma);
-    const curso = turma?.curso;
+    // Detectar curso do pelotão selecionado
+    const pelotao = _pelotoes.find(t => t.id == id_pelotao);
+    const curso = pelotao?.curso;
 
     $('lancar-tipo').innerHTML = '<option value="">Carregando...</option>';
 
     try {
-      const params = new URLSearchParams({ id_turma });
+      const params = new URLSearchParams({ id_pelotao });
       if (curso) params.set('curso', curso);
       const res = await fetch(
         `${API}/disciplina_types/disponiveis?${params}`,
@@ -1090,7 +1090,7 @@
       _disponiveisCache = await res.json();
       const sel = $('lancar-tipo');
       if (!_disponiveisCache.length) {
-        sel.innerHTML = '<option value="">Todas já cadastradas para esta turma</option>';
+        sel.innerHTML = '<option value="">Todas já cadastradas para este pelotão</option>';
         return;
       }
       sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
@@ -1118,19 +1118,19 @@
 
   async function lancarDisciplina() {
     const id_tipo        = parseInt($('lancar-tipo').value);
-    const id_turma       = parseInt($('lancar-turma').value);
+    const id_pelotao = parseInt($('lancar-pelotao').value);
     const nome_instrutor = $('lancar-instrutor').value.trim();
     const alertEl        = $('lancar-alert');
     alertEl.className    = 'alert';
 
-    if (!id_turma)       { alertEl.textContent = 'Selecione a turma.';           alertEl.className = 'alert error show'; return; }
+    if (!id_pelotao)     { alertEl.textContent = 'Selecione o pelotão.';           alertEl.className = 'alert error show'; return; }
     if (!id_tipo)        { alertEl.textContent = 'Selecione a disciplina.';       alertEl.className = 'alert error show'; return; }
     if (!nome_instrutor) { alertEl.textContent = 'Informe o nome do instrutor.';  alertEl.className = 'alert error show'; return; }
 
     const res = await fetch(`${API}/disciplinas`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
-      body:    JSON.stringify({ id_tipo, id_turma, nome_instrutor }),
+      body:    JSON.stringify({ id_tipo, id_pelotao, nome_instrutor }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1201,8 +1201,8 @@
       sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
       discs.filter(d => (d.instrucoes_realizadas || 0) < (d.horas_aula || 0)).forEach(d => {
         const o = document.createElement('option');
-        o.value = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome, instrucoes_realizadas: d.instrucoes_realizadas || 0 });
-        o.textContent = `${d.semestre}º · ${d.tipo_nome} — Turma ${d.id_turma}`;
+        o.value = JSON.stringify({ id: d.id, id_pelotao: d.id_pelotao, nome: d.tipo_nome, instrucoes_realizadas: d.instrucoes_realizadas || 0 });
+        o.textContent = `${d.semestre}º · ${d.tipo_nome} — Pelotão ${d.id_pelotao}`;
         sel.appendChild(o);
       });
     } catch { sel.innerHTML = '<option value="">Erro de conexão</option>'; }
@@ -1218,7 +1218,7 @@
     if (!val) { $('inst-grid-wrap').style.display = 'none'; return; }
     _instDisciplina = JSON.parse(val);
     try {
-      const res = await fetch(`${API}/turma/${_instDisciplina.id_turma}/cadetes`, { headers: { Authorization: `Bearer ${token()}` } });
+      const res = await fetch(`${API}/pelotao/${_instDisciplina.id_pelotao}/cadetes`, { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) { toast('Erro ao carregar cadetes', 'error'); return; }
       _instCadetes = await res.json();
     } catch { toast('Erro de conexão', 'error'); return; }
@@ -1280,7 +1280,7 @@
     // tbody
     html += '<tbody>';
     if (!_instCadetes.length) {
-      html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum cadete na turma.</td></tr>`;
+      html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum cadete no pelotão.</td></tr>`;
     } else {
       _instCadetes.forEach(c => {
         const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
@@ -1463,9 +1463,9 @@
 
     const params = new URLSearchParams();
     const semestre = $('filter-faltas-semestre')?.value;
-    const turma    = $('filter-faltas-turma')?.value;
+    const pelotao = $('filter-faltas-pelotao')?.value;
     if (semestre) params.set('semestre', semestre);
-    if (turma)    params.set('id_turma', turma);
+    if (pelotao) params.set('id_pelotao', turma);
 
     const res = await fetch(`${API}/faltas/resumo?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) {
@@ -1519,18 +1519,18 @@
       </div>`;
   }
 
-  // Visão admin: agrupado por turma, uma linha por (cadete × disciplina)
+  // Visão admin: agrupado por pelotão, uma linha por (cadete × disciplina)
   function _renderFaltasAdmin(cadetes, container) {
-    const byTurma = {};
+    const byPelotao = {};
     cadetes.forEach(c => {
-      const t = c.turma ?? '—';
-      if (!byTurma[t]) byTurma[t] = [];
-      byTurma[t].push(c);
+      const t = c.pelotao ?? '—';
+      if (!byPelotao[t]) byPelotao[t] = [];
+      byPelotao[t].push(c);
     });
 
     let html = '';
-    Object.keys(byTurma).sort().forEach(turma => {
-      const lista = byTurma[turma];
+    Object.keys(byPelotao).sort().forEach(turma => {
+      const lista = byPelotao[turma];
       // Contar total de linhas (uma por disciplina com falta por cadete)
       const totalLinhas = lista.reduce((acc, c) => acc + c.disciplinas.length, 0);
 
@@ -1553,7 +1553,7 @@
 
       html += `
         <div class="semestre-header">
-          <span>Turma ${turma}</span>
+          <span>Pelotão ${pelotao}</span>
           <span class="semestre-carga">${lista.length} cadete(s) com faltas</span>
         </div>
         <div class="card" style="margin-bottom:24px;">
