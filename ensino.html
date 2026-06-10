@@ -1414,14 +1414,7 @@
     }
     if (sucessos > 0) {
       toast(`${sucessos} instrução(ões) lançada(s) com sucesso!`);
-      _instHorarios    = [];
-      _nextHorarioId   = 0;
-      _instXerifeValue = null;
-      $('inst-count').textContent = '0';
-      $('inst-add-btn').disabled  = false;
-      $('inst-table').innerHTML   = '';
-      $('inst-grid-wrap').style.display = 'none';
-      $('inst-disciplina').value  = '';
+      await loadInstForm();
     }
   }
 
