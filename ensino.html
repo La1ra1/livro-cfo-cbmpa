@@ -624,6 +624,36 @@
   </main>
 </div>
 
+<!-- ── MODAL INSTRUÇÕES DA DISCIPLINA ── -->
+<div id="disc-inst-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;" onclick="if(event.target===this)closeDiscInstModal()">
+  <div class="card" style="width:680px;max-width:96vw;max-height:85vh;display:flex;flex-direction:column;">
+    <div class="card-header" style="flex-shrink:0;">
+      <span class="card-title" id="disc-inst-modal-title">Instruções</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeDiscInstModal()">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;" id="disc-inst-modal-body">
+      <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL FALTAS DE UMA INSTRUÇÃO ── -->
+<div id="disc-faltas-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);align-items:center;justify-content:center;" onclick="if(event.target===this)closeDiscFaltasModal()">
+  <div class="card" style="width:520px;max-width:96vw;max-height:85vh;display:flex;flex-direction:column;">
+    <div class="card-header" style="flex-shrink:0;">
+      <span class="card-title" id="disc-faltas-modal-title">Faltas</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeDiscFaltasModal()">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:12px;" id="disc-faltas-modal-body">
+      <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
+    </div>
+    <div style="flex-shrink:0;padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;" id="disc-faltas-modal-footer" style="display:none;">
+      <button class="btn btn-ghost btn-sm" onclick="closeDiscFaltasModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="disc-faltas-salvar-btn" onclick="salvarFaltasInstrucao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL CONFIRMAÇÃO INSTRUÇÃO ── -->
 <div id="inst-confirm-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
   <div class="card" style="width:380px;max-width:95vw;">
@@ -1019,12 +1049,12 @@
                    <button class="btn-icon" title="Editar instrutor" onclick="startEditInstrutor(${d.id}, '${(d.nome_instrutor||'').replace(/'/g,"\\'")}')">✎</button>
                  </div>`
               : `<span class="td-mono" style="font-size:11px;">${d.nome_instrutor ?? '—'}</span>`;
-            return `<tr>
+            return `<tr style="cursor:pointer;" onclick="openDiscInstModal(${d.id}, '${(d.tipo_nome||'').replace(/'/g,"\\'")}', event)">
               <td style="font-weight:500;">${d.tipo_nome ?? '—'}</td>
               <td class="td-mono">${d.curso ?? '—'}</td>
               <td class="td-mono">${d.semestre ?? '—'}º</td>
               ${!_RESTRITOS.has(_user?.role) ? `<td class="td-mono">${d.id_turma ?? '—'}</td>` : ''}
-              <td>${instCell}</td>
+              <td onclick="event.stopPropagation()">${instCell}</td>
               <td class="td-mono">${d.horas_aula}</td>
               <td class="td-mono">${d.peso}</td>
               <td style="min-width:120px;">
@@ -1037,6 +1067,150 @@
           }).join('')}
         </tbody>
       </table>`;
+  }
+
+  // ── MODAL INSTRUÇÕES DA DISCIPLINA ───────────────────────
+  let _discInstModalId = null;
+
+  async function openDiscInstModal(id, nome, event) {
+    if (event) event.stopPropagation();
+    _discInstModalId = id;
+    const modal = $('disc-inst-modal');
+    const body  = $('disc-inst-modal-body');
+    $('disc-inst-modal-title').textContent = nome;
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+    modal.style.display = 'flex';
+
+    const res = await fetch(`${API}/disciplinas/${id}/instrucoes`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    const lista = await res.json();
+
+    if (!lista.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma instrução lançada</div></div>';
+      return;
+    }
+
+    const canEdit = _user?.sub_role === 'B3';
+    const rows = lista.map(i => {
+      const dataFmt = i.data ? i.data.substring(0, 10) : '—';
+      const editBtn = canEdit
+        ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openDiscFaltasModal(${i.id},'Aula ${i.numero_aula} — ${(i.assunto||'').replace(/'/g,"\\'")}',event)">+ Faltas</button>`
+        : '';
+      return `<tr>
+        <td class="td-mono" style="font-size:12px;">${i.numero_aula}</td>
+        <td class="td-mono" style="font-size:12px;">${dataFmt}</td>
+        <td style="font-size:13px;">${i.assunto ?? '—'}</td>
+        <td class="td-mono" style="font-size:12px;">${i.xerife_nome ?? '—'}</td>
+        <td class="td-mono" style="font-size:12px;text-align:center;">${i.total_faltas ?? 0}</td>
+        <td>${editBtn}</td>
+      </tr>`;
+    }).join('');
+
+    body.innerHTML = `<table>
+      <thead><tr>
+        <th style="width:48px;">Aula</th>
+        <th style="width:96px;">Data</th>
+        <th>Tema</th>
+        <th style="width:120px;">Xerife</th>
+        <th style="width:64px;">Faltas F</th>
+        <th style="width:80px;"></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  function closeDiscInstModal() {
+    $('disc-inst-modal').style.display = 'none';
+  }
+
+  // ── MODAL FALTAS DE UMA INSTRUÇÃO ────────────────────────
+  let _discFaltasInstrucaoId = null;
+  let _discFaltasCadetes     = [];
+
+  async function openDiscFaltasModal(instrucaoId, titulo, event) {
+    if (event) event.stopPropagation();
+    _discFaltasInstrucaoId = instrucaoId;
+    const modal  = $('disc-faltas-modal');
+    const body   = $('disc-faltas-modal-body');
+    const footer = $('disc-faltas-modal-footer');
+    $('disc-faltas-modal-title').textContent = titulo;
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando cadetes...</div></div>';
+    footer.style.display = 'none';
+    modal.style.display  = 'flex';
+
+    const res = await fetch(`${API}/instrucoes/${instrucaoId}/faltas-cadetes`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    _discFaltasCadetes = await res.json();
+
+    if (!_discFaltasCadetes.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum cadete encontrado</div></div>';
+      return;
+    }
+
+    const faltaOpts = `<option value="">—</option>
+      <option value="F">F</option><option value="LTSP">LTSP</option>
+      <option value="LL">LL</option><option value="LTFP">LTFP</option>
+      <option value="DCA">DCA</option>`;
+
+    const rows = _discFaltasCadetes.map(c => {
+      const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
+      const sel   = `<select id="df-${c.id}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:4px 6px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);">
+        ${faltaOpts}
+      </select>`;
+      return `<tr>
+        <td style="font-size:13px;">${label}</td>
+        <td>${sel}</td>
+      </tr>`;
+    }).join('');
+
+    body.innerHTML = `<table>
+      <thead><tr><th>Cadete</th><th style="width:110px;">Tipo de Falta</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+    // Preencher valores existentes
+    _discFaltasCadetes.forEach(c => {
+      if (c.tipo) {
+        const sel = document.getElementById(`df-${c.id}`);
+        if (sel) sel.value = c.tipo;
+      }
+    });
+
+    footer.style.display = 'flex';
+  }
+
+  function closeDiscFaltasModal() {
+    $('disc-faltas-modal').style.display = 'none';
+  }
+
+  async function salvarFaltasInstrucao() {
+    const btn = $('disc-faltas-salvar-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Salvando...';
+
+    const payload = _discFaltasCadetes.map(c => ({
+      id_cadete: c.id,
+      tipo:      (document.getElementById(`df-${c.id}`)?.value) || null,
+    }));
+
+    const res = await fetch(`${API}/instrucoes/${_discFaltasInstrucaoId}/faltas-cadetes`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+      body:    JSON.stringify(payload),
+    });
+
+    btn.disabled    = false;
+    btn.textContent = 'Salvar';
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast(err.detail || 'Erro ao salvar faltas', 'error');
+      return;
+    }
+    toast('Faltas salvas com sucesso!');
+    closeDiscFaltasModal();
+    // Reabrir modal de instruções para atualizar contagem
+    if (_discInstModalId) openDiscInstModal(_discInstModalId, $('disc-inst-modal-title').textContent);
   }
 
   // ── LANÇAR DISCIPLINA (B3) ────────────────────────────────
