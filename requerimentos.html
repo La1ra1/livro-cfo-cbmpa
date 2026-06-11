@@ -610,6 +610,8 @@
     }
   </style>
 </head>
+<script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
+<style>.has-token #screen-redirect { display: none !important; }</style>
 <body>
 
 <div id="screen-redirect">
