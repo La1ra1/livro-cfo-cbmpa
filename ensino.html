@@ -1747,13 +1747,13 @@
       const totalLinhas = lista.reduce((acc, c) => acc + c.disciplinas.length, 0);
 
       let tbody = '';
-      lista.forEach(c => {
+      lista.forEach((c, ci) => {
+        const rowBg = ci % 2 === 0 ? '' : 'background:var(--surface-2,rgba(255,255,255,.04));';
         c.disciplinas.forEach((d, idx) => {
           const isFirst = idx === 0;
-          const cadetelabel = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
-          tbody += `<tr style="cursor:pointer;" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
-            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;">${c.numero_geral ?? '—'}</td>
-                         <td style="font-weight:500;vertical-align:middle;" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
+          tbody += `<tr style="cursor:pointer;${rowBg}" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
+            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;border-left:3px solid var(--accent2,var(--accent));${rowBg}">${c.numero_geral ?? '—'}</td>
+                         <td style="font-weight:600;vertical-align:middle;${rowBg}" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
             <td style="font-size:13px;">${d.disciplina_nome}</td>
             <td class="td-mono">${d.total_faltas}</td>
             <td class="td-mono">${d.horas_aula}</td>
