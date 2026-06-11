@@ -1485,8 +1485,10 @@
         const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
         html += `<tr><td style="font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;">${label}</td>`;
         _instHorarios.forEach(h => {
-          html += `<td style="text-align:center;padding:6px 8px;">
-            <select id="h${h.id}-f${c.id}" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
+          const fv = h.faltas?.[c.id] || '';
+          const hlStyle = fv ? 'background:var(--accent-dim,rgba(220,50,50,.15));' : '';
+          html += `<td id="cell-h${h.id}-f${c.id}" style="text-align:center;padding:6px 8px;${hlStyle}">
+            <select id="h${h.id}-f${c.id}" onchange="onFaltaChange(this,'${h.id}','${c.id}')" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
           </td>`;
         });
         html += '</tr>';
@@ -1496,13 +1498,22 @@
 
     table.innerHTML = html;
 
-    // Restaurar valores salvos
+    // Restaurar valores salvos e destaque
     _instHorarios.forEach(h => {
       _instCadetes.forEach(c => {
-        const el = $(`h${h.id}-f${c.id}`);
-        if (el && h.faltas?.[c.id]) el.value = h.faltas[c.id];
+        const el   = $(`h${h.id}-f${c.id}`);
+        const cell = $(`cell-h${h.id}-f${c.id}`);
+        if (el && h.faltas?.[c.id]) {
+          el.value = h.faltas[c.id];
+          if (cell) cell.style.background = 'var(--accent-dim,rgba(220,50,50,.15))';
+        }
       });
     });
+  }
+
+  function onFaltaChange(sel, hid, cid) {
+    const cell = $(`cell-h${hid}-f${cid}`);
+    if (cell) cell.style.background = sel.value ? 'var(--accent-dim,rgba(220,50,50,.15))' : '';
   }
 
   function removeHorarioById(hid) {
@@ -1550,11 +1561,20 @@
     const xerifeLabel = _instXerifeValue
       ? ($('inst-xerife-sd-trigger').textContent || 'selecionado')
       : 'nenhum';
+
+    // Contar total de faltas (qualquer tipo preenchido)
+    let totalFaltas = 0;
+    _instHorarios.forEach(h => {
+      _instCadetes.forEach(c => {
+        if (h.faltas?.[c.id]) totalFaltas++;
+      });
+    });
+
     const lines = _instHorarios.map((h, idx) =>
       `• Aula ${aulaBase + idx}: ${h.assunto}`
     ).join('\n');
     $('inst-confirm-msg').textContent =
-      `Data: ${dataGlobal}   Xerife: ${xerifeLabel}\n\n${lines}`;
+      `Disciplina: ${_instDisciplina.nome}\nData: ${dataGlobal}   Xerife: ${xerifeLabel}\nFaltas registradas: ${totalFaltas}\n\n${lines}`;
     $('inst-confirm-msg').style.whiteSpace = 'pre-wrap';
     $('inst-confirm-modal').style.display = 'flex';
   }
