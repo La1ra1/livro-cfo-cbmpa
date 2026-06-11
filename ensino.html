@@ -1706,23 +1706,17 @@
     const params = new URLSearchParams();
     const semestre = $('filter-faltas-semestre')?.value;
     const turma    = $('filter-faltas-turma')?.value;
+    const ocultarConcluidas = $('filter-faltas-ocultar-concluidas')?.checked;
     if (semestre) params.set('semestre', semestre);
     if (turma)    params.set('id_turma', turma);
+    if (ocultarConcluidas) params.set('ocultar_concluidas', 'true');
 
     const res = await fetch(`${API}/faltas/resumo?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) {
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>';
       return;
     }
-    const ocultarConcluidas = $('filter-faltas-ocultar-concluidas')?.checked;
-    let cadetes = await res.json();
-
-    if (ocultarConcluidas) {
-      cadetes = cadetes.map(c => ({
-        ...c,
-        disciplinas: c.disciplinas.filter(d => d.percentual < 100),
-      })).filter(c => c.disciplinas.length > 0);
-    }
+    const cadetes = await res.json();
 
     if (!cadetes.length) {
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma falta registrada</div></div>';
