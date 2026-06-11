@@ -459,6 +459,10 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="filter-disc-ocultar-concluidas" onchange="loadDisciplinas()" style="cursor:pointer;">
+          Ocultar concluídas
+        </label>
       </div>
 
       <div class="card">
@@ -1042,7 +1046,9 @@
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
-    const lista = await res.json();
+    const ocultarConcluidas = $('filter-disc-ocultar-concluidas')?.checked;
+    let lista = await res.json();
+    if (ocultarConcluidas) lista = lista.filter(d => Number(d.percentual_conclusao) < 100);
 
     $('disc-meta').textContent = `${lista.length} disciplina(s)`;
 
@@ -1485,8 +1491,10 @@
         const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
         html += `<tr><td style="font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;">${label}</td>`;
         _instHorarios.forEach(h => {
-          html += `<td style="text-align:center;padding:6px 8px;">
-            <select id="h${h.id}-f${c.id}" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
+          const fv = h.faltas?.[c.id] || '';
+          const hlStyle = fv ? 'background:var(--accent-dim,rgba(220,50,50,.15));' : '';
+          html += `<td id="cell-h${h.id}-f${c.id}" style="text-align:center;padding:6px 8px;${hlStyle}">
+            <select id="h${h.id}-f${c.id}" onchange="onFaltaChange(this,'${h.id}','${c.id}')" style="padding:3px 4px;font-size:11px;width:70px;">${faltaOpts}</select>
           </td>`;
         });
         html += '</tr>';
@@ -1496,13 +1504,22 @@
 
     table.innerHTML = html;
 
-    // Restaurar valores salvos
+    // Restaurar valores salvos e destaque
     _instHorarios.forEach(h => {
       _instCadetes.forEach(c => {
-        const el = $(`h${h.id}-f${c.id}`);
-        if (el && h.faltas?.[c.id]) el.value = h.faltas[c.id];
+        const el   = $(`h${h.id}-f${c.id}`);
+        const cell = $(`cell-h${h.id}-f${c.id}`);
+        if (el && h.faltas?.[c.id]) {
+          el.value = h.faltas[c.id];
+          if (cell) cell.style.background = 'var(--accent-dim,rgba(220,50,50,.15))';
+        }
       });
     });
+  }
+
+  function onFaltaChange(sel, hid, cid) {
+    const cell = $(`cell-h${hid}-f${cid}`);
+    if (cell) cell.style.background = sel.value ? 'var(--accent-dim,rgba(220,50,50,.15))' : '';
   }
 
   function removeHorarioById(hid) {
@@ -1550,11 +1567,20 @@
     const xerifeLabel = _instXerifeValue
       ? ($('inst-xerife-sd-trigger').textContent || 'selecionado')
       : 'nenhum';
+
+    // Contar total de faltas (qualquer tipo preenchido)
+    let totalFaltas = 0;
+    _instHorarios.forEach(h => {
+      _instCadetes.forEach(c => {
+        if (h.faltas?.[c.id]) totalFaltas++;
+      });
+    });
+
     const lines = _instHorarios.map((h, idx) =>
       `• Aula ${aulaBase + idx}: ${h.assunto}`
     ).join('\n');
     $('inst-confirm-msg').textContent =
-      `Data: ${dataGlobal}   Xerife: ${xerifeLabel}\n\n${lines}`;
+      `Disciplina: ${_instDisciplina.nome}\nData: ${dataGlobal}   Xerife: ${xerifeLabel}\nFaltas registradas: ${totalFaltas}\n\n${lines}`;
     $('inst-confirm-msg').style.whiteSpace = 'pre-wrap';
     $('inst-confirm-modal').style.display = 'flex';
   }
@@ -1727,13 +1753,13 @@
       const totalLinhas = lista.reduce((acc, c) => acc + c.disciplinas.length, 0);
 
       let tbody = '';
-      lista.forEach(c => {
+      lista.forEach((c, ci) => {
+        const rowBg = ci % 2 === 0 ? '' : 'background:var(--surface-2,rgba(255,255,255,.04));';
         c.disciplinas.forEach((d, idx) => {
           const isFirst = idx === 0;
-          const cadetelabel = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
-          tbody += `<tr style="cursor:pointer;" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
-            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;">${c.numero_geral ?? '—'}</td>
-                         <td style="font-weight:500;vertical-align:middle;" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
+          tbody += `<tr style="cursor:pointer;${rowBg}" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
+            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;border-left:3px solid var(--accent2,var(--accent));${rowBg}">${c.numero_geral ?? '—'}</td>
+                         <td style="font-weight:600;vertical-align:middle;${rowBg}" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
             <td style="font-size:13px;">${d.disciplina_nome}</td>
             <td class="td-mono">${d.total_faltas}</td>
             <td class="td-mono">${d.horas_aula}</td>
