@@ -314,6 +314,8 @@
     }
   </style>
 </head>
+<script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
+<style>.has-token #screen-login { display: none !important; }</style>
 <body>
 
 <div id="screen-login">
@@ -432,6 +434,10 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="filter-status-ocultar-concluidas" onchange="loadStatus()" style="cursor:pointer;">
+          Ocultar concluídas
+        </label>
       </div>
 
       <div id="status-container">
@@ -880,12 +886,17 @@
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
-    const disciplinas = await res.json();
+    const disciplinas = await res.json(); // lista completa — usada para barras de progresso
 
     if (!disciplinas.length) {
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma disciplina cadastrada</div></div>';
       return;
     }
+
+    const ocultarConcluidas = $('filter-status-ocultar-concluidas')?.checked;
+    const disciplinasFiltradas = ocultarConcluidas
+      ? disciplinas.filter(d => Number(d.percentual_conclusao) < 100)
+      : disciplinas;
 
     // Detectar curso para buscar total curricular
     let cursoParam = '';
@@ -934,23 +945,32 @@
         </div>
       </div>`;
 
-    // Agrupar por semestre
+    // Agrupar por semestre (apenas disciplinas filtradas para as linhas)
     const bySemestre = {};
-    disciplinas.forEach(d => {
+    disciplinasFiltradas.forEach(d => {
       const s = d.semestre ?? 0;
       if (!bySemestre[s]) bySemestre[s] = [];
       bySemestre[s].push(d);
     });
 
-    // Incluir semestres que existem no currículo mas sem disciplinas lançadas ainda
+    // Semestres presentes em todas as disciplinas (para barras de progresso corretas)
+    const allBySemestre = {};
+    disciplinas.forEach(d => {
+      const s = d.semestre ?? 0;
+      if (!allBySemestre[s]) allBySemestre[s] = [];
+      allBySemestre[s].push(d);
+    });
+
+    // Incluir semestres do currículo sem disciplinas lançadas
     Object.keys(horasCurriculoBySem).forEach(s => {
       if (!bySemestre[s]) bySemestre[s] = [];
     });
 
     Object.keys(bySemestre).sort((a,b) => a-b).forEach(s => {
       const lista           = bySemestre[s];
-      const totalHoras      = horasCurriculoBySem[s] || lista.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
-      const totalRealizadas = lista.reduce((acc, d) => acc + (d.instrucoes_realizadas || 0), 0);
+      const listaCompleta   = allBySemestre[s] || [];
+      const totalHoras      = horasCurriculoBySem[s] || listaCompleta.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
+      const totalRealizadas = listaCompleta.reduce((acc, d) => acc + (d.instrucoes_realizadas || 0), 0);
       const pctSemestre     = totalHoras > 0 ? Math.min(+(totalRealizadas / totalHoras * 100).toFixed(2), 100) : 0;
       const clsSem          = progressCls(pctSemestre);
 
