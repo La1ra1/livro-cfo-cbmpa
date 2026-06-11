@@ -502,6 +502,10 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="filter-faltas-ocultar-concluidas" onchange="loadFaltas()" style="cursor:pointer;">
+          Ocultar disciplinas concluídas
+        </label>
       </div>
 
       <div id="faltas-container">
@@ -1710,7 +1714,15 @@
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>';
       return;
     }
-    const cadetes = await res.json();
+    const ocultarConcluidas = $('filter-faltas-ocultar-concluidas')?.checked;
+    let cadetes = await res.json();
+
+    if (ocultarConcluidas) {
+      cadetes = cadetes.map(c => ({
+        ...c,
+        disciplinas: c.disciplinas.filter(d => d.percentual < 100),
+      })).filter(c => c.disciplinas.length > 0);
+    }
 
     if (!cadetes.length) {
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma falta registrada</div></div>';
@@ -1772,13 +1784,20 @@
       // Contar total de linhas (uma por disciplina com falta por cadete)
       const totalLinhas = lista.reduce((acc, c) => acc + c.disciplinas.length, 0);
 
+      const STRIPE_COLORS = [
+        '',
+        'background:rgba(56,139,253,.08);',
+      ];
+      const BORDER_COLORS = ['var(--accent,#3b82f6)', 'var(--accent2,#a78bfa)'];
+
       let tbody = '';
       lista.forEach((c, ci) => {
-        const rowBg = ci % 2 === 0 ? '' : 'background:var(--surface-2,rgba(255,255,255,.04));';
+        const rowBg  = STRIPE_COLORS[ci % 2];
+        const border = BORDER_COLORS[ci % 2];
         c.disciplinas.forEach((d, idx) => {
           const isFirst = idx === 0;
           tbody += `<tr style="cursor:pointer;${rowBg}" onclick="openFaltaDetalhe(${c.id},'${(c.username||'').replace(/'/g,"\\'")}',${d.disciplina_id},'${(d.disciplina_nome||'').replace(/'/g,"\\'")}')">
-            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;border-left:3px solid var(--accent2,var(--accent));${rowBg}">${c.numero_geral ?? '—'}</td>
+            ${isFirst ? `<td class="td-mono" rowspan="${c.disciplinas.length}" style="vertical-align:middle;border-left:3px solid ${border};${rowBg}">${c.numero_geral ?? '—'}</td>
                          <td style="font-weight:600;vertical-align:middle;${rowBg}" rowspan="${c.disciplinas.length}">${c.username}</td>` : ''}
             <td style="font-size:13px;">${d.disciplina_nome}</td>
             <td class="td-mono">${d.total_faltas}</td>
