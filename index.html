@@ -6373,23 +6373,23 @@
       }
 
       const json = await res.json();
-      _expData = json.data;
+      _expData = json.data.filter(r => r.numero_geral != null);
 
       document.getElementById('exp-titulo').textContent =
         `Turma ${turma} — ${mesesNomes[mes]}/${ano}`;
       document.getElementById('exp-subtitulo').textContent =
-        `${json.data.length} cadete(s)`;
+        `${_expData.length} cadete(s)`;
 
-      const totalDesc = json.data.reduce((s, r) => s + Number(r.desconto_total), 0);
+      const totalDesc = _expData.reduce((s, r) => s + Number(r.desconto_total), 0);
 
-      if (!json.data.length) {
+      if (!_expData.length) {
         document.getElementById('tbody-exportar').innerHTML =
           '<tr><td colspan="6" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM RESULTADO</td></tr>';
         document.getElementById('exp-total-bar').textContent = '';
         return;
       }
 
-      document.getElementById('tbody-exportar').innerHTML = json.data.map(r => {
+      document.getElementById('tbody-exportar').innerHTML = _expData.map(r => {
         const desconto   = Number(r.desconto_total) || 0;
         const elogios    = Number(r.pontos_elogios) || 0;
         const notaFinal  = Math.min(10, Math.max(0, 8 - desconto + elogios));
@@ -6406,9 +6406,9 @@
 
       // fix empty state colspan handled above
 
-      const totalElogios = json.data.reduce((s, r) => s + (Number(r.pontos_elogios) || 0), 0);
-      const mediaNotas   = json.data.length
-        ? (json.data.reduce((s, r) => s + Math.min(10, Math.max(0, 8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0))), 0) / json.data.length).toFixed(2)
+      const totalElogios = _expData.reduce((s, r) => s + (Number(r.pontos_elogios) || 0), 0);
+      const mediaNotas   = _expData.length
+        ? (_expData.reduce((s, r) => s + Math.min(10, Math.max(0, 8 - (Number(r.desconto_total)||0) + (Number(r.pontos_elogios)||0))), 0) / _expData.length).toFixed(2)
         : '—';
       document.getElementById('exp-total-bar').innerHTML =
         `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">
@@ -7512,6 +7512,7 @@
     );
     if (!res.ok) { alert('Erro ao buscar descontos.'); return; }
     const json = await res.json();
+    json.data = json.data.filter(r => r.numero_geral != null);
 
     if (!json.data.length) { alert('Nenhum desconto encontrado para os filtros selecionados.'); return; }
 
@@ -7782,7 +7783,7 @@
   async function exportarPunicoesLista() {
     const data  = document.getElementById('pun-filtro-data').value;
     const tipo  = document.getElementById('pun-filtro-tipo').value;
-    const lista = window._punListaData || [];
+    const lista = (window._punListaData || []).filter(r => r.numero_geral != null);
     if (!lista.length) return;
 
     const dataFmt = data ? data.split('-').reverse().join('/') : '—';
@@ -8126,7 +8127,7 @@
   function exportarPunicoesCsv() {
     const data  = document.getElementById('pun-filtro-data').value;
     const tipo  = document.getElementById('pun-filtro-tipo').value;
-    const lista = window._punListaData || [];
+    const lista = (window._punListaData || []).filter(r => r.numero_geral != null);
     if (!lista.length) return;
 
     const tipoLabel = tipo ? _punResultadoLabel[tipo] || tipo : 'Todas';
