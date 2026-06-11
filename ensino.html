@@ -459,6 +459,10 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="filter-disc-ocultar-concluidas" onchange="loadDisciplinas()" style="cursor:pointer;">
+          Ocultar concluídas
+        </label>
       </div>
 
       <div class="card">
@@ -1042,7 +1046,9 @@
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
-    const lista = await res.json();
+    const ocultarConcluidas = $('filter-disc-ocultar-concluidas')?.checked;
+    let lista = await res.json();
+    if (ocultarConcluidas) lista = lista.filter(d => Number(d.percentual_conclusao) < 100);
 
     $('disc-meta').textContent = `${lista.length} disciplina(s)`;
 
