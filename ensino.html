@@ -1145,12 +1145,9 @@
       return;
     }
 
-    const canEdit = _user?.sub_role === 'B3';
     const rows = lista.map(i => {
       const dataFmt = i.data ? i.data.substring(0, 10) : '—';
-      const editBtn = canEdit
-        ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openDiscFaltasModal(${i.id},'Aula ${i.numero_aula} — ${(i.assunto||'').replace(/'/g,"\\'")}',event)">+ Faltas</button>`
-        : '';
+      const editBtn = `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openDiscFaltasModal(${i.id},'Aula ${i.numero_aula} — ${(i.assunto||'').replace(/'/g,"\\'")}',event)">+ Faltas</button>`;
       return `<tr>
         <td class="td-mono" style="font-size:12px;">${i.numero_aula}</td>
         <td class="td-mono" style="font-size:12px;">${dataFmt}</td>
