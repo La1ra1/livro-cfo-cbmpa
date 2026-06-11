@@ -875,6 +875,24 @@
   </div><!-- .page-wrap -->
 </div><!-- #app -->
 
+<!-- ══ MODAL CONFIRMAÇÃO ENVIO ══ -->
+<div class="modal-overlay" id="modal-confirm-envio">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Confirmar Envio</div>
+      <button class="modal-close" onclick="closeModal('modal-confirm-envio')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Revise antes de enviar:</p>
+      <div id="confirm-envio-resumo" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:13px;line-height:1.7;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-confirm-envio')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-confirm-envio-ok" onclick="_confirmarEnvioRequerimento()">✦ Enviar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL DETALHE ══ -->
 <div class="modal-overlay" id="modal-detalhe">
   <div class="modal-box">
@@ -1439,24 +1457,27 @@
     return `${y}-${mo}-${d}`;
   }
 
+  let _pendingReqBody = null;
+
   async function enviarRequerimento() {
-    const catId    = document.getElementById('novo-categoria').value;
-    const titulo   = document.getElementById('novo-titulo').value.trim();
-    const descricao = document.getElementById('novo-descricao').value.trim();
+    const catId      = document.getElementById('novo-categoria').value;
+    const titulo     = document.getElementById('novo-titulo').value.trim();
+    const descricao  = document.getElementById('novo-descricao').value.trim();
     const dataIniRaw = document.getElementById('novo-data-ini').value;
     const dataFimRaw = document.getElementById('novo-data-fim').value;
-    const dataIni  = dataIniRaw ? parseDataBR(dataIniRaw) : '';
-    const dataFim  = dataFimRaw ? parseDataBR(dataFimRaw) : '';
-    const errEl    = document.getElementById('novo-error');
-    const sucEl    = document.getElementById('novo-success');
-    errEl.className = 'alert error';
-    sucEl.className = 'alert success';
+    const dataIni    = dataIniRaw ? parseDataBR(dataIniRaw) : '';
+    const dataFim    = dataFimRaw ? parseDataBR(dataFimRaw) : '';
+    const errEl      = document.getElementById('novo-error');
+    const sucEl      = document.getElementById('novo-success');
+    errEl.className  = 'alert error';
+    sucEl.className  = 'alert success';
 
-    if (!catId)   { errEl.textContent = 'Selecione a categoria.'; errEl.classList.add('show'); return; }
-    if (!titulo)  { errEl.textContent = 'Informe o título.';       errEl.classList.add('show'); return; }
+    if (!catId)  { errEl.textContent = 'Selecione a categoria.'; errEl.classList.add('show'); return; }
+    if (!titulo) { errEl.textContent = 'Informe o título.';      errEl.classList.add('show'); return; }
 
     const sel  = document.getElementById('novo-categoria');
     const nome = sel.options[sel.selectedIndex]?.getAttribute('data-nome') || '';
+    const categoriaNome = sel.options[sel.selectedIndex]?.textContent || '';
     if (nome === 'dispensa') {
       if (!dataIniRaw || !dataFimRaw) {
         errEl.textContent = 'Informe as datas de afastamento.'; errEl.classList.add('show'); return;
@@ -1466,18 +1487,32 @@
       }
     }
 
-    if (!confirm('Confirma o envio deste requerimento?')) return;
-
-    const body = { categoria_id: Number(catId), titulo, descricao: descricao || null };
+    _pendingReqBody = { categoria_id: Number(catId), titulo, descricao: descricao || null };
     if (nome === 'dispensa') {
-      body.data_afastamento_inicio = dataIni;
-      body.data_afastamento_fim    = dataFim;
+      _pendingReqBody.data_afastamento_inicio = dataIni;
+      _pendingReqBody.data_afastamento_fim    = dataFim;
     }
 
-    const btn = document.getElementById('btn-enviar-req');
+    // Montar resumo para o modal
+    let resumo = `<strong>Categoria:</strong> ${categoriaNome}<br>`;
+    resumo    += `<strong>Título:</strong> ${titulo}<br>`;
+    if (descricao) resumo += `<strong>Descrição:</strong> ${descricao}<br>`;
+    if (nome === 'dispensa') resumo += `<strong>Período:</strong> ${dataIniRaw} → ${dataFimRaw}<br>`;
+    if (_novosArquivos.length) resumo += `<strong>Anexos:</strong> ${_novosArquivos.length} arquivo(s)<br>`;
+    document.getElementById('confirm-envio-resumo').innerHTML = resumo;
+    document.getElementById('modal-confirm-envio').classList.add('open');
+  }
+
+  async function _confirmarEnvioRequerimento() {
+    document.getElementById('modal-confirm-envio').classList.remove('open');
+    const body  = _pendingReqBody;
+    const errEl = document.getElementById('novo-error');
+    const sucEl = document.getElementById('novo-success');
+    const btn   = document.getElementById('btn-enviar-req');
+    errEl.className = 'alert error';
+    sucEl.className = 'alert success';
     btn.classList.add('btn-loading');
     btn.textContent = 'Enviando...';
-
     try {
       const res = await fetch(`${API}/requerimentos`, {
         method: 'POST',
