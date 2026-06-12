@@ -752,6 +752,9 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <input type="search" id="filter-notas-busca" placeholder="Buscar matéria..."
+          oninput="filtrarNotasDiscs()"
+          style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;min-width:200px;" />
       </div>
 
       <div id="notas-container">
@@ -2219,6 +2222,20 @@
 
   // ── ABA NOTAS (pública) ───────────────────────────────────
 
+  function filtrarNotasDiscs() {
+    const q = ($('filter-notas-busca').value || '').toLowerCase().trim();
+    document.querySelectorAll('#notas-container [data-disc-nome]').forEach(card => {
+      const nome = card.dataset.discNome.toLowerCase();
+      card.style.display = (!q || nome.includes(q)) ? '' : 'none';
+    });
+    // Ocultar cabeçalhos de semestre sem cards visíveis
+    document.querySelectorAll('#notas-container [data-sem-header]').forEach(header => {
+      const section = header.parentElement;
+      const visible = section.querySelectorAll('[data-disc-nome]:not([style*="display: none"])').length;
+      section.style.display = visible ? '' : 'none';
+    });
+  }
+
   async function loadNotas() {
     const semestre = $('filter-notas-semestre').value;
     const turma    = $('filter-notas-turma')?.value || '';
@@ -2248,11 +2265,11 @@
 
     container.innerHTML = Object.keys(bySem).sort((a,b) => b-a).map(sem => `
       <div style="margin-bottom:32px;">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+        <div data-sem-header style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">
           ${sem === '0' ? 'SEM SEMESTRE' : `${sem}º SEMESTRE`}
         </div>
         ${bySem[sem].map(d => `
-          <div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openNotasDisc(${d.id},'${(d.tipo_nome||'').replace(/'/g,"\\'")}',event)">
+          <div class="card" data-disc-nome="${(d.tipo_nome||'').toLowerCase()}" style="margin-bottom:10px;cursor:pointer;" onclick="openNotasDisc(${d.id},'${(d.tipo_nome||'').replace(/'/g,"\\'")}',event)">
             <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
               <div>
                 <div style="font-weight:600;font-size:14px;">${d.tipo_nome}</div>
@@ -2264,6 +2281,7 @@
             </div>
           </div>`).join('')}
       </div>`).join('');
+    filtrarNotasDiscs();
   }
 
   async function openNotasDisc(id, nome, event) {
