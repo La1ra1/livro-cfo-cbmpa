@@ -381,6 +381,9 @@
       <div class="nav-item" data-section="faltas" onclick="showSection('faltas')">
         <span class="nav-icon">⚑</span> Faltas
       </div>
+      <div class="nav-item" data-section="notas" onclick="showSection('notas')">
+        <span class="nav-icon">★</span> Notas
+      </div>
     </div>
 
     <div class="sidebar-section" id="nav-lancar" style="display:none;">
@@ -675,10 +678,23 @@
                 <input type="url" id="aval-link" placeholder="https://drive.google.com/..." />
               </div>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;margin-bottom:14px;">
-              <input type="checkbox" id="aval-is-nota-final" style="cursor:pointer;width:15px;height:15px;">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;">Esta é a nota final da disciplina</span>
-            </label>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="aval-is-nota-final" style="cursor:pointer;width:15px;height:15px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;">Esta é a nota final da disciplina</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="aval-is-verificacao-final" style="cursor:pointer;width:15px;height:15px;">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;">Esta é a verificação final</span>
+              </label>
+            </div>
+
+            <!-- Resumo de verificações já lançadas -->
+            <div id="aval-resumo-verif" style="display:none;margin-bottom:14px;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Verificações desta disciplina</div>
+              <div id="aval-resumo-verif-body"></div>
+            </div>
+
             <button class="btn btn-ghost btn-sm" onclick="carregarTabelaNotas()" style="margin-bottom:4px;">
               ↓ Carregar Cadetes
             </button>
@@ -716,7 +732,45 @@
       </div>
     </section>
 
+    <!-- ── NOTAS (pública) ── -->
+    <section class="section" id="section-notas">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Notas das <span>Avaliações</span></div>
+        </div>
+      </div>
+
+      <div class="filters-bar" id="notas-filters">
+        <label>Semestre</label>
+        <select id="filter-notas-semestre" onchange="loadNotas()">
+          <option value="">Todos</option>
+        </select>
+        <span id="filter-notas-turma-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Turma</label>
+          <select id="filter-notas-turma" onchange="loadNotas()">
+            <option value="">Todas</option>
+          </select>
+        </span>
+      </div>
+
+      <div id="notas-container">
+        <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Selecione os filtros acima</div></div>
+      </div>
+    </section>
+
   </main>
+</div>
+
+<!-- ── MODAL NOTAS DISCIPLINA ── -->
+<div id="notas-disc-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.75);align-items:center;justify-content:center;" onclick="if(event.target===this)$('notas-disc-modal').style.display='none'">
+  <div class="card" style="width:860px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;">
+    <div class="card-header" style="flex-shrink:0;">
+      <span class="card-title" id="notas-disc-modal-title">Notas</span>
+      <button class="btn btn-ghost btn-sm" onclick="$('notas-disc-modal').style.display='none'">✕</button>
+    </div>
+    <div id="notas-disc-modal-body" style="overflow-y:auto;padding:16px;flex:1;"></div>
+  </div>
 </div>
 
 <!-- ── MODAL DETALHE FALTAS POR INSTRUÇÃO ── -->
@@ -803,6 +857,7 @@
     if (name === 'lancar')      loadLancarForm();
     if (name === 'instrucao')   loadInstForm();
     if (name === 'avaliacao')   loadAvalForm();
+    if (name === 'notas')       loadNotas();
   }
 
   function toggleSidebar() {
@@ -838,6 +893,7 @@
       $('filter-turma-wrap').style.display          = 'flex';
       $('filter-disc-turma-wrap').style.display     = 'flex';
       $('filter-faltas-turma-wrap').style.display   = 'flex';
+      $('filter-notas-turma-wrap').style.display    = 'flex';
     }
 
     await Promise.all([loadSemestreOptions(), loadTurmaOptions()]);
@@ -905,7 +961,7 @@
     if (!res.ok) return;
     const types = await res.json();
     const semestres = [...new Set(types.map(t => t.semestre).filter(Boolean))].sort((a,b) => a-b);
-    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre'].forEach(id => {
+    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre'].forEach(id => {
       const sel = $(id);
       const cur = sel.value;
       while (sel.options.length > 1) sel.remove(1);
@@ -924,7 +980,7 @@
     _turmas = await res.json();
 
     // Filtros de exibição usam todas as turmas
-    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma'].forEach(id => {
+    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
       while (sel.options.length > 1) sel.remove(1);
@@ -1993,16 +2049,52 @@
     } catch { sel.innerHTML = '<option value="">Erro de conexão</option>'; }
   }
 
-  function onAvalDisciplinaChange() {
+  async function onAvalDisciplinaChange() {
     const val = $('aval-disciplina').value;
     $('aval-notas-wrap').style.display  = 'none';
     $('aval-alert').className = 'alert';
+    $('aval-resumo-verif').style.display = 'none';
     if (!val) { $('aval-config-wrap').style.display = 'none'; return; }
     _avalDisciplina = JSON.parse(val);
     $('aval-peso').value  = '';
     $('aval-link').value  = '';
     $('aval-is-nota-final').checked = false;
+    $('aval-is-verificacao-final').checked = false;
     $('aval-config-wrap').style.display = 'block';
+    _avalVerificacaoId = null;
+
+    // Carregar resumo de verificações já lançadas
+    try {
+      const res = await fetch(`${API}/disciplinas/${_avalDisciplina.id}/verificacoes`,
+        { headers: { Authorization: `Bearer ${token()}` } });
+      if (res.ok) {
+        const verifs = await res.json();
+        if (verifs.length) {
+          const regulares = verifs.filter(v => !v.is_nota_final && !v.is_verificacao_final);
+          const vfs       = verifs.filter(v => v.is_verificacao_final);
+          const nfs       = verifs.filter(v => v.is_nota_final);
+          const somaReg   = regulares.reduce((s, v) => s + Number(v.peso_avaliacao), 0);
+
+          $('aval-resumo-verif-body').innerHTML = `
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+              <div style="background:var(--surface2);border:1px solid var(--border);padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+                <span style="color:var(--muted);">Regulares</span><br>
+                <strong style="font-size:16px;">${regulares.length}</strong>
+                <span style="color:var(--muted);font-size:10px;"> · Σpeso ${somaReg.toFixed(4)}</span>
+              </div>
+              ${vfs.length ? `<div style="background:var(--surface2);border:1px solid var(--warn);padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+                <span style="color:var(--warn);">Verif. Final</span><br>
+                <strong style="font-size:16px;">${vfs.length}</strong>
+              </div>` : ''}
+              ${nfs.length ? `<div style="background:var(--surface2);border:1px solid var(--accent);padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+                <span style="color:var(--accent);">Nota Final</span><br>
+                <strong style="font-size:16px;">${nfs.length}</strong>
+              </div>` : ''}
+            </div>`;
+          $('aval-resumo-verif').style.display = 'block';
+        }
+      }
+    } catch {}
   }
 
   async function carregarTabelaNotas() {
@@ -2042,9 +2134,10 @@
   }
 
   async function salvarAvaliacao() {
-    const peso          = parseFloat($('aval-peso').value);
-    const link          = $('aval-link').value.trim() || null;
-    const isNotaFinal   = $('aval-is-nota-final').checked;
+    const peso              = parseFloat($('aval-peso').value);
+    const link              = $('aval-link').value.trim() || null;
+    const isNotaFinal       = $('aval-is-nota-final').checked;
+    const isVerificacaoFinal = $('aval-is-verificacao-final').checked;
 
     if (!_avalDisciplina) { toast('Selecione uma disciplina', 'error'); return; }
     if (isNaN(peso) || peso < 0) {
@@ -2085,7 +2178,7 @@
       const vRes = await fetch(`${API}/verificacoes`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_disciplina: _avalDisciplina.id, peso_avaliacao: peso, link_drive: link, is_nota_final: isNotaFinal }),
+        body: JSON.stringify({ id_disciplina: _avalDisciplina.id, peso_avaliacao: peso, link_drive: link, is_nota_final: isNotaFinal, is_verificacao_final: isVerificacaoFinal }),
       });
       if (!vRes.ok) {
         const d = await vRes.json().catch(() => ({}));
@@ -2122,6 +2215,144 @@
       toast(`${notas.length} nota(s) salva(s) com sucesso`, 'success');
       await loadAvalForm();
     }
+  }
+
+  // ── ABA NOTAS (pública) ───────────────────────────────────
+
+  async function loadNotas() {
+    const semestre = $('filter-notas-semestre').value;
+    const turma    = $('filter-notas-turma')?.value || '';
+    const container = $('notas-container');
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+
+    const params = new URLSearchParams();
+    if (semestre) params.set('semestre', semestre);
+    if (turma)    params.set('id_turma', turma);
+
+    const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    const discs = await res.json();
+
+    if (!discs.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma disciplina encontrada</div></div>';
+      return;
+    }
+
+    // Agrupar por semestre
+    const bySem = {};
+    discs.forEach(d => {
+      const s = d.semestre ?? 0;
+      if (!bySem[s]) bySem[s] = [];
+      bySem[s].push(d);
+    });
+
+    container.innerHTML = Object.keys(bySem).sort((a,b) => a-b).map(sem => `
+      <div style="margin-bottom:32px;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+          ${sem === '0' ? 'SEM SEMESTRE' : `${sem}º SEMESTRE`}
+        </div>
+        ${bySem[sem].map(d => `
+          <div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openNotasDisc(${d.id},'${(d.tipo_nome||'').replace(/'/g,"\\'")}',event)">
+            <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
+              <div>
+                <div style="font-weight:600;font-size:14px;">${d.tipo_nome}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;">
+                  Turma ${d.id_turma} · ${d.nome_instrutor ?? '—'}
+                </div>
+              </div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">ver notas ›</div>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+  }
+
+  async function openNotasDisc(id, nome, event) {
+    if (event) event.stopPropagation();
+    const modal = $('notas-disc-modal');
+    const body  = $('notas-disc-modal-body');
+    $('notas-disc-modal-title').textContent = nome;
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+    modal.style.display = 'flex';
+
+    const res = await fetch(`${API}/disciplinas/${id}/resumo-notas`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { body.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    const data = await res.json();
+
+    const { verificacoes, cadetes } = data;
+    if (!verificacoes.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma verificação lançada</div></div>';
+      return;
+    }
+
+    // Cabeçalho das verificações
+    const regulares = verificacoes.filter(v => !v.is_nota_final && !v.is_verificacao_final);
+    const vfs       = verificacoes.filter(v => v.is_verificacao_final);
+    const nfs       = verificacoes.filter(v => v.is_nota_final);
+
+    const tagVerif = v => {
+      if (v.is_nota_final)       return `<span style="font-size:9px;background:rgba(200,168,75,.2);color:var(--accent);padding:1px 5px;border-radius:2px;margin-left:4px;">NOTA FINAL</span>`;
+      if (v.is_verificacao_final) return `<span style="font-size:9px;background:rgba(224,123,42,.2);color:var(--warn);padding:1px 5px;border-radius:2px;margin-left:4px;">VF</span>`;
+      return '';
+    };
+
+    // Colunas de verificações
+    const thVerifs = verificacoes.map(v =>
+      `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">
+        P${v.peso_avaliacao}${tagVerif(v)}
+      </th>`
+    ).join('');
+
+    const fmt = n => n == null ? '<span style="color:var(--muted);">—</span>' : Number(n).toFixed(4);
+
+    const rows = cadetes.map((c, i) => {
+      const notaCalc   = c.nota_final_calculada;
+      const notaDireta = c.nota_final_direta;
+      const diverge    = notaCalc != null && notaDireta != null && Math.abs(notaCalc - notaDireta) > 0.0001;
+
+      const tdVerifs = verificacoes.map(v => {
+        const val = c.notas?.[v.id];
+        return `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${val != null ? Number(val).toFixed(4) : '<span style="color:var(--muted);">—</span>'}</td>`;
+      }).join('');
+
+      const mediaCell = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${fmt(c.media_ponderada)}</td>`;
+      const vfCell    = vfs.length ? `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--warn);">${fmt(c.nota_verificacao_final)}</td>` : '';
+      const calcCell  = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${notaCalc != null ? (notaCalc >= 7 ? 'color:var(--success)' : notaCalc >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaCalc)}</td>`;
+      const diretaCell = nfs.length ? `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${diverge ? 'color:var(--danger);' : ''}${notaDireta != null && !diverge ? (notaDireta >= 7 ? 'color:var(--success)' : notaDireta >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaDireta)}${diverge ? ' <span title="Diverge da nota calculada" style="font-size:10px;">⚠</span>' : ''}</td>` : '';
+
+      return `<tr style="background:${i%2===0?'var(--surface)':'var(--surface2)'};">
+        <td style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${c.numero_geral ?? '—'}</td>
+        <td style="padding:6px 10px;font-size:13px;">${c.username}</td>
+        ${tdVerifs}
+        ${mediaCell}
+        ${vfCell}
+        ${calcCell}
+        ${diretaCell}
+      </tr>`;
+    }).join('');
+
+    const thMedia = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">MÉDIA POND.</th>`;
+    const thVF    = vfs.length ? `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--warn);border-bottom:1px solid var(--border);background:var(--surface2);">VF</th>` : '';
+    const thCalc  = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--success);border-bottom:1px solid var(--border);background:var(--surface2);">CALCULADA</th>`;
+    const thDireta = nfs.length ? `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA FINAL LANÇADA</th>` : '';
+
+    body.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">Nº</th>
+              <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">CADETE</th>
+              ${thVerifs}
+              ${thMedia}
+              ${thVF}
+              ${thCalc}
+              ${thDireta}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${nfs.length ? '<div style="margin-top:10px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);">⚠ = nota lançada difere da nota calculada pelo sistema</div>' : ''}`;
   }
 </script>
 </body>
