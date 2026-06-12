@@ -2296,6 +2296,16 @@
         ↗ ${tipo}</a>`;
     }).join('');
 
+    // Verificações que aparecem como colunas individuais (todas exceto nota_final)
+    const colVerifs = verificacoes.filter(v => !v.is_nota_final);
+
+    const thVerifs = colVerifs.map(v => {
+      const label = v.is_verificacao_final
+        ? `<span style="color:var(--warn);">VF</span>`
+        : `P${Number(v.peso_avaliacao)}`;
+      return `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">${label}</th>`;
+    }).join('');
+
     const fmt = n => n == null ? '<span style="color:var(--muted);">—</span>' : Number(n).toFixed(4);
 
     const rows = cadetes.map((c, i) => {
@@ -2303,20 +2313,25 @@
       const notaDireta = c.nota_final_direta;
       const diverge    = notaCalc != null && notaDireta != null && Math.abs(notaCalc - notaDireta) > 0.0001;
 
-      const mediaCell  = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${fmt(c.media_ponderada)}</td>`;
+      const tdVerifs   = colVerifs.map(v => {
+        const val = c.notas?.[v.id];
+        return `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${val != null ? Number(val).toFixed(4) : '<span style="color:var(--muted);">—</span>'}</td>`;
+      }).join('');
+      const mediaCell  = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;border-left:1px solid var(--border);">${fmt(c.media_ponderada)}</td>`;
       const calcCell   = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${notaCalc != null ? (notaCalc >= 7 ? 'color:var(--success)' : notaCalc >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaCalc)}</td>`;
       const diretaCell = nfs.length ? `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${diverge ? 'color:var(--danger);' : ''}${notaDireta != null && !diverge ? (notaDireta >= 7 ? 'color:var(--success)' : notaDireta >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaDireta)}${diverge ? ' <span title="Diverge da nota calculada" style="font-size:10px;">⚠</span>' : ''}</td>` : '';
 
       return `<tr style="background:${i%2===0?'var(--surface)':'var(--surface2)'};">
         <td style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${c.numero_geral ?? '—'}</td>
         <td style="padding:6px 10px;font-size:13px;">${c.username}</td>
+        ${tdVerifs}
         ${mediaCell}
         ${calcCell}
         ${diretaCell}
       </tr>`;
     }).join('');
 
-    const thMedia  = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA DAS AVALS.</th>`;
+    const thMedia  = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);border-left:1px solid var(--border);">MÉDIA POND.</th>`;
     const thCalc   = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--success);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA FINAL CALC.</th>`;
     const thDireta = nfs.length ? `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA FINAL LANÇADA</th>` : '';
 
@@ -2328,6 +2343,7 @@
             <tr>
               <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">Nº</th>
               <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">CADETE</th>
+              ${thVerifs}
               ${thMedia}
               ${thCalc}
               ${thDireta}
