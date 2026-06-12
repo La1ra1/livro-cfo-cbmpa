@@ -2013,7 +2013,7 @@
       const res = await fetch(`${API}/turma/${_avalDisciplina.id_turma}/cadetes`,
         { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) { toast('Erro ao carregar cadetes', 'error'); return; }
-      _avalCadetes = (await res.json()).filter(c => c.numero_geral != null);
+      _avalCadetes = await res.json();
     } catch { toast('Erro de conexão', 'error'); return; }
 
     $('aval-disc-label').textContent  = _avalDisciplina.nome;
@@ -2023,7 +2023,7 @@
     const tbody = $('aval-tbody');
     tbody.innerHTML = _avalCadetes.map((c, i) => `
       <tr style="background:${i % 2 === 0 ? 'var(--surface)' : 'var(--surface2)'};">
-        <td style="padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);">${c.numero_geral}</td>
+        <td style="padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);">${c.numero_geral ?? '—'}</td>
         <td style="padding:8px 14px;font-size:13px;">${c.username}</td>
         <td style="padding:6px 14px;text-align:center;">
           <input type="text" inputmode="decimal" id="nota-${c.id}"
@@ -2069,6 +2069,11 @@
 
     $('aval-notas-alert').className = 'alert';
 
+    // Bloquear botões durante o salvamento
+    document.querySelectorAll('[onclick="salvarAvaliacao()"]').forEach(b => {
+      b.disabled = true; b.classList.add('btn-loading');
+    });
+
     // 1. Criar verificação (ou reutilizar se já foi salva antes)
     if (!_avalVerificacaoId) {
       const vRes = await fetch(`${API}/verificacoes`, {
@@ -2080,6 +2085,9 @@
         const d = await vRes.json().catch(() => ({}));
         $('aval-notas-alert').textContent = d.detail || 'Erro ao criar verificação.';
         $('aval-notas-alert').className = 'alert error show';
+        document.querySelectorAll('[onclick="salvarAvaliacao()"]').forEach(b => {
+          b.disabled = false; b.classList.remove('btn-loading');
+        });
         return;
       }
       const v = await vRes.json();
@@ -2096,6 +2104,10 @@
       });
       if (!nRes.ok) erros++;
     }
+
+    document.querySelectorAll('[onclick="salvarAvaliacao()"]').forEach(b => {
+      b.disabled = false; b.classList.remove('btn-loading');
+    });
 
     if (erros) {
       $('aval-notas-alert').textContent = `${erros} nota(s) não puderam ser salvas.`;
