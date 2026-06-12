@@ -1103,7 +1103,7 @@
       if (!bySemestre[s]) bySemestre[s] = [];
     });
 
-    Object.keys(bySemestre).sort((a,b) => a-b).forEach(s => {
+    Object.keys(bySemestre).sort((a,b) => b-a).forEach(s => {
       const lista           = bySemestre[s];
       const listaCompleta   = allBySemestre[s] || [];
       const totalHoras      = horasCurriculoBySem[s] || listaCompleta.reduce((acc, d) => acc + (d.horas_aula || 0), 0);
@@ -2246,7 +2246,7 @@
       bySem[s].push(d);
     });
 
-    container.innerHTML = Object.keys(bySem).sort((a,b) => a-b).map(sem => `
+    container.innerHTML = Object.keys(bySem).sort((a,b) => b-a).map(sem => `
       <div style="margin-bottom:32px;">
         <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">
           ${sem === '0' ? 'SEM SEMESTRE' : `${sem}º SEMESTRE`}
@@ -2284,23 +2284,17 @@
       return;
     }
 
-    // Cabeçalho das verificações
     const regulares = verificacoes.filter(v => !v.is_nota_final && !v.is_verificacao_final);
     const vfs       = verificacoes.filter(v => v.is_verificacao_final);
     const nfs       = verificacoes.filter(v => v.is_nota_final);
 
-    const tagVerif = v => {
-      if (v.is_nota_final)       return `<span style="font-size:9px;background:rgba(200,168,75,.2);color:var(--accent);padding:1px 5px;border-radius:2px;margin-left:4px;">NOTA FINAL</span>`;
-      if (v.is_verificacao_final) return `<span style="font-size:9px;background:rgba(224,123,42,.2);color:var(--warn);padding:1px 5px;border-radius:2px;margin-left:4px;">VF</span>`;
-      return '';
-    };
-
-    // Colunas de verificações
-    const thVerifs = verificacoes.map(v =>
-      `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">
-        P${v.peso_avaliacao}${tagVerif(v)}
-      </th>`
-    ).join('');
+    // Links das avaliações
+    const linksHtml = verificacoes.filter(v => v.link_drive).map(v => {
+      const tipo = v.is_nota_final ? 'Nota Final' : v.is_verificacao_final ? 'Verif. Final' : `P${v.peso_avaliacao}`;
+      return `<a href="${v.link_drive}" target="_blank" rel="noopener"
+        style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:3px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:4px;">
+        ↗ ${tipo}</a>`;
+    }).join('');
 
     const fmt = n => n == null ? '<span style="color:var(--muted);">—</span>' : Number(n).toFixed(4);
 
@@ -2309,42 +2303,32 @@
       const notaDireta = c.nota_final_direta;
       const diverge    = notaCalc != null && notaDireta != null && Math.abs(notaCalc - notaDireta) > 0.0001;
 
-      const tdVerifs = verificacoes.map(v => {
-        const val = c.notas?.[v.id];
-        return `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${val != null ? Number(val).toFixed(4) : '<span style="color:var(--muted);">—</span>'}</td>`;
-      }).join('');
-
-      const mediaCell = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${fmt(c.media_ponderada)}</td>`;
-      const vfCell    = vfs.length ? `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--warn);">${fmt(c.nota_verificacao_final)}</td>` : '';
-      const calcCell  = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${notaCalc != null ? (notaCalc >= 7 ? 'color:var(--success)' : notaCalc >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaCalc)}</td>`;
+      const mediaCell  = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;">${fmt(c.media_ponderada)}</td>`;
+      const calcCell   = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${notaCalc != null ? (notaCalc >= 7 ? 'color:var(--success)' : notaCalc >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaCalc)}</td>`;
       const diretaCell = nfs.length ? `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${diverge ? 'color:var(--danger);' : ''}${notaDireta != null && !diverge ? (notaDireta >= 7 ? 'color:var(--success)' : notaDireta >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaDireta)}${diverge ? ' <span title="Diverge da nota calculada" style="font-size:10px;">⚠</span>' : ''}</td>` : '';
 
       return `<tr style="background:${i%2===0?'var(--surface)':'var(--surface2)'};">
         <td style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${c.numero_geral ?? '—'}</td>
         <td style="padding:6px 10px;font-size:13px;">${c.username}</td>
-        ${tdVerifs}
         ${mediaCell}
-        ${vfCell}
         ${calcCell}
         ${diretaCell}
       </tr>`;
     }).join('');
 
-    const thMedia = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">MÉDIA POND.</th>`;
-    const thVF    = vfs.length ? `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--warn);border-bottom:1px solid var(--border);background:var(--surface2);">VF</th>` : '';
-    const thCalc  = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--success);border-bottom:1px solid var(--border);background:var(--surface2);">CALCULADA</th>`;
+    const thMedia  = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA DAS AVALS.</th>`;
+    const thCalc   = `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--success);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA FINAL CALC.</th>`;
     const thDireta = nfs.length ? `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA FINAL LANÇADA</th>` : '';
 
     body.innerHTML = `
+      ${linksHtml ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${linksHtml}</div>` : ''}
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead>
             <tr>
               <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">Nº</th>
               <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">CADETE</th>
-              ${thVerifs}
               ${thMedia}
-              ${thVF}
               ${thCalc}
               ${thDireta}
             </tr>
