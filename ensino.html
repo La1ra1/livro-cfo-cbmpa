@@ -2289,21 +2289,28 @@
     const nfs       = verificacoes.filter(v => v.is_nota_final);
 
     // Links das avaliações
-    const linksHtml = verificacoes.filter(v => v.link_drive).map(v => {
-      const tipo = v.is_nota_final ? 'Nota Final' : v.is_verificacao_final ? 'Verif. Final' : `P${v.peso_avaliacao}`;
-      return `<a href="${v.link_drive}" target="_blank" rel="noopener"
+    // Mapa id → label (calculado uma vez, usado em links e cabeçalho)
+    let _avN = 0;
+    const labelMap = {};
+    verificacoes.forEach(v => {
+      if (v.is_nota_final)        labelMap[v.id] = 'Nota Final';
+      else if (v.is_verificacao_final) labelMap[v.id] = 'VF';
+      else                        labelMap[v.id] = `Av.${++_avN} · P${Number(v.peso_avaliacao)}`;
+    });
+
+    const linksHtml = verificacoes.filter(v => v.link_drive).map(v =>
+      `<a href="${v.link_drive}" target="_blank" rel="noopener"
         style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:3px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:4px;">
-        ↗ ${tipo}</a>`;
-    }).join('');
+        ↗ ${labelMap[v.id]}</a>`
+    ).join('');
 
     // Verificações que aparecem como colunas individuais (todas exceto nota_final)
     const colVerifs = verificacoes.filter(v => !v.is_nota_final);
 
-    let avalIdx = 0;
     const thVerifs = colVerifs.map(v => {
       const label = v.is_verificacao_final
         ? `<span style="color:var(--warn);">VF</span>`
-        : `Av.${++avalIdx}<br><span style="font-size:9px;color:var(--muted);">P${Number(v.peso_avaliacao)}</span>`;
+        : `Av.${labelMap[v.id].match(/\d+/)[0]}<br><span style="font-size:9px;color:var(--muted);">P${Number(v.peso_avaliacao)}</span>`;
       return `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;line-height:1.4;">${label}</th>`;
     }).join('');
 
