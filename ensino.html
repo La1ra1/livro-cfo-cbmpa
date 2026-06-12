@@ -814,6 +814,19 @@
   </div>
 </div>
 
+<!-- ── SUBMODAL OBSERVAÇÃO DA INSTRUÇÃO ── -->
+<div id="obs-submodal" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.55);align-items:center;justify-content:center;" onclick="if(event.target===this)$('obs-submodal').style.display='none'">
+  <div class="card" style="width:420px;max-width:95vw;">
+    <div class="card-header">
+      <span class="card-title">Observação</span>
+      <button class="btn btn-ghost btn-sm" onclick="$('obs-submodal').style.display='none'">✕</button>
+    </div>
+    <div class="card-body">
+      <p id="obs-submodal-text" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;margin:0;"></p>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL DETALHE FALTAS POR INSTRUÇÃO ── -->
 <div id="falta-detalhe-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);align-items:center;justify-content:center;" onclick="if(event.target===this)$('falta-detalhe-modal').style.display='none'">
   <div class="card" style="width:560px;max-width:96vw;max-height:82vh;display:flex;flex-direction:column;">
@@ -2031,25 +2044,43 @@
       return `<span class="badge ${cores[tipo] || ''}">${tipo}</span>`;
     };
 
-    const rows = lista.map(i => `
-      <tr>
+    const rows = lista.map(i => {
+      const hasObs = i.observacoes && i.observacoes.trim();
+      const obsAttr = hasObs ? ` data-obs="${i.observacoes.replace(/"/g,'&quot;')}"` : '';
+      const rowStyle = hasObs
+        ? 'cursor:pointer;background:rgba(var(--accent-rgb,90,120,200),.06);'
+        : '';
+      const obsIcon = hasObs
+        ? `<span title="Ver observação" style="color:var(--accent);font-size:11px;margin-left:4px;">📝</span>`
+        : '';
+      return `
+      <tr style="${rowStyle}"${obsAttr} onclick="${hasObs ? `openObsSubmodal(this)` : ''}">
         <td class="td-mono" style="font-size:12px;">${i.numero_aula}</td>
         <td class="td-mono" style="font-size:12px;">${(i.data || '—').substring(0, 10)}</td>
-        <td style="font-size:13px;">${i.assunto ?? '—'}</td>
+        <td style="font-size:13px;">${i.assunto ?? '—'}${obsIcon}</td>
         <td class="td-mono" style="font-size:12px;">${i.xerife_nome ?? '—'}</td>
         <td>${tipoBadge(i.tipo)}</td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
 
-    body.innerHTML = `<table>
-      <thead><tr>
-        <th style="width:48px;">Aula</th>
-        <th style="width:96px;">Data</th>
-        <th>Tema</th>
-        <th style="width:110px;">Xerife</th>
-        <th style="width:64px;">Tipo</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
+    body.innerHTML = `
+      <table>
+        <thead><tr>
+          <th style="width:48px;">Aula</th>
+          <th style="width:96px;">Data</th>
+          <th>Tema</th>
+          <th style="width:110px;">Xerife</th>
+          <th style="width:64px;">Tipo</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${lista.some(i => i.observacoes && i.observacoes.trim()) ? '<div style="margin-top:8px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);">📝 = instrução com observação — clique para ver</div>' : ''}`;
+  }
+
+  function openObsSubmodal(row) {
+    const obs = row.dataset.obs || '';
+    $('obs-submodal-text').textContent = obs;
+    $('obs-submodal').style.display = 'flex';
   }
 
   // ── BOOT ─────────────────────────────────────────────────
