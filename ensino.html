@@ -381,6 +381,9 @@
       <div class="nav-item" data-section="faltas" onclick="showSection('faltas')">
         <span class="nav-icon">⚑</span> Faltas
       </div>
+      <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
+        ▦ Dashboard
+      </div>
       <div class="nav-item" data-section="notas" onclick="showSection('notas')">
         <span class="nav-icon">★</span> Notas
       </div>
@@ -762,6 +765,41 @@
       </div>
     </section>
 
+    <!-- ── DASHBOARD ── -->
+    <section class="section" id="section-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Dashboard de <span>Ensino</span></div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <label>Semestre</label>
+        <select id="filter-dash-semestre" onchange="loadDashboard()">
+          <option value="">Todos</option>
+        </select>
+        <span id="filter-dash-turma-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Turma</label>
+          <select id="filter-dash-turma" onchange="loadDashboard()">
+            <option value="">Todas</option>
+          </select>
+        </span>
+      </div>
+
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <span class="card-title">Carga Horária Semanal</span>
+          <span id="dash-carga-total" style="font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;"></span>
+        </div>
+        <div class="card-body" style="padding:24px 16px 8px;">
+          <div id="dash-carga-chart" style="min-height:200px;">
+            <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Selecione os filtros acima</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -861,6 +899,7 @@
     if (name === 'instrucao')   loadInstForm();
     if (name === 'avaliacao')   loadAvalForm();
     if (name === 'notas')       loadNotas();
+    if (name === 'dashboard')   loadDashboard();
   }
 
   function toggleSidebar() {
@@ -897,6 +936,7 @@
       $('filter-disc-turma-wrap').style.display     = 'flex';
       $('filter-faltas-turma-wrap').style.display   = 'flex';
       $('filter-notas-turma-wrap').style.display    = 'flex';
+      $('filter-dash-turma-wrap').style.display     = 'flex';
     }
 
     await Promise.all([loadSemestreOptions(), loadTurmaOptions()]);
@@ -964,7 +1004,7 @@
     if (!res.ok) return;
     const types = await res.json();
     const semestres = [...new Set(types.map(t => t.semestre).filter(Boolean))].sort((a,b) => a-b);
-    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre'].forEach(id => {
+    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre', 'filter-dash-semestre'].forEach(id => {
       const sel = $(id);
       const cur = sel.value;
       while (sel.options.length > 1) sel.remove(1);
@@ -983,7 +1023,7 @@
     _turmas = await res.json();
 
     // Filtros de exibição usam todas as turmas
-    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma'].forEach(id => {
+    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma', 'filter-dash-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
       while (sel.options.length > 1) sel.remove(1);
@@ -2379,6 +2419,54 @@
         </table>
       </div>
       ${nfs.length ? '<div style="margin-top:10px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);">⚠ = nota lançada difere da nota calculada pelo sistema</div>' : ''}`;
+  }
+
+  // ── DASHBOARD ────────────────────────────────────────────────
+  async function loadDashboard() {
+    const semestre = $('filter-dash-semestre').value;
+    const turma    = $('filter-dash-turma')?.value || '';
+    const chart    = $('dash-carga-chart');
+    const totalEl  = $('dash-carga-total');
+    chart.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+    totalEl.textContent = '';
+
+    const params = new URLSearchParams();
+    if (semestre) params.set('semestre', semestre);
+    if (turma)    params.set('id_turma', turma);
+
+    const res = await fetch(`${API}/ensino/dashboard/carga-semanal?${params}`, {
+      headers: { Authorization: `Bearer ${token()}` }
+    });
+    if (!res.ok) { chart.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro ao carregar dados</div></div>'; return; }
+    const data = await res.json();
+
+    if (!data.length) {
+      chart.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum dado encontrado</div></div>';
+      return;
+    }
+
+    const maxHoras = Math.max(...data.map(d => d.horas));
+    const total    = data.reduce((s, d) => s + d.horas, 0);
+    totalEl.textContent = `Total: ${total} instruções`;
+
+    const bars = data.map(d => {
+      const pct   = maxHoras > 0 ? Math.round((d.horas / maxHoras) * 100) : 0;
+      const label = d.semana_inicio ? d.semana_inicio.slice(5) : ''; // MM-DD
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:40px;max-width:80px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);">${d.horas}</span>
+          <div style="width:100%;display:flex;align-items:flex-end;height:160px;">
+            <div style="width:100%;height:${pct}%;min-height:4px;background:var(--accent);border-radius:3px 3px 0 0;transition:height .3s;" title="${d.semana_inicio}: ${d.horas} instruções"></div>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);writing-mode:vertical-lr;transform:rotate(180deg);max-height:54px;overflow:hidden;">${label}</span>
+        </div>`;
+    }).join('');
+
+    chart.innerHTML = `
+      <div style="display:flex;align-items:flex-end;gap:4px;overflow-x:auto;padding-bottom:8px;min-height:220px;">
+        ${bars}
+      </div>
+      <div style="margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Semana (MM-DD) · cada barra representa uma semana</div>`;
   }
 </script>
 </body>
