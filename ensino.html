@@ -752,6 +752,9 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <input type="search" id="filter-notas-busca" placeholder="Buscar matéria..."
+          oninput="filtrarNotasDiscs()"
+          style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px;min-width:200px;" />
       </div>
 
       <div id="notas-container">
@@ -2219,6 +2222,20 @@
 
   // ── ABA NOTAS (pública) ───────────────────────────────────
 
+  function filtrarNotasDiscs() {
+    const q = ($('filter-notas-busca').value || '').toLowerCase().trim();
+    document.querySelectorAll('#notas-container [data-disc-nome]').forEach(card => {
+      const nome = card.dataset.discNome.toLowerCase();
+      card.style.display = (!q || nome.includes(q)) ? '' : 'none';
+    });
+    // Ocultar cabeçalhos de semestre sem cards visíveis
+    document.querySelectorAll('#notas-container [data-sem-header]').forEach(header => {
+      const section = header.parentElement;
+      const visible = section.querySelectorAll('[data-disc-nome]:not([style*="display: none"])').length;
+      section.style.display = visible ? '' : 'none';
+    });
+  }
+
   async function loadNotas() {
     const semestre = $('filter-notas-semestre').value;
     const turma    = $('filter-notas-turma')?.value || '';
@@ -2248,11 +2265,11 @@
 
     container.innerHTML = Object.keys(bySem).sort((a,b) => b-a).map(sem => `
       <div style="margin-bottom:32px;">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+        <div data-sem-header style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">
           ${sem === '0' ? 'SEM SEMESTRE' : `${sem}º SEMESTRE`}
         </div>
         ${bySem[sem].map(d => `
-          <div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="openNotasDisc(${d.id},'${(d.tipo_nome||'').replace(/'/g,"\\'")}',event)">
+          <div class="card" data-disc-nome="${(d.tipo_nome||'').toLowerCase()}" style="margin-bottom:10px;cursor:pointer;" onclick="openNotasDisc(${d.id},'${(d.tipo_nome||'').replace(/'/g,"\\'")}',event)">
             <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
               <div>
                 <div style="font-weight:600;font-size:14px;">${d.tipo_nome}</div>
@@ -2264,6 +2281,7 @@
             </div>
           </div>`).join('')}
       </div>`).join('');
+    filtrarNotasDiscs();
   }
 
   async function openNotasDisc(id, nome, event) {
@@ -2289,21 +2307,28 @@
     const nfs       = verificacoes.filter(v => v.is_nota_final);
 
     // Links das avaliações
-    const linksHtml = verificacoes.filter(v => v.link_drive).map(v => {
-      const tipo = v.is_nota_final ? 'Nota Final' : v.is_verificacao_final ? 'Verif. Final' : `P${v.peso_avaliacao}`;
-      return `<a href="${v.link_drive}" target="_blank" rel="noopener"
+    // Mapa id → label (calculado uma vez, usado em links e cabeçalho)
+    let _avN = 0;
+    const labelMap = {};
+    verificacoes.forEach(v => {
+      if (v.is_nota_final)        labelMap[v.id] = 'Nota Final';
+      else if (v.is_verificacao_final) labelMap[v.id] = 'VF';
+      else                        labelMap[v.id] = `Av.${++_avN} · P${Number(v.peso_avaliacao)}`;
+    });
+
+    const linksHtml = verificacoes.filter(v => v.link_drive).map(v =>
+      `<a href="${v.link_drive}" target="_blank" rel="noopener"
         style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:3px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:4px;">
-        ↗ ${tipo}</a>`;
-    }).join('');
+        ↗ ${labelMap[v.id]}</a>`
+    ).join('');
 
     // Verificações que aparecem como colunas individuais (todas exceto nota_final)
     const colVerifs = verificacoes.filter(v => !v.is_nota_final);
 
-    let avalIdx = 0;
     const thVerifs = colVerifs.map(v => {
       const label = v.is_verificacao_final
         ? `<span style="color:var(--warn);">VF</span>`
-        : `Av.${++avalIdx}<br><span style="font-size:9px;color:var(--muted);">P${Number(v.peso_avaliacao)}</span>`;
+        : `Av.${labelMap[v.id].match(/\d+/)[0]}<br><span style="font-size:9px;color:var(--muted);">P${Number(v.peso_avaliacao)}</span>`;
       return `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;line-height:1.4;">${label}</th>`;
     }).join('');
 
