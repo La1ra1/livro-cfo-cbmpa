@@ -2299,11 +2299,12 @@
     // Verificações que aparecem como colunas individuais (todas exceto nota_final)
     const colVerifs = verificacoes.filter(v => !v.is_nota_final);
 
+    let avalIdx = 0;
     const thVerifs = colVerifs.map(v => {
       const label = v.is_verificacao_final
         ? `<span style="color:var(--warn);">VF</span>`
-        : `P${Number(v.peso_avaliacao)}`;
-      return `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;">${label}</th>`;
+        : `Av.${++avalIdx}<br><span style="font-size:9px;color:var(--muted);">P${Number(v.peso_avaliacao)}</span>`;
+      return `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap;line-height:1.4;">${label}</th>`;
     }).join('');
 
     const fmt = n => n == null ? '<span style="color:var(--muted);">—</span>' : Number(n).toFixed(4);
