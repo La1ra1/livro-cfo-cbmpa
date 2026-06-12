@@ -675,6 +675,10 @@
                 <input type="url" id="aval-link" placeholder="https://drive.google.com/..." />
               </div>
             </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;margin-bottom:14px;">
+              <input type="checkbox" id="aval-is-nota-final" style="cursor:pointer;width:15px;height:15px;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;">Esta é a nota final da disciplina</span>
+            </label>
             <button class="btn btn-ghost btn-sm" onclick="carregarTabelaNotas()" style="margin-bottom:4px;">
               ↓ Carregar Cadetes
             </button>
@@ -1997,6 +2001,7 @@
     _avalDisciplina = JSON.parse(val);
     $('aval-peso').value  = '';
     $('aval-link').value  = '';
+    $('aval-is-nota-final').checked = false;
     $('aval-config-wrap').style.display = 'block';
   }
 
@@ -2037,8 +2042,9 @@
   }
 
   async function salvarAvaliacao() {
-    const peso     = parseFloat($('aval-peso').value);
-    const link     = $('aval-link').value.trim() || null;
+    const peso          = parseFloat($('aval-peso').value);
+    const link          = $('aval-link').value.trim() || null;
+    const isNotaFinal   = $('aval-is-nota-final').checked;
 
     if (!_avalDisciplina) { toast('Selecione uma disciplina', 'error'); return; }
     if (isNaN(peso) || peso < 0) {
@@ -2079,7 +2085,7 @@
       const vRes = await fetch(`${API}/verificacoes`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_disciplina: _avalDisciplina.id, peso_avaliacao: peso, link_drive: link }),
+        body: JSON.stringify({ id_disciplina: _avalDisciplina.id, peso_avaliacao: peso, link_drive: link, is_nota_final: isNotaFinal }),
       });
       if (!vRes.ok) {
         const d = await vRes.json().catch(() => ({}));
