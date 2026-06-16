@@ -2682,9 +2682,11 @@
       </div>
 
       <!-- Filtros -->
-      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-        <select id="dash-mes" class="role-select" style="min-width:140px;" onchange="loadDashboard()"></select>
-        <select id="dash-ano" class="role-select" style="min-width:100px;" onchange="loadDashboard()"></select>
+      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">De</span>
+        <select id="dash-ano-inicio" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Até</span>
+        <select id="dash-ano-fim" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
         <div id="dash-filters-adv" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;">
           <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
             <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os cadetes</div>
@@ -2692,16 +2694,24 @@
               <input class="sd-search" placeholder="Buscar cadete..." oninput="filterSd('sd-dash-cadete', this.value)" />
               <div class="sd-list" id="sd-dash-cadete-list"></div>
             </div>
-            <div class="sd-clear" onclick="clearSd('sd-dash-cadete', loadDashboard)">Limpar</div>
+            <div class="sd-clear" onclick="clearSd('sd-dash-cadete', refreshDashboard)">Limpar</div>
           </div>
           <select id="dash-turma" class="role-select" style="min-width:130px;" onchange="onDashTurmaChange()">
             <option value="">Todas as turmas</option>
           </select>
-          <select id="dash-pel" class="role-select" style="min-width:130px;" onchange="loadDashboard()">
+          <select id="dash-pel" class="role-select" style="min-width:130px;" onchange="refreshDashboard()">
             <option value="">Todos os pelotões</option>
           </select>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="clearDashFilters()">✕ Limpar</button>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">Anotações Mensais</span>
+          <span id="dash-stacked-subtitle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Clique em uma barra para ver o detalhe do mês</span>
+        </div>
+        <div id="dash-stacked-container" style="padding:20px 16px 8px;"></div>
       </div>
 
       <div class="card" style="max-width:480px;">
@@ -7939,25 +7949,20 @@
 
     filtersEl.style.display = 'flex';
 
-    // Populate month/year selects once
-    const mesEl = document.getElementById('dash-mes');
-    const anoEl = document.getElementById('dash-ano');
-    const now   = new Date();
-    if (mesEl && !mesEl.dataset.init) {
-      const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      mesEl.innerHTML = '<option value="">Todos os meses</option>' +
-        meses.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
-      mesEl.value     = '';
-      mesEl.dataset.init = '1';
-    }
-    if (anoEl && !anoEl.dataset.init) {
+    // Populate year-range selects once (default to the last 3 years up to now)
+    const anoIniEl = document.getElementById('dash-ano-inicio');
+    const anoFimEl = document.getElementById('dash-ano-fim');
+    const now      = new Date();
+    if (anoIniEl && !anoIniEl.dataset.init) {
       const cur = now.getFullYear();
-      anoEl.innerHTML = '<option value="">Todos os anos</option>' +
-        [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
-      anoEl.value     = '';
-      anoEl.dataset.init = '1';
+      const opts = [cur-3, cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
+      anoIniEl.innerHTML = opts;
+      anoFimEl.innerHTML = opts;
+      anoIniEl.value     = String(cur - 2);
+      anoFimEl.value     = String(cur);
+      anoIniEl.dataset.init = '1';
     }
+    _dashSelectedPeriod = null;
 
     const advEl = document.getElementById('dash-filters-adv');
     if (role === 'coordenador' || role === 'auxiliar' || role === 'comandante') {
@@ -7986,7 +7991,7 @@
       if (advEl) advEl.style.display = 'none';
     }
 
-    loadDashboard();
+    refreshDashboard();
   }
 
   function onDashTurmaChange() {
@@ -7999,37 +8004,33 @@
       pelEl.innerHTML = '<option value="">Todos os pelotões</option>' +
         [...pelSet].sort().map(p => `<option value="${p}">${p}</option>`).join('');
     }
-    loadDashboard();
+    refreshDashboard();
   }
 
   function clearDashFilters() {
     clearSd('sd-dash-cadete', () => {});
-    const turmaEl = document.getElementById('dash-turma');
-    const pelEl   = document.getElementById('dash-pel');
-    const mesEl   = document.getElementById('dash-mes');
-    const anoEl   = document.getElementById('dash-ano');
-    if (turmaEl) turmaEl.value = '';
-    if (pelEl)   pelEl.value   = '';
-    if (mesEl)   mesEl.value   = '';
-    if (anoEl)   anoEl.value   = '';
+    const turmaEl  = document.getElementById('dash-turma');
+    const pelEl    = document.getElementById('dash-pel');
+    const anoIniEl = document.getElementById('dash-ano-inicio');
+    const anoFimEl = document.getElementById('dash-ano-fim');
+    const cur      = new Date().getFullYear();
+    if (turmaEl)  turmaEl.value  = '';
+    if (pelEl)    pelEl.value    = '';
+    if (anoIniEl) anoIniEl.value = String(cur - 2);
+    if (anoFimEl) anoFimEl.value = String(cur);
+    _dashSelectedPeriod = null;
+    refreshDashboard();
+  }
+
+  // Re-fetches both the monthly stacked chart and the pie chart (for the selected period, if any)
+  function refreshDashboard() {
+    loadDashboardMensal();
     loadDashboard();
   }
 
-  async function loadDashboard() {
-    const role      = window._currentUser?.role;
-    const container = document.getElementById('dash-chart-container');
-    const subtitle  = document.getElementById('dash-chart-subtitle');
-    if (!container) return;
-
-    container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
-
+  function _dashCommonParams() {
+    const role   = window._currentUser?.role;
     const params = new URLSearchParams();
-
-    // Month/year (all roles)
-    const mes = document.getElementById('dash-mes')?.value;
-    const ano = document.getElementById('dash-ano')?.value;
-    if (mes) params.set('mes', mes);
-    if (ano) params.set('ano', ano);
 
     if (role === 'coordenador' || role === 'auxiliar' || role === 'comandante') {
       const cId   = getSdValue('sd-dash-cadete');
@@ -8042,14 +8043,116 @@
         if (pel) params.set('pel', pel);
       }
     }
+    return params;
+  }
 
-    const qs = params.toString();
+  let _dashSelectedPeriod = null; // { ano, mes } | null
+  let _dashMonthlyData    = [];
+  const _MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  const _MESES_NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                         'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  async function loadDashboardMensal() {
+    const container = document.getElementById('dash-stacked-container');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
+
+    const params   = _dashCommonParams();
+    const anoIni   = document.getElementById('dash-ano-inicio')?.value;
+    const anoFim   = document.getElementById('dash-ano-fim')?.value;
+    if (anoIni) params.set('ano_inicio', anoIni);
+    if (anoFim) params.set('ano_fim',    anoFim);
+
     try {
-      const res = await fetch(`${API}/dashboard/anotacoes${qs ? '?' + qs : ''}`,
+      const res = await fetch(`${API}/dashboard/anotacoes/mensal?${params}`,
         { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) throw new Error((await res.json()).detail || res.status);
       const json = await res.json();
-      if (subtitle) subtitle.textContent = `${json.total} anotação(ões)`;
+      _dashMonthlyData = json.data;
+      renderDashboardStackedChart(json.data);
+    } catch (e) {
+      container.innerHTML = `<div style="color:var(--danger);font-family:monospace;font-size:11px;padding:24px;text-align:center;">ERRO: ${e.message}</div>`;
+    }
+  }
+
+  function renderDashboardStackedChart(data) {
+    const container = document.getElementById('dash-stacked-container');
+    if (!container) return;
+
+    const maxTotal = Math.max(1, ...data.map(d => d.total));
+    const resultadosUsados = [...new Set(data.flatMap(d => Object.keys(d.resultados)))];
+    const multiAno = new Set(data.map(d => d.ano)).size > 1;
+
+    const bars = data.map(d => {
+      const h = d.total > 0 ? Math.max(2, (d.total / maxTotal) * 140) : 2;
+      const isSelected = _dashSelectedPeriod && _dashSelectedPeriod.ano === d.ano && _dashSelectedPeriod.mes === d.mes;
+      let segHtml = '';
+      if (d.total > 0) {
+        segHtml = Object.entries(d.resultados).map(([resultado, val]) => {
+          const segH = (val / d.total) * h;
+          return `<div style="width:100%;height:${segH}px;background:${_dashColors[resultado] || '#94a3b8'};" title="${_dashLabels[resultado] || resultado}: ${val}"></div>`;
+        }).join('');
+      }
+      const label = multiAno ? `${_MESES_ABREV[d.mes - 1]}/${String(d.ano).slice(2)}` : _MESES_ABREV[d.mes - 1];
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:40px;cursor:pointer;"
+             onclick="selectDashPeriod(${d.ano},${d.mes})">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);min-height:14px;">${d.total || ''}</span>
+          <div style="width:100%;max-width:34px;display:flex;flex-direction:column-reverse;height:140px;
+                       border-radius:3px 3px 0 0;overflow:hidden;
+                       outline:${isSelected ? '2px solid var(--accent)' : 'none'};outline-offset:2px;
+                       background:${d.total === 0 ? 'var(--surface2)' : 'transparent'};">
+            ${segHtml}
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:${isSelected ? 'var(--accent)' : 'var(--muted)'};font-weight:${isSelected ? '700' : '400'};white-space:nowrap;">${label}</span>
+        </div>`;
+    }).join('');
+
+    const legend = resultadosUsados.length ? `
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;justify-content:center;">
+        ${resultadosUsados.map(r => `
+          <div style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);">
+            <div style="width:10px;height:10px;border-radius:2px;background:${_dashColors[r] || '#94a3b8'};"></div>
+            ${_dashLabels[r] || r}
+          </div>`).join('')}
+      </div>` : '';
+
+    container.innerHTML = `
+      <div style="display:flex;align-items:flex-end;gap:6px;overflow-x:auto;padding-bottom:4px;">${bars}</div>
+      ${legend}`;
+  }
+
+  function selectDashPeriod(ano, mes) {
+    const same = _dashSelectedPeriod && _dashSelectedPeriod.ano === ano && _dashSelectedPeriod.mes === mes;
+    _dashSelectedPeriod = same ? null : { ano, mes };
+    renderDashboardStackedChart(_dashMonthlyData);
+    loadDashboard();
+  }
+
+  async function loadDashboard() {
+    const container = document.getElementById('dash-chart-container');
+    const subtitle  = document.getElementById('dash-chart-subtitle');
+    if (!container) return;
+
+    if (!_dashSelectedPeriod) {
+      container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">Clique em uma barra do gráfico mensal para ver o detalhe</div>';
+      if (subtitle) subtitle.textContent = '';
+      return;
+    }
+
+    container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
+
+    const params = _dashCommonParams();
+    params.set('ano', _dashSelectedPeriod.ano);
+    params.set('mes', _dashSelectedPeriod.mes);
+
+    try {
+      const res = await fetch(`${API}/dashboard/anotacoes?${params}`,
+        { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) throw new Error((await res.json()).detail || res.status);
+      const json = await res.json();
+      const mesLabel = `${_MESES_NOMES[_dashSelectedPeriod.mes - 1]}/${_dashSelectedPeriod.ano}`;
+      if (subtitle) subtitle.textContent = `${json.total} anotação(ões) · ${mesLabel}`;
       renderDashboardChart(json.data, json.total);
     } catch (e) {
       container.innerHTML = `<div style="color:var(--danger);font-family:monospace;font-size:11px;padding:24px;text-align:center;">ERRO: ${e.message}</div>`;
