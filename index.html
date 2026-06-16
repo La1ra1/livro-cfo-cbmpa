@@ -7949,7 +7949,7 @@
 
     filtersEl.style.display = 'flex';
 
-    // Populate year-range selects once (default both to current year)
+    // Populate year-range selects once (default to the last 3 years up to now)
     const anoIniEl = document.getElementById('dash-ano-inicio');
     const anoFimEl = document.getElementById('dash-ano-fim');
     const now      = new Date();
@@ -7958,7 +7958,7 @@
       const opts = [cur-3, cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
       anoIniEl.innerHTML = opts;
       anoFimEl.innerHTML = opts;
-      anoIniEl.value     = String(cur);
+      anoIniEl.value     = String(cur - 2);
       anoFimEl.value     = String(cur);
       anoIniEl.dataset.init = '1';
     }
@@ -8013,11 +8013,11 @@
     const pelEl    = document.getElementById('dash-pel');
     const anoIniEl = document.getElementById('dash-ano-inicio');
     const anoFimEl = document.getElementById('dash-ano-fim');
-    const cur      = String(new Date().getFullYear());
+    const cur      = new Date().getFullYear();
     if (turmaEl)  turmaEl.value  = '';
     if (pelEl)    pelEl.value    = '';
-    if (anoIniEl) anoIniEl.value = cur;
-    if (anoFimEl) anoFimEl.value = cur;
+    if (anoIniEl) anoIniEl.value = String(cur - 2);
+    if (anoFimEl) anoFimEl.value = String(cur);
     _dashSelectedPeriod = null;
     refreshDashboard();
   }
