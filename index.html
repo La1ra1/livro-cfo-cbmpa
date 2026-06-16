@@ -8030,8 +8030,8 @@
   }
 
   // Re-fetches both the monthly stacked chart and the pie chart (for the selected period, if any)
-  function refreshDashboard() {
-    loadDashboardMensal();
+  async function refreshDashboard() {
+    await loadDashboardMensal();
     loadDashboard();
   }
 
@@ -8162,7 +8162,12 @@
   function showDashTotalPeriodo() {
     const container = document.getElementById('dash-chart-container');
     const subtitle  = document.getElementById('dash-chart-subtitle');
-    if (!container || !_dashMonthlyData.length) return;
+    if (!container) return;
+    if (!_dashMonthlyData.length) {
+      container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM DADO NO PERÍODO</div>';
+      if (subtitle) subtitle.textContent = '';
+      return;
+    }
 
     _dashSelectedPeriod = null;
     renderDashboardStackedChart(_dashMonthlyData);
@@ -8190,8 +8195,7 @@
     if (!container) return;
 
     if (!_dashSelectedPeriod) {
-      container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">Clique em uma barra do gráfico mensal para ver o detalhe</div>';
-      if (subtitle) subtitle.textContent = '';
+      showDashTotalPeriodo();
       return;
     }
 
