@@ -8082,9 +8082,23 @@
     }
   }
 
+  function _updateDashStackedSubtitle() {
+    const subtitle = document.getElementById('dash-stacked-subtitle');
+    if (!subtitle) return;
+    const cId = getSdValue('sd-dash-cadete');
+    if (cId) {
+      const trigger = document.getElementById('sd-dash-cadete-trigger');
+      subtitle.textContent = `Cadete: ${trigger?.textContent || ''} · clique em uma barra para ver o detalhe do mês`;
+    } else {
+      subtitle.textContent = 'Clique em uma barra para ver o detalhe do mês';
+    }
+  }
+
   function renderDashboardStackedChart(rawData) {
     const container = document.getElementById('dash-stacked-container');
     if (!container) return;
+
+    _updateDashStackedSubtitle();
 
     const ocultarVazios = document.getElementById('dash-ocultar-vazios')?.checked;
     const data = ocultarVazios ? rawData.filter(d => d.total > 0) : rawData;
