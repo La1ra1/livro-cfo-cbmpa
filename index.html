@@ -2687,6 +2687,10 @@
         <select id="dash-ano-inicio" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Até</span>
         <select id="dash-ano-fim" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer;">
+          <input type="checkbox" id="dash-ocultar-vazios" onchange="renderDashboardStackedChart(_dashMonthlyData)" />
+          Ocultar meses sem dados
+        </label>
         <div id="dash-filters-adv" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;">
           <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
             <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os cadetes</div>
@@ -8075,9 +8079,17 @@
     }
   }
 
-  function renderDashboardStackedChart(data) {
+  function renderDashboardStackedChart(rawData) {
     const container = document.getElementById('dash-stacked-container');
     if (!container) return;
+
+    const ocultarVazios = document.getElementById('dash-ocultar-vazios')?.checked;
+    const data = ocultarVazios ? rawData.filter(d => d.total > 0) : rawData;
+
+    if (!data.length) {
+      container.innerHTML = '<div style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">NENHUM MÊS COM DADOS NO PERÍODO</div>';
+      return;
+    }
 
     const maxTotal = Math.max(1, ...data.map(d => d.total));
     const resultadosUsados = [...new Set(data.flatMap(d => Object.keys(d.resultados)))];
