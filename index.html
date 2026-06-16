@@ -2723,6 +2723,9 @@
           <span class="card-title">Anotações por Veredito</span>
           <span id="dash-chart-subtitle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
         </div>
+        <div style="padding:0 24px;">
+          <button class="btn btn-ghost btn-sm" onclick="showDashTotalPeriodo()">Σ Mostrar total do período</button>
+        </div>
         <div id="dash-chart-container" style="padding:28px 24px;"></div>
       </div>
     </section>
@@ -8139,6 +8142,32 @@
     _dashSelectedPeriod = same ? null : { ano, mes };
     renderDashboardStackedChart(_dashMonthlyData);
     loadDashboard();
+  }
+
+  // Agrega os totais de _dashMonthlyData (já carregado pelo gráfico de barras) por resultado
+  function showDashTotalPeriodo() {
+    const container = document.getElementById('dash-chart-container');
+    const subtitle  = document.getElementById('dash-chart-subtitle');
+    if (!container || !_dashMonthlyData.length) return;
+
+    _dashSelectedPeriod = null;
+    renderDashboardStackedChart(_dashMonthlyData);
+
+    const totais = {};
+    _dashMonthlyData.forEach(d => {
+      Object.entries(d.resultados).forEach(([resultado, val]) => {
+        totais[resultado] = (totais[resultado] || 0) + val;
+      });
+    });
+
+    const data  = Object.entries(totais).map(([resultado, total]) => ({ resultado, total }));
+    const total = data.reduce((s, d) => s + d.total, 0);
+
+    const anoIni = document.getElementById('dash-ano-inicio')?.value;
+    const anoFim = document.getElementById('dash-ano-fim')?.value;
+    const periodoLabel = anoIni === anoFim ? anoIni : `${anoIni}–${anoFim}`;
+    if (subtitle) subtitle.textContent = `${total} anotação(ões) · Total ${periodoLabel}`;
+    renderDashboardChart(data, total);
   }
 
   async function loadDashboard() {
