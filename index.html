@@ -2588,7 +2588,7 @@
             <option value="9">Setembro</option><option value="10">Outubro</option>
             <option value="11">Novembro</option><option value="12">Dezembro</option>
           </select>
-          <select class="role-select" id="el-filter-ano" onchange="loadElogiosLista(1)" style="width:auto;"></select>
+          <select class="role-select" id="el-filter-ano" onchange="loadElogiosLista(1)" style="width:auto;"><option value="">Todos os anos</option></select>
           <select class="role-select" id="el-filter-status" onchange="loadElogiosLista(1)" style="width:auto;">
             <option value="aprovado" selected>Aprovado</option>
             <option value="rejeitado">Descartado</option>
@@ -6967,10 +6967,12 @@
       const anoSel = document.getElementById('el-filter-ano');
       if (anoSel && anoSel.options.length <= 1) {
         const y = new Date().getFullYear();
-        for (let yr = y - 1; yr <= y + 1; yr++) {
+        const todos = document.createElement('option');
+        todos.value = ''; todos.textContent = 'Todos os anos';
+        anoSel.appendChild(todos);
+        for (let yr = y - 3; yr <= y + 1; yr++) {
           const o = document.createElement('option');
           o.value = yr; o.textContent = yr;
-          if (yr === y) o.selected = true;
           anoSel.appendChild(o);
         }
       }
