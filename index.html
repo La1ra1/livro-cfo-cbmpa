@@ -2682,8 +2682,11 @@
       </div>
 
       <!-- Filtros -->
-      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-        <select id="dash-ano" class="role-select" style="min-width:100px;" onchange="refreshDashboard()"></select>
+      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">De</span>
+        <select id="dash-ano-inicio" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Até</span>
+        <select id="dash-ano-fim" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
         <div id="dash-filters-adv" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;">
           <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
             <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os cadetes</div>
@@ -7946,16 +7949,20 @@
 
     filtersEl.style.display = 'flex';
 
-    // Populate year select once (defaults to current year — required for the monthly chart)
-    const anoEl = document.getElementById('dash-ano');
-    const now   = new Date();
-    if (anoEl && !anoEl.dataset.init) {
+    // Populate year-range selects once (default both to current year)
+    const anoIniEl = document.getElementById('dash-ano-inicio');
+    const anoFimEl = document.getElementById('dash-ano-fim');
+    const now      = new Date();
+    if (anoIniEl && !anoIniEl.dataset.init) {
       const cur = now.getFullYear();
-      anoEl.innerHTML = [cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
-      anoEl.value     = String(cur);
-      anoEl.dataset.init = '1';
+      const opts = [cur-3, cur-2, cur-1, cur, cur+1].map(y => `<option value="${y}">${y}</option>`).join('');
+      anoIniEl.innerHTML = opts;
+      anoFimEl.innerHTML = opts;
+      anoIniEl.value     = String(cur);
+      anoFimEl.value     = String(cur);
+      anoIniEl.dataset.init = '1';
     }
-    _dashSelectedMonth = null;
+    _dashSelectedPeriod = null;
 
     const advEl = document.getElementById('dash-filters-adv');
     if (role === 'coordenador' || role === 'auxiliar' || role === 'comandante') {
@@ -8002,17 +8009,20 @@
 
   function clearDashFilters() {
     clearSd('sd-dash-cadete', () => {});
-    const turmaEl = document.getElementById('dash-turma');
-    const pelEl   = document.getElementById('dash-pel');
-    const anoEl   = document.getElementById('dash-ano');
-    if (turmaEl) turmaEl.value = '';
-    if (pelEl)   pelEl.value   = '';
-    if (anoEl)   anoEl.value   = String(new Date().getFullYear());
-    _dashSelectedMonth = null;
+    const turmaEl  = document.getElementById('dash-turma');
+    const pelEl    = document.getElementById('dash-pel');
+    const anoIniEl = document.getElementById('dash-ano-inicio');
+    const anoFimEl = document.getElementById('dash-ano-fim');
+    const cur      = String(new Date().getFullYear());
+    if (turmaEl)  turmaEl.value  = '';
+    if (pelEl)    pelEl.value    = '';
+    if (anoIniEl) anoIniEl.value = cur;
+    if (anoFimEl) anoFimEl.value = cur;
+    _dashSelectedPeriod = null;
     refreshDashboard();
   }
 
-  // Re-fetches both the monthly stacked chart and the pie chart (for the selected month, if any)
+  // Re-fetches both the monthly stacked chart and the pie chart (for the selected period, if any)
   function refreshDashboard() {
     loadDashboardMensal();
     loadDashboard();
@@ -8021,8 +8031,6 @@
   function _dashCommonParams() {
     const role   = window._currentUser?.role;
     const params = new URLSearchParams();
-    const ano    = document.getElementById('dash-ano')?.value;
-    if (ano) params.set('ano', ano);
 
     if (role === 'coordenador' || role === 'auxiliar' || role === 'comandante') {
       const cId   = getSdValue('sd-dash-cadete');
@@ -8038,7 +8046,7 @@
     return params;
   }
 
-  let _dashSelectedMonth  = null;
+  let _dashSelectedPeriod = null; // { ano, mes } | null
   let _dashMonthlyData    = [];
   const _MESES_ABREV = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
   const _MESES_NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -8049,7 +8057,12 @@
     if (!container) return;
     container.innerHTML = '<div style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
 
-    const params = _dashCommonParams();
+    const params   = _dashCommonParams();
+    const anoIni   = document.getElementById('dash-ano-inicio')?.value;
+    const anoFim   = document.getElementById('dash-ano-fim')?.value;
+    if (anoIni) params.set('ano_inicio', anoIni);
+    if (anoFim) params.set('ano_fim',    anoFim);
+
     try {
       const res = await fetch(`${API}/dashboard/anotacoes/mensal?${params}`,
         { headers: { Authorization: `Bearer ${token()}` } });
@@ -8068,10 +8081,11 @@
 
     const maxTotal = Math.max(1, ...data.map(d => d.total));
     const resultadosUsados = [...new Set(data.flatMap(d => Object.keys(d.resultados)))];
+    const multiAno = new Set(data.map(d => d.ano)).size > 1;
 
     const bars = data.map(d => {
       const h = d.total > 0 ? Math.max(2, (d.total / maxTotal) * 140) : 2;
-      const isSelected = _dashSelectedMonth === d.mes;
+      const isSelected = _dashSelectedPeriod && _dashSelectedPeriod.ano === d.ano && _dashSelectedPeriod.mes === d.mes;
       let segHtml = '';
       if (d.total > 0) {
         segHtml = Object.entries(d.resultados).map(([resultado, val]) => {
@@ -8079,9 +8093,10 @@
           return `<div style="width:100%;height:${segH}px;background:${_dashColors[resultado] || '#94a3b8'};" title="${_dashLabels[resultado] || resultado}: ${val}"></div>`;
         }).join('');
       }
+      const label = multiAno ? `${_MESES_ABREV[d.mes - 1]}/${String(d.ano).slice(2)}` : _MESES_ABREV[d.mes - 1];
       return `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0;cursor:pointer;"
-             onclick="selectDashMonth(${d.mes})">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:40px;cursor:pointer;"
+             onclick="selectDashPeriod(${d.ano},${d.mes})">
           <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);min-height:14px;">${d.total || ''}</span>
           <div style="width:100%;max-width:34px;display:flex;flex-direction:column-reverse;height:140px;
                        border-radius:3px 3px 0 0;overflow:hidden;
@@ -8089,7 +8104,7 @@
                        background:${d.total === 0 ? 'var(--surface2)' : 'transparent'};">
             ${segHtml}
           </div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:${isSelected ? 'var(--accent)' : 'var(--muted)'};font-weight:${isSelected ? '700' : '400'};">${_MESES_ABREV[d.mes - 1]}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:${isSelected ? 'var(--accent)' : 'var(--muted)'};font-weight:${isSelected ? '700' : '400'};white-space:nowrap;">${label}</span>
         </div>`;
     }).join('');
 
@@ -8103,12 +8118,13 @@
       </div>` : '';
 
     container.innerHTML = `
-      <div style="display:flex;align-items:flex-end;gap:6px;">${bars}</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;overflow-x:auto;padding-bottom:4px;">${bars}</div>
       ${legend}`;
   }
 
-  function selectDashMonth(mes) {
-    _dashSelectedMonth = (_dashSelectedMonth === mes) ? null : mes;
+  function selectDashPeriod(ano, mes) {
+    const same = _dashSelectedPeriod && _dashSelectedPeriod.ano === ano && _dashSelectedPeriod.mes === mes;
+    _dashSelectedPeriod = same ? null : { ano, mes };
     renderDashboardStackedChart(_dashMonthlyData);
     loadDashboard();
   }
@@ -8118,18 +8134,25 @@
     const subtitle  = document.getElementById('dash-chart-subtitle');
     if (!container) return;
 
+    if (!_dashSelectedPeriod) {
+      container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">Clique em uma barra do gráfico mensal para ver o detalhe</div>';
+      if (subtitle) subtitle.textContent = '';
+      return;
+    }
+
     container.innerHTML = '<div style="text-align:center;padding:48px;font-family:monospace;font-size:11px;color:var(--muted);">CARREGANDO...</div>';
 
     const params = _dashCommonParams();
-    if (_dashSelectedMonth) params.set('mes', _dashSelectedMonth);
+    params.set('ano', _dashSelectedPeriod.ano);
+    params.set('mes', _dashSelectedPeriod.mes);
 
     try {
       const res = await fetch(`${API}/dashboard/anotacoes?${params}`,
         { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) throw new Error((await res.json()).detail || res.status);
       const json = await res.json();
-      const mesLabel = _dashSelectedMonth ? ` · ${_MESES_NOMES[_dashSelectedMonth - 1]}` : ' · Ano todo';
-      if (subtitle) subtitle.textContent = `${json.total} anotação(ões)${mesLabel}`;
+      const mesLabel = `${_MESES_NOMES[_dashSelectedPeriod.mes - 1]}/${_dashSelectedPeriod.ano}`;
+      if (subtitle) subtitle.textContent = `${json.total} anotação(ões) · ${mesLabel}`;
       renderDashboardChart(json.data, json.total);
     } catch (e) {
       container.innerHTML = `<div style="color:var(--danger);font-family:monospace;font-size:11px;padding:24px;text-align:center;">ERRO: ${e.message}</div>`;
