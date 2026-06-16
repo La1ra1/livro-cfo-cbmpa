@@ -7988,7 +7988,7 @@
           .sort((a, b) => (a.numero_geral ?? 9999) - (b.numero_geral ?? 9999))
           .map(u => {
             const lbl = `${u.numero_geral != null ? u.numero_geral + ' ' : ''}${u.username}`;
-            return `<div class="sd-option" data-value="${u.id}" data-search="${lbl.toLowerCase()}" onclick="selectSdOption('sd-dash-cadete',${u.id},'${lbl.replace(/'/g,"\\'")}',loadDashboard)">${lbl}</div>`;
+            return `<div class="sd-option" data-value="${u.id}" data-search="${lbl.toLowerCase()}" onclick="selectSdOption('sd-dash-cadete',${u.id},'${lbl.replace(/'/g,"\\'")}',refreshDashboard)">${lbl}</div>`;
           }).join('');
       }
     } else {
