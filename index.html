@@ -8082,16 +8082,17 @@
     }
   }
 
+  function _dashCadetePrefix() {
+    const cId = getSdValue('sd-dash-cadete');
+    if (!cId) return '';
+    const trigger = document.getElementById('sd-dash-cadete-trigger');
+    return trigger?.textContent ? `Cadete: ${trigger.textContent} · ` : '';
+  }
+
   function _updateDashStackedSubtitle() {
     const subtitle = document.getElementById('dash-stacked-subtitle');
     if (!subtitle) return;
-    const cId = getSdValue('sd-dash-cadete');
-    if (cId) {
-      const trigger = document.getElementById('sd-dash-cadete-trigger');
-      subtitle.textContent = `Cadete: ${trigger?.textContent || ''} · clique em uma barra para ver o detalhe do mês`;
-    } else {
-      subtitle.textContent = 'Clique em uma barra para ver o detalhe do mês';
-    }
+    subtitle.textContent = `${_dashCadetePrefix()}Clique em uma barra para ver o detalhe do mês`;
   }
 
   function renderDashboardStackedChart(rawData) {
@@ -8185,7 +8186,7 @@
     const anoIni = document.getElementById('dash-ano-inicio')?.value;
     const anoFim = document.getElementById('dash-ano-fim')?.value;
     const periodoLabel = anoIni === anoFim ? anoIni : `${anoIni}–${anoFim}`;
-    if (subtitle) subtitle.textContent = `${total} anotação(ões) · Total ${periodoLabel}`;
+    if (subtitle) subtitle.textContent = `${_dashCadetePrefix()}${total} anotação(ões) · Total ${periodoLabel}`;
     renderDashboardChart(data, total);
   }
 
@@ -8211,7 +8212,7 @@
       if (!res.ok) throw new Error((await res.json()).detail || res.status);
       const json = await res.json();
       const mesLabel = `${_MESES_NOMES[_dashSelectedPeriod.mes - 1]}/${_dashSelectedPeriod.ano}`;
-      if (subtitle) subtitle.textContent = `${json.total} anotação(ões) · ${mesLabel}`;
+      if (subtitle) subtitle.textContent = `${_dashCadetePrefix()}${json.total} anotação(ões) · ${mesLabel}`;
       renderDashboardChart(json.data, json.total);
     } catch (e) {
       container.innerHTML = `<div style="color:var(--danger);font-family:monospace;font-size:11px;padding:24px;text-align:center;">ERRO: ${e.message}</div>`;
