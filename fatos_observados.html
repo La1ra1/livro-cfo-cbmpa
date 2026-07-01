@@ -162,8 +162,16 @@
           </div>
         </div>
       </div>
-      <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
-        <span class="nav-icon">↓</span> Exportar
+      <div class="nav-group collapsed" data-group="coord-relatorios">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Relatórios <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
+            <span class="nav-icon">↓</span> Exportar
+          </div>
+          <div class="nav-item" data-section="punicoes" onclick="showSection('punicoes')">
+            <span class="nav-icon">📅</span> Calendário de Punições
+          </div>
+        </div>
       </div>
       <div class="sidebar-divider" id="nav-coord-fo-divider"></div>
       <div class="sidebar-label cv-anot" id="nav-coord-fo-label">Fatos Observados</div>
