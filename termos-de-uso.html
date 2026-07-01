@@ -4,21 +4,22 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="ABM.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Termos de Uso — CFO Academia Bombeiro Militar</title>
+  <title>Termos de Uso — Sistema de Controle do Corpo de Alunos — CBMPA/DGCEP</title>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:        #0a0c0f;
-      --surface:   #111318;
-      --surface2:  #181c22;
-      --border:    #1e2229;
-      --border2:   #2a3040;
-      --accent:    #c8a84b;
-      --accent2:   #8b6f2e;
-      --text:      #e8e4d9;
-      --text-dim:  #c8cdd8;
-      --muted:     #7a8394;
+      --bg:        #eef0f3;
+      --surface:   rgba(255,255,255,.68);
+      --surface2:  rgba(255,255,255,.85);
+      --border:    rgba(15,23,42,.09);
+      --border2:   rgba(15,23,42,.16);
+      --accent:    #b40a0a;
+      --accent2:   #7a0808;
+      --text:      #1c2128;
+      --text-dim:  #4b5563;
+      --muted:     #707b8c;
       --danger:    #c0392b;
+      --glass-blur: blur(14px);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,10 +35,9 @@
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
-      background-size: 48px 48px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(180,10,10,.06) 0%, transparent 45%),
+        radial-gradient(circle at 100% 30%, rgba(15,23,42,.04) 0%, transparent 50%);
       pointer-events: none; z-index: 0;
     }
 
@@ -88,13 +88,13 @@
     }
 
     .warning-box {
-      background: rgba(192,57,43,.1);
-      border: 1px solid rgba(192,57,43,.35);
+      background: rgba(192,57,43,.08);
+      border: 1px solid rgba(192,57,43,.3);
       border-radius: 8px;
       padding: 16px 20px;
       margin-bottom: 40px;
       font-size: .9rem;
-      color: #e07070;
+      color: #9a2a1f;
       display: flex;
       gap: 12px;
       align-items: flex-start;
@@ -161,7 +161,7 @@
       padding: 14px 18px;
       margin: 14px 0;
       font-size: .88rem;
-      color: #e07070;
+      color: #9a2a1f;
     }
 
     footer {
@@ -201,9 +201,9 @@
     <img src="ABM.png" alt="Brasão ABM" />
     <div class="header-text">
       <h1>Termos de Uso</h1>
-      <p>Academia Bombeiro Militar do Pará — Sistema de Controle do Corpo de Alunos</p>
+      <p>Corpo de Bombeiros Militar do Pará — Departamento Geral de Cultura, Educação e Pesquisa (DGCEP)</p>
     </div>
-    <div class="version-badge">Versão 1.0 · Jun/2026</div>
+    <div class="version-badge">Versão 2.0 · Jun/2026</div>
   </header>
 
   <div class="warning-box">
@@ -214,14 +214,14 @@
   <!-- 1 -->
   <section>
     <h2>Identificação do sistema e do controlador</h2>
-    <p>O <strong>Sistema de Controle do Corpo de Alunos</strong> (doravante "Sistema") é uma plataforma digital de uso interno da <strong>Academia Bombeiro Militar do Pará (ABM/CBMPA)</strong>, destinada ao gerenciamento disciplinar do Curso de Formação de Oficiais (CFO).</p>
-    <p>O controlador dos dados e responsável operacional pelo Sistema é a <strong>ABM/CBMPA</strong>, com sede no município de <strong>Marituba, Estado do Pará</strong>, vinculada ao Corpo de Bombeiros Militar do Pará (CBMPA).</p>
+    <p>O <strong>Sistema de Controle do Corpo de Alunos</strong> (doravante "Sistema") é uma plataforma digital de uso interno do <strong>Corpo de Bombeiros Militar do Pará (CBMPA)</strong>, destinada ao gerenciamento disciplinar dos cursos de <strong>formação, habilitação e especialização</strong> ministrados pelas unidades de ensino subordinadas ao <strong>Departamento Geral de Cultura, Educação e Pesquisa (DGCEP)</strong>, entre elas a Academia Bombeiro Militar do Pará (ABM).</p>
+    <p>O controlador dos dados e responsável final pelo Sistema é o <strong>CBMPA</strong>. O <strong>DGCEP</strong>, com sede no município de <strong>Ananindeua, Estado do Pará</strong>, é o departamento geral ao qual as unidades de ensino que utilizam o Sistema — entre elas a ABM, com sede em Marituba — são subordinadas, atuando como gestor operacional do Sistema perante os respectivos cursos.</p>
   </section>
 
   <!-- 2 -->
   <section>
     <h2>Aceitação e vinculação do usuário</h2>
-    <p>Ao <strong>marcar a caixa de aceite e efetuar o login</strong> no Sistema, o usuário — identificado como Aluno Oficial, Instrutor, Oficial-do-Dia, Xerife, Coordenador ou Comandante — declara, de forma expressa, livre e informada, que:</p>
+    <p>Ao <strong>marcar a caixa de aceite e efetuar o login</strong> no Sistema, o usuário — identificado como Aluno, Instrutor, Oficial-do-Dia, Xerife, Coordenador, Comandante de Pelotão/Companhia ou demais perfis cadastrados nos cursos de formação, habilitação ou especialização abrangidos pelo Sistema — declara, de forma expressa, livre e informada, que:</p>
     <ol>
       <li>Leu e compreendeu integralmente estes Termos de Uso;</li>
       <li>Concorda com todas as condições aqui estabelecidas;</li>
@@ -253,7 +253,7 @@
     <h2>Credenciais de acesso — guarda e sigilo</h2>
     <p>O usuário é o único responsável pela guarda, confidencialidade e uso de seu nome de usuário e senha. São expressamente vedadas:</p>
     <ul>
-      <li>A divulgação da senha a terceiros, ainda que a outros alunos do CFO;</li>
+      <li>A divulgação da senha a terceiros, ainda que a outros alunos do mesmo curso;</li>
       <li>O empréstimo ou compartilhamento de credenciais;</li>
       <li>O acesso ao Sistema em nome de outro usuário;</li>
       <li>A utilização de mecanismos automatizados (bots, scripts) sem autorização expressa da administração do Sistema.</li>
@@ -264,7 +264,7 @@
   <!-- 5 -->
   <section>
     <h2>Efeitos disciplinares das ações no sistema</h2>
-    <p>O usuário reconhece que as seguintes operações produzem efeitos disciplinares diretos sobre a sua <strong>Nota de Comportamento (NC)</strong> e, consequentemente, sobre sua <strong>classificação de antiguidade</strong> no CFO:</p>
+    <p>Para usuários matriculados em <strong>cursos de formação ou habilitação</strong>, o usuário reconhece que as seguintes operações produzem efeitos disciplinares diretos sobre a sua <strong>Nota de Comportamento (NC)</strong> e, consequentemente, sobre sua <strong>classificação de antiguidade</strong> no curso. Cursos de <strong>especialização</strong> não possuem Nota de Comportamento, não se aplicando a estes as anotações disciplinares e respectivos vereditos:</p>
     <ul>
       <li><strong>Anotações disciplinares:</strong> registros de transgressões que podem resultar em desconto de pontos na NC;</li>
       <li><strong>Justificativas:</strong> defesa escrita apresentada pelo aluno em resposta a uma anotação — o conteúdo e o prazo de envio influenciam o veredito;</li>
@@ -291,20 +291,20 @@
   <!-- 7 -->
   <section>
     <h2>Proteção de dados pessoais (LGPD)</h2>
-    <p>O tratamento de dados pessoais realizado pelo Sistema observa a <strong>Lei nº 13.709/2018 (LGPD)</strong>. Os dados coletados — nome, matrícula, registro de ações, endereço IP e timestamps — são utilizados exclusivamente para as finalidades disciplinares e administrativas inerentes ao CFO.</p>
+    <p>O tratamento de dados pessoais realizado pelo Sistema observa a <strong>Lei nº 13.709/2018 (LGPD)</strong>. Os dados coletados — nome, matrícula, registro de ações, endereço IP e timestamps — são utilizados exclusivamente para as finalidades disciplinares e administrativas inerentes aos cursos de formação, habilitação e especialização abrangidos pelo Sistema.</p>
     <p>O usuário tem direito a:</p>
     <ul>
       <li>Confirmar a existência de tratamento e acessar seus dados pessoais registrados;</li>
       <li>Solicitar correção de dados incompletos, inexatos ou desatualizados;</li>
       <li>Obter informação sobre compartilhamento de dados com outras entidades públicas, quando aplicável.</li>
     </ul>
-    <p>Solicitações relacionadas à LGPD devem ser encaminhadas ao responsável pelo Sistema por meio dos canais oficiais da ABM/CBMPA.</p>
+    <p>Solicitações relacionadas à LGPD devem ser encaminhadas ao responsável pelo Sistema por meio dos canais oficiais do CBMPA/DGCEP.</p>
   </section>
 
   <!-- 8 -->
   <section>
     <h2>Disponibilidade do sistema e notificações</h2>
-    <p>A ABM/CBMPA empenhará esforços razoáveis para manter o Sistema disponível, mas não garante disponibilidade ininterrupta. <strong>Indisponibilidade técnica devidamente comprovada</strong> poderá ser considerada como excludente de responsabilidade pelo descumprimento de prazo, desde que comunicada ao responsável pelo Sistema imediatamente após a restauração do serviço.</p>
+    <p>O CBMPA/DGCEP empenhará esforços razoáveis para manter o Sistema disponível, mas não garante disponibilidade ininterrupta. <strong>Indisponibilidade técnica devidamente comprovada</strong> poderá ser considerada como excludente de responsabilidade pelo descumprimento de prazo, desde que comunicada ao responsável pelo Sistema imediatamente após a restauração do serviço.</p>
     <p>Notificações sobre anotações, memorandos e prazos são enviadas ao e-mail cadastrado. O usuário é responsável por manter seu endereço de e-mail atualizado e por verificar regularmente a caixa de entrada, incluindo a pasta de spam.</p>
   </section>
 
@@ -323,13 +323,13 @@
   <!-- 10 -->
   <section>
     <h2>Alterações dos termos</h2>
-    <p>A ABM/CBMPA reserva-se o direito de alterar estes Termos a qualquer tempo. Alterações serão comunicadas por meio de aviso exibido na tela de login do Sistema e/ou por e-mail. O uso continuado do Sistema após a comunicação implica aceitação das novas condições.</p>
+    <p>O CBMPA/DGCEP reserva-se o direito de alterar estes Termos a qualquer tempo. Alterações serão comunicadas por meio de aviso exibido na tela de login do Sistema e/ou por e-mail. O uso continuado do Sistema após a comunicação implica aceitação das novas condições.</p>
   </section>
 
   <!-- 11 -->
   <section>
     <h2>Foro e legislação aplicável</h2>
-    <p>Estes Termos são regidos pela legislação brasileira. Para dirimir quaisquer controvérsias decorrentes de sua aplicação, fica eleito o <strong>Foro da Comarca de Belém, Estado do Pará</strong> — comarca à qual o município de Marituba, sede da ABM/CBMPA, é vinculado, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>
+    <p>Estes Termos são regidos pela legislação brasileira. Para dirimir quaisquer controvérsias decorrentes de sua aplicação, fica eleito o <strong>Foro da Comarca de Belém, Estado do Pará</strong>, sede do CBMPA, com renúncia expressa a qualquer outro, por mais privilegiado que seja, incluindo os foros das comarcas de Marituba (sede da ABM) e Ananindeua (sede do DGCEP).</p>
     <p>Aplicam-se subsidiariamente:</p>
     <ul>
       <li>Lei nº 13.709/2018 — Lei Geral de Proteção de Dados (LGPD);</li>
@@ -342,9 +342,9 @@
   </section>
 
   <footer>
-    <p>Academia Bombeiro Militar do Pará — Corpo de Bombeiros Militar do Pará</p>
-    <p>Sistema de Controle do Corpo de Alunos · Versão 1.0 · Vigência a partir de junho de 2026</p>
-    <p style="margin-top:8px; font-size:.75rem;">Academia Bombeiro Militar do Pará — Todos os direitos reservados.</p>
+    <p>Corpo de Bombeiros Militar do Pará — Departamento Geral de Cultura, Educação e Pesquisa (DGCEP)</p>
+    <p>Sistema de Controle do Corpo de Alunos · Versão 2.0 · Vigência a partir de junho de 2026</p>
+    <p style="margin-top:8px; font-size:.75rem;">Corpo de Bombeiros Militar do Pará — Todos os direitos reservados.</p>
   </footer>
 
 </div>

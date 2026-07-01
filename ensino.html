@@ -6,27 +6,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CFO — Ensino e Instrução</title>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="table-sort.js" defer></script>
   <style>
     :root {
-      --bg:              #0a0c0f;
-      --surface:         #111318;
-      --surface2:        #181c22;
-      --border:          #1e2229;
-      --border2:         #2a3040;
-      --accent:          #c8a84b;
-      --accent2:         #8b6f2e;
-      --accent-dim:      rgba(200,168,75,.08);
+      --bg:              #eef0f3;
+      --surface:         rgba(255,255,255,.68);
+      --surface2:        rgba(255,255,255,.85);
+      --border:          rgba(15,23,42,.09);
+      --border2:         rgba(15,23,42,.16);
+      --accent:          #b40a0a;
+      --accent2:         #7a0808;
+      --accent-dim:      rgba(180,10,10,.08);
       --danger:          #c0392b;
       --danger-dim:      rgba(192,57,43,.12);
-      --text:            #e8e4d9;
-      --text-dim:        #c8cdd8;
-      --muted:           #7a8394;
-      --success:         #2ecc71;
-      --success-dim:     rgba(46,204,113,.1);
-      --blue:            #3498db;
-      --blue-dim:        rgba(52,152,219,.1);
-      --warn:            #e07b2a;
-      --warn-dim:        rgba(224,123,42,.1);
+      --text:            #1c2128;
+      --text-dim:        #4b5563;
+      --muted:           #707b8c;
+      --success:         #1e9e57;
+      --success-dim:     rgba(30,158,87,.1);
+      --blue:            #2f7dbd;
+      --blue-dim:        rgba(47,125,189,.1);
+      --warn:            #c2670f;
+      --warn-dim:        rgba(194,103,15,.1);
+      --glass-blur:      blur(14px);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,10 +44,9 @@
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
-      background-size: 48px 48px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(180,10,10,.06) 0%, transparent 45%),
+        radial-gradient(circle at 100% 30%, rgba(15,23,42,.04) 0%, transparent 50%);
       pointer-events: none; z-index: 0;
     }
 
@@ -58,8 +59,10 @@
 
     .login-wrap { position: relative; z-index: 1; width: 100%; max-width: 400px; padding: 16px; }
     .login-card {
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--surface); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border);
       border-top: 3px solid var(--accent); padding: 44px 40px;
+      box-shadow: 0 12px 40px rgba(15,23,42,.12);
     }
     .login-emblem { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
     .login-hex {
@@ -90,8 +93,8 @@
       letter-spacing: 2px; text-transform: uppercase; transition: all .15s;
     }
     .btn-full { width: 100%; justify-content: center; }
-    .btn-primary { background: var(--accent); color: var(--bg); border-left: 3px solid var(--accent2); }
-    .btn-primary:hover { background: #d4b45a; }
+    .btn-primary { background: var(--accent); color: #fff; border-left: 3px solid var(--accent2); }
+    .btn-primary:hover { background: #d11414; }
     .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
     .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(192,57,43,.3); }
@@ -111,8 +114,9 @@
     /* ── TOPBAR ── */
     .topbar {
       position: fixed; top: 0; left: 0; right: 0; height: 48px;
-      background: rgba(17,19,24,.95); backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--accent2);
+      background: rgba(255,255,255,.78); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 3px solid var(--accent);
+      box-shadow: 0 1px 12px rgba(15,23,42,.06);
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 20px; z-index: 200;
     }
@@ -132,21 +136,22 @@
     /* ── SIDEBAR ── */
     .sidebar {
       position: fixed; top: 48px; left: 0; bottom: 0; width: 210px;
-      background: var(--surface); border-right: 1px solid var(--border);
+      background: linear-gradient(185deg, #14171c 0%, #1f0b0b 100%);
+      border-right: 1px solid var(--border2);
       overflow-y: auto; z-index: 100;
       display: flex; flex-direction: column;
     }
     .sidebar-section { padding: 20px 0 8px; }
-    .sidebar-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; padding: 0 16px 8px; }
-    .sidebar-divider { height: 1px; background: var(--border); margin: 6px 14px; }
+    .sidebar-label { font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 3px; color: rgba(255,255,255,.4); text-transform: uppercase; padding: 0 16px 8px; }
+    .sidebar-divider { height: 1px; background: rgba(255,255,255,.08); margin: 6px 14px; }
     .nav-item {
       display: flex; align-items: center; gap: 9px;
       padding: 8px 16px; font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px; letter-spacing: 1px; color: var(--text-dim);
+      font-size: 11px; letter-spacing: 1px; color: rgba(255,255,255,.85);
       cursor: pointer; transition: all .15s; border-left: 2px solid transparent;
     }
-    .nav-item:hover { color: var(--text); background: var(--accent-dim); border-left-color: var(--accent2); }
-    .nav-item.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+    .nav-item:hover { color: #fff; background: rgba(180,10,10,.18); border-left-color: var(--accent2); }
+    .nav-item.active { color: #fff; background: rgba(180,10,10,.28); border-left-color: var(--accent); }
     .nav-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
     .nav-badge {
       margin-left: auto; background: rgba(192,57,43,.8); color: #fff;
@@ -168,8 +173,11 @@
     .page-breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
 
     /* ── CARD ── */
-    .card { background: var(--surface); border: 1px solid var(--border); margin-bottom: 20px; }
-    .card-header { padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card { background: var(--surface); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--border); box-shadow: 0 4px 18px rgba(15,23,42,.05); margin-bottom: 20px; position: relative; }
+    /* backdrop-filter cria stacking context próprio - sem isso, um .sd-panel
+       aberto dentro de um .card fica por baixo do próximo .card da página. */
+    .card:has(.sd-panel.open) { z-index: 5; }
+    .card-header { padding: 13px 18px; background: rgba(255,255,255,.9); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
     .card-title { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--accent); }
     .card-body { padding: 18px; }
 
@@ -181,7 +189,7 @@
 
     /* ── BADGES ── */
     .badge { display: inline-block; padding: 2px 8px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
-    .badge-gold   { background: rgba(200,168,75,.12); color: var(--accent); border: 1px solid rgba(200,168,75,.25); }
+    .badge-gold   { background: rgba(180,10,10,.12); color: var(--accent); border: 1px solid rgba(180,10,10,.25); }
     .badge-silver { background: rgba(74,80,96,.15); color: var(--text-dim); border: 1px solid rgba(74,80,96,.3); }
     .badge-blue   { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(52,152,219,.25); }
     .badge-green  { background: rgba(46,204,113,.1); color: var(--success); border: 1px solid rgba(46,204,113,.25); }
@@ -193,7 +201,7 @@
     th { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
     td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(200,168,75,.03); }
+    tr:hover td { background: rgba(180,10,10,.03); }
     .td-mono { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
 
     /* ── PROGRESS BAR ── */
@@ -235,8 +243,9 @@
     }
     .sd-panel {
       display: none; position: absolute; top: 100%; left: 0; right: 0;
-      background: var(--surface); border: 1px solid var(--border2);
-      z-index: 350; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      background: var(--surface2); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border2);
+      z-index: 350; box-shadow: 0 8px 24px rgba(15,23,42,.18);
     }
     .sd-panel.open { display: block; }
     .sd-search {
@@ -249,17 +258,17 @@
     .sd-list { max-height: 200px; overflow-y: auto; }
     .sd-option {
       padding: 8px 12px; font-size: 12px; cursor: pointer;
-      border-bottom: 1px solid rgba(30,34,41,.6); transition: background .1s;
+      border-bottom: 1px solid rgba(15,23,42,.07); transition: background .1s;
     }
-    .sd-option:hover { background: rgba(200,168,75,.08); }
-    .sd-option.sd-selected { background: rgba(200,168,75,.12); color: var(--accent); }
+    .sd-option:hover { background: rgba(180,10,10,.08); }
+    .sd-option.sd-selected { background: rgba(180,10,10,.12); color: var(--accent); }
     .sd-clear {
       padding: 7px 12px; font-family: 'IBM Plex Mono', monospace;
       font-size: 10px; color: var(--muted); cursor: pointer;
       border-top: 1px solid var(--border); text-align: center;
       letter-spacing: 1px; text-transform: uppercase;
     }
-    .sd-clear:hover { color: var(--text); background: rgba(200,168,75,.05); }
+    .sd-clear:hover { color: var(--text); background: rgba(180,10,10,.05); }
     .inline-edit-wrap { display: flex; align-items: center; gap: 6px; }
     .inline-edit-wrap input { padding: 4px 8px; font-size: 11px; width: 180px; border-bottom-width: 1px; }
     .btn-icon { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 2px 4px; transition: color .15s; }
@@ -312,6 +321,88 @@
       .page-title { font-size: 20px; }
       .form-row { flex-direction: column; }
     }
+
+    /* ── FOOTER ── */
+    .app-footer { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .app-footer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 18px; }
+    .app-footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .app-footer-brand img { width: 34px; height: auto; }
+    .app-footer-brand span {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 2px;
+      color: var(--text); font-size: 14px; text-transform: uppercase;
+    }
+    .app-footer-title {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .app-footer p, .app-footer li { font-size: 12px; color: var(--text-dim); line-height: 1.8; }
+    .app-footer ul { list-style: none; }
+    .app-footer a { color: var(--accent); text-decoration: none; }
+    .app-footer a:hover { text-decoration: underline; }
+    .app-footer-copy {
+      text-align: center; padding-top: 14px; border-top: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+      letter-spacing: .5px;
+    }
+    @media (max-width: 640px) {
+      .app-footer-grid { grid-template-columns: 1fr; gap: 16px; }
+    }
+
+    /* ── CURSO ATIVO (badge + modal) ── */
+    .curso-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent); color: #fff;
+      border: none; cursor: pointer;
+      padding: 7px 14px; border-radius: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: opacity .15s;
+    }
+    .curso-badge:hover { opacity: .85; }
+
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.35);
+      backdrop-filter: blur(8px) saturate(110%);
+      -webkit-backdrop-filter: blur(8px) saturate(110%);
+      z-index: 400;
+      display: none; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      box-shadow: 0 12px 40px rgba(15,23,42,.15);
+      width: 100%; max-width: 400px; padding: 36px;
+      position: relative;
+    }
+    .modal-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px; font-weight: 700;
+      letter-spacing: 3px; color: var(--accent);
+      text-transform: uppercase; margin-bottom: 24px;
+    }
+    .curso-card {
+      display: flex; align-items: center; justify-content: space-between;
+      text-align: left; width: 100%;
+      background: var(--bg); border: 1px solid var(--border);
+      padding: 14px 16px; cursor: pointer; border-radius: 6px;
+      font-family: inherit; transition: border-color .15s;
+    }
+    .curso-card:hover { border-color: var(--accent); }
+    .curso-card.active { border-color: var(--accent); border-width: 2px; }
+    .curso-card-nome {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      font-size: 16px; letter-spacing: 1px; color: var(--text);
+    }
+    .curso-card-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-top: 3px;
+    }
+    .curso-card-check { color: var(--accent); font-size: 18px; font-weight: 700; }
   </style>
 </head>
 <script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
@@ -351,12 +442,16 @@
       <div class="topbar-sub">Academia Bombeiro Militar</div>
     </div>
     <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;display:flex;">
-      <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
+      <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Gestão</a>
+      <a href="fatos_observados.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
       <a href="requerimentos.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Requerimentos</a>
       <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
       <a href="ensino.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Ensino</a>
     </nav>
     <div class="topbar-user">
+      <button type="button" id="top-curso-badge" class="curso-badge" style="display:none;" onclick="abrirModalCurso()">
+        <span id="top-curso-badge-label">—</span><span style="opacity:.65;">▾</span>
+      </button>
       <div style="text-align:right;">
         <div class="topbar-name" id="top-name">—</div>
         <div class="topbar-role" id="top-role">—</div>
@@ -364,6 +459,14 @@
       <div class="topbar-avatar" id="top-avatar">?</div>
     </div>
   </header>
+
+  <div class="modal-overlay" id="modal-curso">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-title">Selecionar Curso</div>
+      <div id="modal-curso-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <button class="btn btn-ghost btn-full btn-sm" style="margin-top:18px;" onclick="document.getElementById('modal-curso').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
 
   <button id="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu" style="position:fixed;top:12px;left:12px;z-index:250;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:18px;width:38px;height:38px;align-items:center;justify-content:center;cursor:pointer;">☰</button>
 
@@ -406,13 +509,13 @@
     <div class="sidebar-section">
       <div class="sidebar-divider"></div>
       <div class="sidebar-label">Navegação</div>
-      <a href="index.html" class="nav-item" style="text-decoration:none;color:inherit;">
+      <a href="fatos_observados.html" class="nav-item" style="text-decoration:none;">
         <span class="nav-icon">◧</span> Fatos Observados
       </a>
-      <a href="requerimentos.html" class="nav-item" style="text-decoration:none;color:inherit;">
+      <a href="requerimentos.html" class="nav-item" style="text-decoration:none;">
         <span class="nav-icon">◈</span> Requerimentos
       </a>
-      <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;color:inherit;">
+      <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;">
         <span class="nav-icon">◆</span> Ordens em Vigor
       </a>
       <div class="nav-item" onclick="handleLogout()" style="color:var(--danger,#e55);">
@@ -440,7 +543,6 @@
         <span id="filter-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-status-turma" onchange="loadStatus()">
-            <option value="">Todas</option>
           </select>
         </span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
@@ -471,7 +573,6 @@
         <span id="filter-disc-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-disc-turma" onchange="loadDisciplinas()">
-            <option value="">Todas</option>
           </select>
         </span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
@@ -508,7 +609,6 @@
         <span id="filter-faltas-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-faltas-turma" onchange="loadFaltas()">
-            <option value="">Todas</option>
           </select>
         </span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
@@ -620,7 +720,7 @@
                   <button type="button" class="sd-trigger" id="inst-xerife-sd-trigger"
                           onclick="toggleInstXerifeSd()" data-placeholder="— Nenhum —">— Nenhum —</button>
                   <div class="sd-panel" id="inst-xerife-sd-panel">
-                    <input class="sd-search" placeholder="Pesquisar cadete..."
+                    <input class="sd-search" placeholder="Pesquisar aluno..."
                            oninput="filterInstXerifeSd(this.value)">
                     <div class="sd-list" id="inst-xerife-sd-list"></div>
                     <div class="sd-clear" onclick="clearInstXerifeSd()">✕ Limpar</div>
@@ -699,7 +799,7 @@
             </div>
 
             <button class="btn btn-ghost btn-sm" onclick="carregarTabelaNotas()" style="margin-bottom:4px;">
-              ↓ Carregar Cadetes
+              ↓ Carregar Alunos
             </button>
           </div>
         </div>
@@ -717,7 +817,7 @@
         <div id="aval-notas-alert" class="alert error" style="margin-bottom:12px;"></div>
 
         <div class="card" style="padding:0;overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;" id="aval-table">
+          <table class="sortable-table" style="width:100%;border-collapse:collapse;" id="aval-table">
             <thead>
               <tr>
                 <th style="padding:8px 14px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;border-bottom:1px solid var(--border);background:var(--surface2);">Nº</th>
@@ -752,7 +852,6 @@
         <span id="filter-notas-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-notas-turma" onchange="loadNotas()">
-            <option value="">Todas</option>
           </select>
         </span>
         <input type="search" id="filter-notas-busca" placeholder="Buscar matéria..."
@@ -782,7 +881,6 @@
         <span id="filter-dash-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-dash-turma" onchange="loadDashboard()">
-            <option value="">Todas</option>
           </select>
         </span>
       </div>
@@ -799,6 +897,41 @@
         </div>
       </div>
     </section>
+
+    <footer class="app-footer">
+      <div class="app-footer-grid">
+        <div>
+          <div class="app-footer-brand">
+            <img src="CBMPA.png" alt="Logo CBMPA" />
+            <span>CBMPA</span>
+          </div>
+          <p>
+            Corpo de Bombeiros Militar do Pará<br>
+            Academia Bombeiro Militar
+          </p>
+          <p><a href="https://www.bombeiros.pa.gov.br" target="_blank" rel="noopener noreferrer">bombeiros.pa.gov.br</a></p>
+        </div>
+        <div>
+          <div class="app-footer-title">&lt;/&gt; Sobre o sistema</div>
+          <ul>
+            <li>Sistema de Controle do Corpo de Alunos</li>
+            <li>
+              Desenvolvido por:<br>
+              CAD BM Lauro Correa dos Santos Junior<br>
+              CAD BM Artur Sidney Maceno Moreira
+            </li>
+          </ul>
+        </div>
+        <div>
+          <div class="app-footer-title">&lt;/&gt; Links</div>
+          <ul>
+            <li><a href="termos-de-uso.html">Termos de Uso</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="app-footer-copy">© <span id="footer-year"></span> Corpo de Bombeiros Militar do Pará. Todos os direitos reservados.</div>
+    </footer>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
 
   </main>
 </div>
@@ -887,10 +1020,71 @@
 <div id="toast"></div>
 
 <script>
-  const API = 'https://api.cfo-cbmpa.com.br';
+  const API = 'http://127.0.0.1:8000';
   const $   = id => document.getElementById(id);
 
   function token() { return localStorage.getItem('token'); }
+
+  // ── CURSO ATIVO ────────────────────────────
+  window._meusCursos = [];
+
+  function cursoAtivoId() {
+    const v = localStorage.getItem('curso_ativo_id');
+    return v ? Number(v) : undefined;
+  }
+
+  function qsCurso(prefix = '?') {
+    const id = cursoAtivoId();
+    return id != null ? `${prefix}curso_id=${id}` : '';
+  }
+
+  function tipoCursoLabel(tipo) {
+    const map = { formacao: 'Formação', especializacao: 'Especialização', habilitacao: 'Habilitação' };
+    return map[tipo] || tipo;
+  }
+
+  function _aplicarCursoBadge(cursoId) {
+    const badge = $('top-curso-badge');
+    const label = $('top-curso-badge-label');
+    if (!badge || !label) return;
+    const c = window._meusCursos.find(x => x.curso_id === cursoId);
+    label.textContent = c ? (c.sigla || c.nome) : '—';
+    badge.style.display = window._meusCursos.length ? 'inline-flex' : 'none';
+  }
+
+  async function loadMeusCursos() {
+    try {
+      const res = await fetch(`${API}/matriculas/meus-cursos`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) return;
+      window._meusCursos = await res.json();
+      if (!window._meusCursos.length) { _aplicarCursoBadge(null); return; }
+      const atual = cursoAtivoId();
+      const ativo = window._meusCursos.some(c => c.curso_id === atual) ? atual : window._meusCursos[0].curso_id;
+      localStorage.setItem('curso_ativo_id', ativo);
+      _aplicarCursoBadge(ativo);
+    } catch {}
+  }
+
+  function abrirModalCurso() {
+    if (!window._meusCursos.length) return;
+    const ativo = cursoAtivoId();
+    $('modal-curso-lista').innerHTML = window._meusCursos.map(c => `
+      <button type="button" class="curso-card ${c.curso_id === ativo ? 'active' : ''}" onclick="escolherCursoAtivo(${c.curso_id})">
+        <div>
+          <div class="curso-card-nome">${c.sigla || c.nome}</div>
+          <div class="curso-card-sub">${c.nome} · ${tipoCursoLabel(c.tipo)}${c.matricula_status === 'concluida' ? ' · Concluído' : ''}</div>
+        </div>
+        ${c.curso_id === ativo ? '<span class="curso-card-check">✓</span>' : ''}
+      </button>
+    `).join('');
+    $('modal-curso').classList.add('open');
+  }
+
+  function escolherCursoAtivo(cursoId) {
+    localStorage.setItem('curso_ativo_id', cursoId);
+    $('modal-curso').classList.remove('open');
+    location.reload();
+  }
 
   function toast(msg, type = 'success') {
     const el = $('toast');
@@ -926,10 +1120,10 @@
 
   // ── AUTH ──────────────────────────────────────────────────
   let _user = null;
-  const _RESTRITOS = new Set(['cadete', 'dia_cfo', 'xerife']);
+  const _RESTRITOS = new Set(['cadete', 'aluno', 'dia_cfo', 'dia_curso', 'xerife']);
 
   async function initApp() {
-    const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${token()}` } });
+    const res = await fetch(`${API}/me${qsCurso()}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { doLogout(); return; }
     _user = await res.json();
 
@@ -938,8 +1132,10 @@
     $('top-name').textContent   = _user.username;
     $('top-role').textContent   = roleLabel(_user.role);
 
-    // Mostrar aba de lançamento apenas para B3
-    if (_user.sub_role === 'B3') {
+    await loadMeusCursos();
+
+    // Mostrar aba de lançamento para coordenador e ensino
+    if (_user.role === 'coordenador' || _user.role === 'ensino') {
       $('nav-lancar').style.display = 'block';
     }
 
@@ -1000,7 +1196,26 @@
 
   // ── HELPERS ───────────────────────────────────────────────
   function roleLabel(role) {
-    return { coordenador: 'Coordenador', auxiliar: 'Auxiliar', dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete', comandante: 'Comandante' }[role] || role;
+    return { coordenador: 'Coordenador', auxiliar: 'Auxiliar', dia_cfo: 'Dia CFO', dia_curso: 'Aluno de Dia', xerife: 'Xerife', cadete: 'Cadete', aluno: 'Aluno', comandante: 'Comandante', comandante_de_pelotao: 'Comandante de Pelotão', comandante_de_companhia: 'Comandante de Companhia' }[role] || role;
+  }
+
+  const _ROLES_COMANDO_PELOTAO = new Set(['comandante_de_pelotao', 'comandante_de_companhia']);
+
+  // Turmas que o usuário pode ver nos filtros de ensino: null = sem
+  // restrição (vê todas as turmas do curso ativo); comandante_de_pelotao/
+  // comandante_de_companhia ficam restritos às turmas que comandam (mesmo
+  // critério usado no backend, ver routers/matriculas.py:resolve_turmas_permitidas)
+  // mais a própria turma, se também forem matriculados como aluno/cadete.
+  function turmasPermitidasFrontend() {
+    if (!_user || !_ROLES_COMANDO_PELOTAO.has(_user.role)) return null;
+    const cursoId = cursoAtivoId();
+    const ids = new Set(
+      (_user.roles || [])
+        .filter(r => _ROLES_COMANDO_PELOTAO.has(r.role) && r.turma_id != null && (cursoId == null || r.curso_id === cursoId))
+        .map(r => r.turma_id)
+    );
+    if (_user.turma_id != null) ids.add(_user.turma_id);
+    return ids;
   }
 
   function progressCls(pct) {
@@ -1031,15 +1246,17 @@
   }
 
   async function loadTurmaOptions() {
-    const res = await fetch(`${API}/turma`, { headers: { Authorization: `Bearer ${token()}` } });
+    const res = await fetch(`${API}/turma${qsCurso()}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) return;
-    _turmas = await res.json();
+    const todasTurmas = await res.json();
+    const permitidas = turmasPermitidasFrontend();
+    _turmas = permitidas ? todasTurmas.filter(t => permitidas.has(t.id)) : todasTurmas;
 
-    // Filtros de exibição usam todas as turmas
+    // Filtros de exibição usam as turmas do curso ativo
     ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma', 'filter-dash-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
-      while (sel.options.length > 1) sel.remove(1);
+      while (sel.options.length > 0) sel.remove(0);
       _turmas.forEach(t => {
         const o = document.createElement('option');
         o.value = t.id; o.textContent = t.id;
@@ -1052,7 +1269,7 @@
     if (!selLancar) return;
     while (selLancar.options.length > 1) selLancar.remove(1);
     const turmasLancar = _RESTRITOS.has(_user?.role)
-      ? _turmas.filter(t => t.id == _user.turma)
+      ? _turmas.filter(t => t.id == _user.turma_id)
       : _turmas;
     turmasLancar.forEach(t => {
       const o = document.createElement('option');
@@ -1098,7 +1315,7 @@
       const t = _turmas.find(t => t.id == turmaFiltro);
       if (t?.curso) cursoParam = t.curso;
     } else if (_RESTRITOS.has(_user?.role)) {
-      const t = _turmas.find(t => t.id == _user.turma);
+      const t = _turmas.find(t => t.id == _user.turma_id);
       if (t?.curso) cursoParam = t.curso;
     }
     if (!cursoParam && disciplinas.length) {
@@ -1177,7 +1394,7 @@
           </span>
         </div>
         <div class="card" style="margin-bottom:24px;">
-          <table>
+          <table class="sortable-table">
             <thead><tr>
               <th>Disciplina</th>
               <th>Instrutor</th>
@@ -1271,7 +1488,7 @@
     }
 
     container.innerHTML = `
-      <table>
+      <table class="sortable-table">
         <thead><tr>
           <th>Disciplina</th>
           <th>Curso</th>
@@ -1286,7 +1503,7 @@
           ${lista.map(d => {
             const pct      = Number(d.percentual_conclusao) || 0;
             const cls      = progressCls(pct);
-            const canEdit  = _user?.sub_role === 'B3';
+            const canEdit  = _user?.role === 'coordenador' || _user?.role === 'ensino';
             const instCell = canEdit
               ? `<div class="inline-edit-wrap" id="instrutor-wrap-${d.id}">
                    <span id="instrutor-text-${d.id}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${d.nome_instrutor ?? '—'}</span>
@@ -1347,7 +1564,7 @@
       </tr>`;
     }).join('');
 
-    body.innerHTML = `<table>
+    body.innerHTML = `<table class="sortable-table">
       <thead><tr>
         <th style="width:48px;">Aula</th>
         <th style="width:96px;">Data</th>
@@ -1375,7 +1592,7 @@
     const body   = $('disc-faltas-modal-body');
     const footer = $('disc-faltas-modal-footer');
     $('disc-faltas-modal-title').textContent = titulo;
-    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando cadetes...</div></div>';
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando alunos...</div></div>';
     footer.style.display = 'none';
     modal.style.display  = 'flex';
 
@@ -1384,7 +1601,7 @@
     _discFaltasCadetes = await res.json();
 
     if (!_discFaltasCadetes.length) {
-      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum cadete encontrado</div></div>';
+      body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum aluno encontrado</div></div>';
       return;
     }
 
@@ -1404,8 +1621,8 @@
       </tr>`;
     }).join('');
 
-    body.innerHTML = `<table>
-      <thead><tr><th>Cadete</th><th style="width:110px;">Tipo de Falta</th></tr></thead>
+    body.innerHTML = `<table class="sortable-table">
+      <thead><tr><th>Aluno</th><th style="width:110px;">Tipo de Falta</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 
@@ -1695,7 +1912,7 @@
     // tbody
     html += '<tbody>';
     if (!_instCadetes.length) {
-      html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum cadete na turma.</td></tr>`;
+      html += `<tr><td colspan="${_instHorarios.length + 1}" style="text-align:center;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;">Nenhum aluno na turma.</td></tr>`;
     } else {
       _instCadetes.forEach(c => {
         const label = c.numero_geral ? `${c.numero_geral} ${c.username}` : c.username;
@@ -1835,7 +2052,7 @@
         await fetch(`${API}/faltas`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
-          body:    JSON.stringify({ tipo, data: dataGlobal, id_instrucao: instrucaoId, id_cadete: c.id }),
+          body:    JSON.stringify({ tipo, data: dataGlobal, id_instrucao: instrucaoId, id_cadete: c.id, curso_id: cursoAtivoId() }),
         }).catch(() => {});
       }
     }
@@ -1932,7 +2149,7 @@
         <div class="card-header">
           <span class="card-title">Minhas Faltas por Disciplina</span>
         </div>
-        <table>
+        <table class="sortable-table">
           <thead><tr>
             <th>Disciplina</th>
             <th>Faltas</th>
@@ -1991,13 +2208,13 @@
       html += `
         <div class="semestre-header">
           <span>Turma ${turma}</span>
-          <span class="semestre-carga">${lista.length} cadete(s) com faltas</span>
+          <span class="semestre-carga">${lista.length} aluno(s) com faltas</span>
         </div>
         <div class="card" style="margin-bottom:24px;">
           <table>
             <thead><tr>
               <th>Nº</th>
-              <th>Cadete</th>
+              <th>Aluno</th>
               <th>Disciplina</th>
               <th>Faltas</th>
               <th>H/A</th>
@@ -2064,7 +2281,7 @@
     }).join('');
 
     body.innerHTML = `
-      <table>
+      <table class="sortable-table">
         <thead><tr>
           <th style="width:48px;">Aula</th>
           <th style="width:96px;">Data</th>
@@ -2435,7 +2652,7 @@
     body.innerHTML = `
       ${linksHtml ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${linksHtml}</div>` : ''}
       <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <table class="sortable-table" style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead>
             <tr>
               <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">Nº</th>

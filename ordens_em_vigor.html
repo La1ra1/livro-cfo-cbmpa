@@ -8,24 +8,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:          #0a0c0f;
-      --surface:     #111318;
-      --surface2:    #181c22;
-      --border:      #1e2229;
-      --border2:     #2a3040;
-      --accent:      #c8a84b;
-      --accent2:     #8b6f2e;
-      --accent-dim:  rgba(200,168,75,.08);
+      --bg:          #eef0f3;
+      --surface:     rgba(255,255,255,.68);
+      --surface2:    rgba(255,255,255,.85);
+      --border:      rgba(15,23,42,.09);
+      --border2:     rgba(15,23,42,.16);
+      --accent:      #b40a0a;
+      --accent2:     #7a0808;
+      --accent-dim:  rgba(180,10,10,.08);
       --danger:      #c0392b;
       --danger-dim:  rgba(192,57,43,.12);
-      --text:        #e8e4d9;
-      --text-dim:    #c8cdd8;
-      --muted:       #7a8394;
-      --success:     #2ecc71;
-      --success-dim: rgba(46,204,113,.1);
-      --blue:        #3498db;
-      --warn:        #e07b2a;
-      --warn-dim:    rgba(224,123,42,.1);
+      --text:        #1c2128;
+      --text-dim:    #4b5563;
+      --muted:       #707b8c;
+      --success:     #1e9e57;
+      --success-dim: rgba(30,158,87,.1);
+      --blue:        #2f7dbd;
+      --warn:        #c2670f;
+      --warn-dim:    rgba(194,103,15,.1);
+      --glass-blur:  blur(14px);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,19 +41,19 @@
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(200,168,75,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,168,75,.025) 1px, transparent 1px);
-      background-size: 48px 48px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(180,10,10,.06) 0%, transparent 45%),
+        radial-gradient(circle at 100% 30%, rgba(15,23,42,.04) 0%, transparent 50%);
       pointer-events: none; z-index: 0;
     }
 
     /* ── TOPBAR ── */
     .topbar {
       position: fixed; top: 0; left: 0; right: 0; height: 48px;
-      background: rgba(17,19,24,.95);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--accent2);
+      background: rgba(255,255,255,.78);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 3px solid var(--accent);
+      box-shadow: 0 1px 12px rgba(15,23,42,.06);
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 20px; z-index: 200;
     }
@@ -110,7 +111,9 @@
     .filter-bar {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       background: var(--surface);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       border: 1px solid var(--border);
+      box-shadow: 0 4px 18px rgba(15,23,42,.05);
       padding: 12px 16px; margin-bottom: 24px;
     }
     .filter-bar select {
@@ -136,8 +139,10 @@
     /* ── CARD DE ORDEM ── */
     .ordem-card {
       background: var(--surface);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       border: 1px solid var(--border);
       border-left: 3px solid var(--accent);
+      box-shadow: 0 4px 18px rgba(15,23,42,.05);
       position: relative; overflow: hidden;
       transition: border-color .2s, transform .15s;
       display: flex; flex-direction: column;
@@ -179,8 +184,8 @@
       padding: 3px 8px; flex-shrink: 0;
     }
     .badge-vigor {
-      background: rgba(200,168,75,.12);
-      border: 1px solid rgba(200,168,75,.3);
+      background: rgba(180,10,10,.12);
+      border: 1px solid rgba(180,10,10,.3);
       color: var(--accent);
     }
     .badge-revogada {
@@ -225,8 +230,8 @@
     }
     .btn-sm { padding: 4px 10px; font-size: 10px; letter-spacing: 1px; }
     .btn-full { width: 100%; justify-content: center; }
-    .btn-primary { background: var(--accent); color: var(--bg); border-left: 3px solid var(--accent2); }
-    .btn-primary:hover { background: #d4b45a; }
+    .btn-primary { background: var(--accent); color: #fff; border-left: 3px solid var(--accent2); }
+    .btn-primary:hover { background: #d11414; }
     .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
     .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(192,57,43,.3); }
@@ -248,16 +253,19 @@
     /* ── MODAL ── */
     .modal-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,.7);
-      backdrop-filter: blur(4px);
+      background: rgba(15,23,42,.35);
+      backdrop-filter: blur(8px) saturate(110%);
+      -webkit-backdrop-filter: blur(8px) saturate(110%);
       z-index: 400; display: none;
       align-items: center; justify-content: center; padding: 16px;
     }
     .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
     .modal-box {
       background: var(--surface);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       border: 1px solid var(--border);
       border-top: 2px solid var(--accent);
+      box-shadow: 0 12px 40px rgba(15,23,42,.15);
       width: 100%; max-width: 520px;
     }
     .modal-header {
@@ -270,6 +278,38 @@
       letter-spacing: 3px; color: var(--accent);
       text-transform: uppercase;
     }
+
+    /* ── CURSO ATIVO (badge + modal) ── */
+    .curso-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent); color: #fff;
+      border: none; cursor: pointer;
+      padding: 7px 14px; border-radius: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: opacity .15s;
+    }
+    .curso-badge:hover { opacity: .85; }
+    .curso-card {
+      display: flex; align-items: center; justify-content: space-between;
+      text-align: left; width: 100%;
+      background: var(--bg); border: 1px solid var(--border);
+      padding: 14px 16px; cursor: pointer; border-radius: 6px;
+      font-family: inherit; transition: border-color .15s;
+    }
+    .curso-card:hover { border-color: var(--accent); }
+    .curso-card.active { border-color: var(--accent); border-width: 2px; }
+    .curso-card-nome {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700;
+      font-size: 16px; letter-spacing: 1px; color: var(--text);
+    }
+    .curso-card-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-top: 3px;
+    }
+    .curso-card-check { color: var(--accent); font-size: 18px; font-weight: 700; }
+
     .modal-close {
       background: none; border: none; color: var(--muted);
       font-size: 18px; cursor: pointer; padding: 0 4px;
@@ -309,7 +349,8 @@
     /* ── TOAST ── */
     #toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
-      background: var(--surface); border: 1px solid var(--border2);
+      background: var(--surface2); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border2);
       border-left: 3px solid var(--accent);
       padding: 10px 20px; font-family: 'IBM Plex Mono', monospace;
       font-size: 12px; color: var(--text); z-index: 600;
@@ -352,6 +393,32 @@
       .page-header { flex-direction: column; gap: 10px; }
       .page-title { font-size: 22px; }
     }
+
+    /* ── FOOTER ── */
+    .app-footer { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .app-footer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 18px; }
+    .app-footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .app-footer-brand img { width: 34px; height: auto; }
+    .app-footer-brand span {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 2px;
+      color: var(--text); font-size: 14px; text-transform: uppercase;
+    }
+    .app-footer-title {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .app-footer p, .app-footer li { font-size: 12px; color: var(--text-dim); line-height: 1.8; }
+    .app-footer ul { list-style: none; }
+    .app-footer a { color: var(--accent); text-decoration: none; }
+    .app-footer a:hover { text-decoration: underline; }
+    .app-footer-copy {
+      text-align: center; padding-top: 14px; border-top: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+      letter-spacing: .5px;
+    }
+    @media (max-width: 640px) {
+      .app-footer-grid { grid-template-columns: 1fr; gap: 16px; }
+    }
   </style>
 </head>
 <script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
@@ -370,17 +437,21 @@
   <header class="topbar">
     <div class="topbar-brand">
       <!-- Botão voltar — só mobile -->
-      <a href="index.html" id="btn-voltar" style="display:none;align-items:center;justify-content:center;width:36px;height:36px;color:var(--accent);font-size:20px;text-decoration:none;flex-shrink:0;margin-right:4px;">‹</a>
+      <a href="fatos_observados.html" id="btn-voltar" style="display:none;align-items:center;justify-content:center;width:36px;height:36px;color:var(--accent);font-size:20px;text-decoration:none;flex-shrink:0;margin-right:4px;">‹</a>
       <img src="ABM.png" alt="ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
       <div class="topbar-sub">Academia Bombeiro Militar</div>
     </div>
     <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;">
-      <a href="index.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
+      <a href="index.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Gestão</a>
+      <a href="fatos_observados.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Fatos Observados</a>
       <a href="requerimentos.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Requerimentos</a>
       <a href="ordens_em_vigor.html" class="topbar-nav-link" style="color:var(--accent);border-bottom:2px solid var(--accent);">Ordens em Vigor</a>
       <a href="ensino.html" class="topbar-nav-link" style="color:var(--muted);border-bottom:2px solid transparent;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ensino</a>
     </nav>
     <div class="topbar-user">
+      <button type="button" id="top-curso-badge" class="curso-badge" style="display:none;" onclick="abrirModalCurso()">
+        <span id="top-curso-badge-label">—</span><span style="opacity:.65;">▾</span>
+      </button>
       <div style="text-align:right;">
         <div class="topbar-name" id="top-name">—</div>
         <div class="topbar-role" id="top-role">—</div>
@@ -388,6 +459,14 @@
       <div class="topbar-avatar" id="top-avatar">?</div>
     </div>
   </header>
+
+  <div class="modal-overlay" id="modal-curso">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-title" style="margin-bottom:20px;">Selecionar Curso</div>
+      <div id="modal-curso-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <button class="btn btn-ghost btn-full btn-sm" style="margin-top:18px;" onclick="document.getElementById('modal-curso').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
 
   <!-- CONTEÚDO -->
   <div class="page-wrap">
@@ -426,6 +505,41 @@
       </div>
     </div>
 
+    <footer class="app-footer">
+      <div class="app-footer-grid">
+        <div>
+          <div class="app-footer-brand">
+            <img src="CBMPA.png" alt="Logo CBMPA" />
+            <span>CBMPA</span>
+          </div>
+          <p>
+            Corpo de Bombeiros Militar do Pará<br>
+            Academia Bombeiro Militar
+          </p>
+          <p><a href="https://www.bombeiros.pa.gov.br" target="_blank" rel="noopener noreferrer">bombeiros.pa.gov.br</a></p>
+        </div>
+        <div>
+          <div class="app-footer-title">&lt;/&gt; Sobre o sistema</div>
+          <ul>
+            <li>Sistema de Controle do Corpo de Alunos</li>
+            <li>
+              Desenvolvido por:<br>
+              CAD BM Lauro Correa dos Santos Junior<br>
+              CAD BM Artur Sidney Maceno Moreira
+            </li>
+          </ul>
+        </div>
+        <div>
+          <div class="app-footer-title">&lt;/&gt; Links</div>
+          <ul>
+            <li><a href="termos-de-uso.html">Termos de Uso</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="app-footer-copy">© <span id="footer-year"></span> Corpo de Bombeiros Militar do Pará. Todos os direitos reservados.</div>
+    </footer>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+
   </div>
 </div>
 
@@ -462,12 +576,74 @@
 <div id="toast"></div>
 
 <script>
-  const API = 'https://api.cfo-cbmpa.com.br';
+  const API = 'http://127.0.0.1:8000';
   const token = () => localStorage.getItem('token');
 
+  // ── CURSO ATIVO ────────────────────────────
+  window._meusCursos = [];
+
+  function cursoAtivoId() {
+    const v = localStorage.getItem('curso_ativo_id');
+    return v ? Number(v) : undefined;
+  }
+
+  function qsCurso(prefix = '?') {
+    const id = cursoAtivoId();
+    return id != null ? `${prefix}curso_id=${id}` : '';
+  }
+
+  function tipoCursoLabel(tipo) {
+    const map = { formacao: 'Formação', especializacao: 'Especialização', habilitacao: 'Habilitação' };
+    return map[tipo] || tipo;
+  }
+
+  function _aplicarCursoBadge(cursoId) {
+    const badge = document.getElementById('top-curso-badge');
+    const label = document.getElementById('top-curso-badge-label');
+    if (!badge || !label) return;
+    const c = window._meusCursos.find(x => x.curso_id === cursoId);
+    label.textContent = c ? (c.sigla || c.nome) : '—';
+    badge.style.display = window._meusCursos.length ? 'inline-flex' : 'none';
+  }
+
+  async function loadMeusCursos() {
+    try {
+      const res = await fetch(`${API}/matriculas/meus-cursos`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) return;
+      window._meusCursos = await res.json();
+      if (!window._meusCursos.length) { _aplicarCursoBadge(null); return; }
+      const atual = cursoAtivoId();
+      const ativo = window._meusCursos.some(c => c.curso_id === atual) ? atual : window._meusCursos[0].curso_id;
+      localStorage.setItem('curso_ativo_id', ativo);
+      _aplicarCursoBadge(ativo);
+    } catch {}
+  }
+
+  function abrirModalCurso() {
+    if (!window._meusCursos.length) return;
+    const ativo = cursoAtivoId();
+    document.getElementById('modal-curso-lista').innerHTML = window._meusCursos.map(c => `
+      <button type="button" class="curso-card ${c.curso_id === ativo ? 'active' : ''}" onclick="escolherCursoAtivo(${c.curso_id})">
+        <div>
+          <div class="curso-card-nome">${c.sigla || c.nome}</div>
+          <div class="curso-card-sub">${c.nome} · ${tipoCursoLabel(c.tipo)}${c.matricula_status === 'concluida' ? ' · Concluído' : ''}</div>
+        </div>
+        ${c.curso_id === ativo ? '<span class="curso-card-check">✓</span>' : ''}
+      </button>
+    `).join('');
+    document.getElementById('modal-curso').classList.add('open');
+  }
+
+  function escolherCursoAtivo(cursoId) {
+    localStorage.setItem('curso_ativo_id', cursoId);
+    document.getElementById('modal-curso').classList.remove('open');
+    location.reload();
+  }
+
   const ROLE_LABELS = {
-    coordenador: 'Coordenador', auxiliar: 'Auxiliar',
-    dia_cfo: 'Dia CFO', xerife: 'Xerife', cadete: 'Cadete',
+    coordenador: 'Coordenador', auxiliar: 'Auxiliar', comandante: 'Comandante', comandante_de_pelotao: 'Comandante de Pelotão',
+    dia_cfo: 'Dia CFO', dia_curso: 'Aluno de Dia', xerife: 'Xerife',
+    cadete: 'Cadete', aluno: 'Aluno',
   };
 
   let _ordens = [];
@@ -486,8 +662,8 @@
       if (!res.ok) { redirect(); return; }
       const me = await res.json();
       _userRole = me.role;
-      _canManage  = ['coordenador', 'auxiliar'].includes(_userRole);
-      _isCoord    = _userRole === 'coordenador';
+      _canManage  = ['coordenador', 'auxiliar', 'comandante_de_pelotao'].includes(_userRole);
+      _isCoord    = _userRole === 'coordenador' || _userRole === 'comandante_de_pelotao';
 
       document.getElementById('top-name').textContent = me.username || '—';
       document.getElementById('top-role').textContent = ROLE_LABELS[_userRole] || _userRole;
@@ -503,6 +679,7 @@
       document.getElementById('screen-redirect').classList.add('hidden');
       document.getElementById('app').classList.add('visible');
 
+      await loadMeusCursos();
       await loadOrdens();
     } catch {
       redirect();
@@ -516,7 +693,7 @@
   // ── Carregar ordens ──
   async function loadOrdens() {
     try {
-      const res = await fetch(`${API}/ordens-em-vigor`, {
+      const res = await fetch(`${API}/ordens-em-vigor${qsCurso()}`, {
         headers: { Authorization: `Bearer ${token()}` }
       });
       if (!res.ok) throw new Error();
@@ -632,13 +809,13 @@
         res = await fetch(`${API}/ordens-em-vigor/${_editId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
-          body: JSON.stringify({ escopo, texto, data_publicacao: data })
+          body: JSON.stringify({ escopo, texto, data_publicacao: data, curso_id: cursoAtivoId() })
         });
       } else {
         res = await fetch(`${API}/ordens-em-vigor`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
-          body: JSON.stringify({ escopo, texto, data_publicacao: data })
+          body: JSON.stringify({ escopo, texto, data_publicacao: data, curso_id: cursoAtivoId() })
         });
       }
       if (!res.ok) {

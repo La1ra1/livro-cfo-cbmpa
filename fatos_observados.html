@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="ABM.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fatos Observados — Academia Bombeiro Militar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script type="module">
+    import Keycloak from 'https://esm.sh/keycloak-js@26.2.3';
+    window.Keycloak = Keycloak;
+  </script>
+  <script src="table-sort.js" defer></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
+<style>.has-token #screen-login { display: none !important; }</style>
+<body>
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div id="screen-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-emblem" style="flex-direction:column;align-items:center;gap:12px;">
+        <img src="ABM.png" alt="Brasão ABM" style="width:80px;height:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));" />
+        <div style="text-align:center;">
+          <div class="login-sub">Academia Bombeiro Militar</div>
+          <div class="login-sub" style="color:var(--accent);letter-spacing:1px;">Sistema de Controle do Corpo de Alunos</div>
+        </div>
+      </div>
+
+      <div class="alert error" id="login-error"></div>
+
+      <div class="field">
+        <label>Usuário</label>
+        <input type="text" id="login-username" placeholder="Usuário" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-login">ENTRAR NO SISTEMA</button>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span class="login-sub" style="margin:0;">OU</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <button class="btn btn-ghost btn-full" id="btn-login-keycloak" onclick="doLoginKeycloak()">ENTRAR COM KEYCLOAK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SEM VÍNCULO ══════════════════ -->
+<div id="screen-sem-vinculo" class="hidden">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-emblem" style="flex-direction:column;align-items:center;gap:12px;">
+        <img src="ABM.png" alt="Brasão ABM" style="width:80px;height:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));" />
+        <div style="text-align:center;">
+          <div class="login-sub">Academia Bombeiro Militar</div>
+          <div class="login-sub" style="color:var(--accent);letter-spacing:1px;">Sistema de Controle do Corpo de Alunos</div>
+        </div>
+      </div>
+      <div class="alert error" style="display:block;">
+        Olá, <strong id="sv-username"></strong>. Sua conta ainda não está vinculada a nenhum curso ou função neste sistema.
+        Contate a coordenação para regularizar seu acesso.
+      </div>
+      <button class="btn btn-ghost btn-full" onclick="doLogout()">SAIR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP SHELL ══════════════════ -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <!-- Overlay para fechar sidebar no mobile -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+
+  <header class="topbar">
+    <div class="topbar-brand">
+      <button id="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+      <img src="ABM.png" alt="Brasão ABM" style="width:28px;height:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));" />
+      <div class="topbar-sub">Academia Bombeiro Militar</div>
+    </div>
+    <nav id="topbar-page-nav" style="gap:0;align-items:stretch;margin:0 auto;">
+      <a href="index.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Gestão</a>
+      <a href="fatos_observados.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border-bottom:2px solid var(--accent);text-decoration:none;white-space:nowrap;">Fatos Observados</a>
+      <a href="requerimentos.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Requerimentos</a>
+      <a href="ordens_em_vigor.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ordens em Vigor</a>
+      <a href="ensino.html" style="display:flex;align-items:center;padding:0 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;text-decoration:none;white-space:nowrap;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Ensino</a>
+    </nav>
+    <div class="topbar-user">
+      <button type="button" id="top-curso-badge" class="curso-badge" style="display:none;" onclick="abrirModalCurso()">
+        <span id="top-curso-badge-label">—</span><span style="opacity:.65;">▾</span>
+      </button>
+      <div style="text-align:right;">
+        <div class="topbar-name" id="top-name">—</div>
+        <div class="topbar-role" id="top-role">—</div>
+      </div>
+      <div class="topbar-avatar" id="top-avatar">?</div>
+    </div>
+  </header>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Geral</div>
+      <div class="nav-item active" data-section="perfil" onclick="showSection('perfil')">
+        <span class="nav-icon">◎</span> Meu Perfil
+      </div>
+    </div>
+
+
+    <div class="sidebar-section" id="nav-coord" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="nav-group collapsed cv-anot" data-group="coord-anotacoes">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Anotações <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item" data-section="anot-pendentes" onclick="showSection('anot-pendentes')">
+            <span class="nav-icon">◧</span> Pendentes
+            <span class="nav-badge" id="badge-pendentes" style="display:none;">0</span>
+          </div>
+          <div class="nav-item" data-section="anot-justificativa" onclick="showSection('anot-justificativa')">
+            <span class="nav-icon">◉</span> Aguard. Justif.
+            <span class="nav-badge" id="badge-justificativa" style="display:none;background:var(--warn);">0</span>
+          </div>
+          <div class="nav-item" data-section="anot-justificadas" onclick="showSection('anot-justificadas')">
+            <span class="nav-icon">▣</span> Justificadas
+          </div>
+          <div class="nav-item" data-section="anot-veredito" onclick="showSection('anot-veredito')">
+            <span class="nav-icon">◆</span> Com Veredito
+          </div>
+          <div class="nav-item" data-section="recursos" onclick="showSection('recursos')">
+            <span class="nav-icon">⚖</span> Pedidos de Recurso
+            <span class="nav-badge" id="badge-recursos-pend" style="display:none;background:var(--danger);">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label cv-anot">Lançamento</div>
+      <div class="nav-item cv-anot" data-section="lancamento" onclick="showSection('lancamento')">
+        <span class="nav-icon">✚</span> Lançar Anotações
+      </div>
+      <div class="nav-item cv-anot" data-section="pernoite-inopinado" onclick="showSection('pernoite-inopinado')">
+        <span class="nav-icon">🌙</span> Punição Inopinada
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="nav-group collapsed" data-group="coord-elogios">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Elogios <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item" data-section="elogios-pendentes" onclick="showSection('elogios-pendentes')">
+            <span class="nav-icon">★</span> Elogios Pendentes
+            <span class="nav-badge" id="badge-elogios-pend" style="display:none;">0</span>
+          </div>
+          <div class="nav-item" data-section="lancar-elogio" onclick="showSection('lancar-elogio')">
+            <span class="nav-icon">★</span> Lançar Elogio
+          </div>
+          <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
+            <span class="nav-icon">☆</span> Ver Elogios
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-divider" id="nav-coord-fo-divider"></div>
+      <div class="sidebar-label cv-anot" id="nav-coord-fo-label">Fatos Observados</div>
+      <div class="nav-item cv-anot" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="nav-comandante" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="nav-group collapsed cv-anot" data-group="cmd-anotacoes">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Anotações <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item" data-section="anot-veredito" onclick="showSection('anot-veredito')">
+            <span class="nav-icon">◆</span> Com Veredito
+          </div>
+          <div class="nav-item" data-section="comandante-recursos" onclick="showSection('comandante-recursos')">
+            <span class="nav-icon">⚖</span> Recursos
+            <span class="nav-badge" id="badge-recursos-cmd" style="display:none;background:var(--danger);">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Elogios</div>
+      <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
+        <span class="nav-icon">☆</span> Elogios Aprovados
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label cv-anot">Punições</div>
+      <div class="nav-item cv-anot" data-section="punicoes" onclick="showSection('punicoes')">
+        <span class="nav-icon">📅</span> Calendário de Punições
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label cv-anot">Fatos Observados</div>
+      <div class="nav-item cv-anot" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="nav-diacfo" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="nav-group collapsed" data-group="diacfo-main">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Dia CFO <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item cv-anot" data-section="lancamento" onclick="showSection('lancamento')">
+            <span class="nav-icon">✚</span> Lançar Anotações
+          </div>
+          <div class="nav-item" data-section="lancar-elogio" onclick="showSection('lancar-elogio')">
+            <span class="nav-icon">★</span> Lançar Elogio
+          </div>
+          <div class="nav-item cv-anot" data-section="minhas-anotacoes" onclick="showSection('minhas-anotacoes')">
+            <span class="nav-icon">◧</span> Anotações Lançadas
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="nav-auxiliar" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label">Auxiliar</div>
+      <div class="nav-item" data-section="aux-usuarios" onclick="showSection('aux-usuarios')">
+        <span class="nav-icon">◈</span> Usuários
+      </div>
+      <div class="nav-group collapsed cv-anot" data-group="aux-anotacoes">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Anotações <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item" data-section="anot-pendentes" onclick="showSection('anot-pendentes')">
+            <span class="nav-icon">⏳</span> Pendentes de Aprovação
+            <span class="nav-badge" id="badge-pendentes-aux" style="display:none;background:var(--warn);">0</span>
+          </div>
+          <div class="nav-item" data-section="anot-justificativa" onclick="showSection('anot-justificativa')">
+            <span class="nav-icon">✉</span> Aguardando Justificativa
+            <span class="nav-badge" id="badge-justificativa-aux" style="display:none;background:var(--blue);">0</span>
+          </div>
+          <div class="nav-item" data-section="anot-justificadas" onclick="showSection('anot-justificadas')">
+            <span class="nav-icon">▣</span> Aguard. Veredito
+          </div>
+          <div class="nav-item" data-section="aux-vereditos" onclick="showSection('aux-vereditos')">
+            <span class="nav-icon">◆</span> Com Veredito
+          </div>
+        </div>
+      </div>
+      <div class="nav-group collapsed" data-group="aux-elogios">
+        <div class="sidebar-label collapsible" onclick="toggleNavGroup(this)">Elogios <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item" data-section="lancar-elogio" onclick="showSection('lancar-elogio')">
+            <span class="nav-icon">★</span> Lançar Elogio
+          </div>
+          <div class="nav-item" data-section="elogios-pendentes" onclick="showSection('elogios-pendentes')">
+            <span class="nav-icon">★</span> Elogios Pendentes
+            <span class="nav-badge" id="badge-elogios-pend-aux" style="display:none;">0</span>
+          </div>
+          <div class="nav-item" data-section="elogios-lista" onclick="showSection('elogios-lista')">
+            <span class="nav-icon">☆</span> Ver Elogios
+          </div>
+        </div>
+      </div>
+      <div class="nav-item cv-anot" data-section="exportar" onclick="showSection('exportar')">
+        <span class="nav-icon">↓</span> Exportar
+      </div>
+      <div class="nav-item cv-anot" data-section="punicoes" onclick="showSection('punicoes')">
+        <span class="nav-icon">📅</span> Punições
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label cv-anot">Fatos Observados</div>
+      <div class="nav-item cv-anot" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="nav-shared" style="display:none;">
+      <div class="sidebar-divider"></div>
+      <div class="nav-group collapsed" data-group="shared-minhas">
+        <div class="sidebar-label collapsible cv-anot" onclick="toggleNavGroup(this)">Minhas Anotações <span class="nav-group-chevron">▾</span></div>
+        <div class="nav-group-children">
+          <div class="nav-item cv-anot" data-section="justificar" onclick="showSection('justificar')">
+            <span class="nav-icon">✍</span> Justificar
+            <span class="nav-badge" id="badge-justificar" style="display:none;background:var(--warn);">0</span>
+          </div>
+          <div class="nav-item cv-anot" data-section="meus-vereditos" onclick="showSection('meus-vereditos')">
+            <span class="nav-icon">◆</span> Vereditos
+          </div>
+          <div class="nav-item cv-anot" data-section="minhas-punicoes" onclick="showSection('minhas-punicoes')">
+            <span class="nav-icon">📅</span> Minhas Punições
+          </div>
+          <div class="nav-item" data-section="meus-elogios" onclick="showSection('meus-elogios')">
+            <span class="nav-icon">★</span> Meus Elogios
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-label cv-anot">Fatos Observados</div>
+      <div class="nav-item cv-anot" data-section="dashboard" onclick="showSection('dashboard')">
+        <span class="nav-icon">◉</span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-divider"></div>
+      <a href="index.html" class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon">⚙</span> Gestão
+      </a>
+      <a href="requerimentos.html" class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon">📄</span> Requerimentos
+      </a>
+      <a href="ordens_em_vigor.html" class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon">📋</span> Ordens em Vigor
+      </a>
+      <a href="ensino.html" class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon">◎</span> Ensino e Instrução
+      </a>
+      <div class="nav-item" onclick="handleLogout()">
+        <span class="nav-icon">↩</span> Sair
+      </div>
+    </div>
+  </aside>
+
+
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── PERFIL ── -->
+    <section class="section active" id="section-perfil">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
+          <div class="page-title">Meu <span>Perfil</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openChangePw()">◈ Alterar Senha</button>
+      </div>
+
+      <div class="card" style="max-width:520px;">
+        <div class="profile-header">
+          <div class="profile-avatar" id="pf-avatar">?</div>
+          <div>
+            <div class="profile-name" id="pf-name">—</div>
+            <div class="profile-role-label"><span id="pf-role">—</span> <span id="pf-sub-role"></span></div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Turma</span>
+          <span class="info-value" id="pf-turma-pel">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Número Geral</span>
+          <span class="info-value" id="pf-numero">—</span>
+        </div>
+        <div class="info-row" id="pf-sub-role-row" style="display:none;">
+          <span class="info-label">Sub-Função</span>
+          <span class="info-value" id="pf-sub-role-value">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Nível de Acesso</span>
+          <span class="info-value" id="pf-badge">—</span>
+        </div>
+        <hr class="divider" />
+        <div style="padding:16px 20px; display:flex; gap:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="openChangePw()">Alterar Senha</button>
+          <button class="btn btn-danger btn-sm" onclick="handleLogout()">Sair</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-anot-pendentes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Anotações</div>
+          <div class="page-title">Anotações <span>Pendentes</span></div>
+          <div class="page-meta" id="meta-pendentes">Aguardando aprovação ou descarte</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadPendentes()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Aluno:</span>
+        <div class="sd-wrap" id="sd-cadete-pendentes">
+          <div class="sd-trigger" id="sd-cadete-pendentes-trigger" onclick="toggleSd('sd-cadete-pendentes')">Todos os alunos</div>
+          <div class="sd-panel" id="sd-cadete-pendentes-panel">
+            <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-pendentes', this.value)" />
+            <div class="sd-list" id="sd-cadete-pendentes-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-pendentes', loadPendentes)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Dia CFO:</span>
+        <div class="sd-wrap" id="sd-diacfo-pendentes">
+          <div class="sd-trigger" id="sd-diacfo-pendentes-trigger" onclick="toggleSd('sd-diacfo-pendentes')">Todos</div>
+          <div class="sd-panel" id="sd-diacfo-pendentes-panel">
+            <input class="sd-search" placeholder="Buscar Dia CFO..." oninput="filterSd('sd-diacfo-pendentes', this.value)" />
+            <div class="sd-list" id="sd-diacfo-pendentes-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-diacfo-pendentes', loadPendentes)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
+        <div class="sd-wrap" id="sd-infracao-pendentes">
+          <div class="sd-trigger" id="sd-infracao-pendentes-trigger" onclick="toggleSd('sd-infracao-pendentes')">Todas as infrações</div>
+          <div class="sd-panel" id="sd-infracao-pendentes-panel">
+            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-pendentes', this.value)" />
+            <div class="sd-list" id="sd-infracao-pendentes-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-infracao-pendentes', loadPendentes)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
+        <select class="role-select" id="tp-filter-pendentes" onchange="loadPendentes(1)" style="width:auto;">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="bulk-bar" id="bulk-bar-pendentes">
+        <span class="bulk-count" id="bulk-count-pendentes">0 selecionada(s)</span>
+        <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onclick="bulkStatus('aprovada')">✓ Aprovar Selecionadas</button>
+        <button class="btn btn-sm coord-only" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onclick="bulkStatus('descartada')">✕ Descartar Selecionadas</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelectionPendentes()">Limpar seleção</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="pendentes" data-sort-reload="loadPendentes">
+            <thead>
+              <tr>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-pendentes" onclick="toggleAllPendentes(this)" /></th>
+                <th data-sort-key="id">ID</th>
+                <th data-sort-key="data">Data</th>
+                <th data-sort-key="data_fato">Data do Fato</th>
+                <th>Superior Resp.</th>
+                <th data-sort-key="cadete">Aluno Anotado</th>
+                <th>Resp. Lançamento</th>
+                <th data-sort-key="infracao">Infração / Pontos</th>
+                <th data-sort-key="descricao">Descrição</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pendentes">
+              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-pendentes">—</span>
+          <div class="pag-btns" id="pag-btns-pendentes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-anot-justificativa">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Anotações</div>
+          <div class="page-title">Aguardando <span>Justificativa</span></div>
+          <div class="page-meta" id="meta-justificativa">Anotações aprovadas sem justificativa enviada</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadJustificativa()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Aluno:</span>
+        <div class="sd-wrap" id="sd-cadete-justificativa">
+          <div class="sd-trigger" id="sd-cadete-justificativa-trigger" onclick="toggleSd('sd-cadete-justificativa')">Todos os alunos</div>
+          <div class="sd-panel" id="sd-cadete-justificativa-panel">
+            <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-justificativa', this.value)" />
+            <div class="sd-list" id="sd-cadete-justificativa-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-justificativa', loadJustificativa)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
+        <div class="sd-wrap" id="sd-infracao-justificativa">
+          <div class="sd-trigger" id="sd-infracao-justificativa-trigger" onclick="toggleSd('sd-infracao-justificativa')">Todas as infrações</div>
+          <div class="sd-panel" id="sd-infracao-justificativa-panel">
+            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-justificativa', this.value)" />
+            <div class="sd-list" id="sd-infracao-justificativa-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-infracao-justificativa', loadJustificativa)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
+        <select class="role-select" id="tp-filter-justificativa" onchange="loadJustificativa(1)" style="width:auto;">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="justificativa" data-sort-reload="loadJustificativa">
+            <thead>
+              <tr>
+                <th data-sort-key="id">ID</th>
+                <th data-sort-key="data">Data</th>
+                <th data-sort-key="data_fato">Data do Fato</th>
+                <th data-sort-key="aprovada_em">Aprovada em</th>
+                <th>Prazo</th>
+                <th data-sort-key="cadete">Aluno Anotado</th>
+                <th data-sort-key="infracao">Infração / Pontos</th>
+                <th>Rascunho?</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-justificativa">
+              <tr class="loading-row"><td colspan="6">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-justificativa">—</span>
+          <div class="pag-btns" id="pag-btns-justificativa"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-anot-justificadas">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Anotações</div>
+          <div class="page-title">Anotações <span>Justificadas</span></div>
+          <div class="page-meta" id="meta-justificadas">Justificativas enviadas aguardando veredito</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadJustificadas()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Aluno:</span>
+        <div class="sd-wrap" id="sd-cadete-justificadas">
+          <div class="sd-trigger" id="sd-cadete-justificadas-trigger" onclick="toggleSd('sd-cadete-justificadas')">Todos os alunos</div>
+          <div class="sd-panel" id="sd-cadete-justificadas-panel">
+            <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-justificadas', this.value)" />
+            <div class="sd-list" id="sd-cadete-justificadas-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-justificadas', loadJustificadas)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Resp. Anotação:</span>
+        <div class="sd-wrap" id="sd-resp-justificadas">
+          <div class="sd-trigger" id="sd-resp-justificadas-trigger" onclick="toggleSd('sd-resp-justificadas')">Todos</div>
+          <div class="sd-panel" id="sd-resp-justificadas-panel">
+            <input class="sd-search" placeholder="Buscar por nome..." oninput="filterSd('sd-resp-justificadas', this.value)" />
+            <div class="sd-list" id="sd-resp-justificadas-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-resp-justificadas', loadJustificadas)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
+        <div class="sd-wrap" id="sd-infracao-justificadas">
+          <div class="sd-trigger" id="sd-infracao-justificadas-trigger" onclick="toggleSd('sd-infracao-justificadas')">Todas as infrações</div>
+          <div class="sd-panel" id="sd-infracao-justificadas-panel">
+            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-justificadas', this.value)" />
+            <div class="sd-list" id="sd-infracao-justificadas-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-infracao-justificadas', loadJustificadas)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Data do fato:</span>
+        <input type="date" id="filter-just-data-fato" class="role-select" style="padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;" onchange="loadJustificadas(1)" />
+        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="document.getElementById('filter-just-data-fato').value='';loadJustificadas(1)" title="Limpar data">✕</button>
+        <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
+        <select class="role-select" id="tp-filter-justificadas" onchange="loadJustificadas(1)" style="width:auto;">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="btn-batch-veredito" style="display:none;" onclick="openBatchVeredito()">◆ Veredito em Lote (<span id="batch-sel-count">0</span>)</button>
+          </div>
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="justificadas" data-sort-reload="loadJustificadas">
+            <thead>
+              <tr>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-justificadas" onclick="toggleAllJustificadas(this)" /></th>
+                <th data-sort-key="id">ID</th>
+                <th data-sort-key="data">Data</th>
+                <th data-sort-key="data_fato">Data do Fato</th>
+                <th data-sort-key="cadete">Aluno Anotado</th>
+                <th data-sort-key="infracao">Infração / Pontos</th>
+                <th data-sort-key="justificativa">Justificativa (prévia)</th>
+                <th data-sort-key="justificativa_enviado_em">Enviada em</th>
+                <th>Tempo de Resposta</th>
+                <th data-sort-key="resultado">Veredito</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-justificadas">
+              <tr class="loading-row"><td colspan="10">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-justificadas">—</span>
+          <div class="pag-btns" id="pag-btns-justificadas"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-anot-veredito">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Anotações</div>
+          <div class="page-title">Anotações com <span>Veredito</span></div>
+          <div class="page-meta" id="meta-veredito">Anotações com veredito registrado</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="role-select" id="filter-veredito-resultado" onchange="loadVeredito(1)" style="width:auto;">
+            <option value="">Todos os resultados</option>
+            <option value="justificada">Justificada</option>
+            <option value="perda_de_ponto">Perda de Ponto</option>
+            <option value="pernoite">Pernoite</option>
+            <option value="licença_nao_concedida">Licença Não Concedida</option>
+            <option value="recolher">Recolher</option>
+            <option value="servico_extra">Serviço Extra</option>
+            <option value="pre_alvorada">Pré-Alvorada</option>
+            <option value="trabalhos_e_estudos">Trabalhos e Estudos</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadVeredito()">↻ Atualizar</button>
+        </div>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Aluno:</span>
+        <div class="sd-wrap" id="sd-cadete-veredito">
+          <div class="sd-trigger" id="sd-cadete-veredito-trigger" onclick="toggleSd('sd-cadete-veredito')">Todos os alunos</div>
+          <div class="sd-panel" id="sd-cadete-veredito-panel">
+            <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-veredito', this.value)" />
+            <div class="sd-list" id="sd-cadete-veredito-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-veredito', loadVeredito)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Infração:</span>
+        <div class="sd-wrap" id="sd-infracao-veredito">
+          <div class="sd-trigger" id="sd-infracao-veredito-trigger" onclick="toggleSd('sd-infracao-veredito')">Todas as infrações</div>
+          <div class="sd-panel" id="sd-infracao-veredito-panel">
+            <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-veredito', this.value)" />
+            <div class="sd-list" id="sd-infracao-veredito-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-infracao-veredito', loadVeredito)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Data do fato:</span>
+        <input type="date" id="filter-verd-data-fato" class="role-select" style="padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;" onchange="loadVeredito(1)" />
+        <button class="btn btn-ghost btn-sm" style="margin-left:4px;" onclick="document.getElementById('filter-verd-data-fato').value='';loadVeredito(1)" title="Limpar data">✕</button>
+        <span class="anot-filter-label" style="margin-left:8px;">Mês:</span>
+        <select class="role-select" id="filter-verd-mes" onchange="loadVeredito(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="1">Jan</option><option value="2">Fev</option>
+          <option value="3">Mar</option><option value="4">Abr</option>
+          <option value="5">Mai</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Ago</option>
+          <option value="9">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+        <select class="role-select" id="filter-verd-ano" onchange="loadVeredito(1)" style="width:auto;"></select>
+        <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
+        <select class="role-select" id="tp-filter-veredito" onchange="loadVeredito(1)" style="width:auto;">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" id="btn-batch-pun-veredito" style="display:none;" onclick="openBatchPunFromVeredito()">📅 Reagendar Punições (<span id="batch-pun-veredito-count">0</span>)</button>
+          </div>
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="veredito" data-sort-reload="loadVeredito">
+            <thead>
+              <tr>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-veredito" onclick="toggleAllVeredito(this)" /></th>
+                <th data-sort-key="id">ID</th>
+                <th data-sort-key="data">Data</th>
+                <th data-sort-key="data_fato">Data do Fato</th>
+                <th data-sort-key="cadete">Aluno Anotado</th>
+                <th data-sort-key="infracao">Infração / Pontos</th>
+                <th data-sort-key="justificativa">Justificativa (prévia)</th>
+                <th>Tempo de Resposta</th>
+                <th data-sort-key="veredito_decidido_em">Decidido em</th>
+                <th data-sort-key="resultado">Resultado</th>
+                <th data-sort-key="observacao">Observação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-veredito">
+              <tr class="loading-row"><td colspan="11">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-veredito">—</span>
+          <div class="pag-btns" id="pag-btns-veredito"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-lancamento">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Lançamento</div>
+          <div class="page-title">Lançar <span>Anotações</span></div>
+          <div class="page-meta">Registre uma ocorrência para múltiplos alunos ao mesmo tempo</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="resetLancamento()">↺ Limpar</button>
+      </div>
+
+      <div class="lancamento-grid">
+
+        <!-- Formulário -->
+        <div>
+          <!-- Superior responsável -->
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Superior Responsável</span>
+            </div>
+            <div class="lancamento-body">
+              <label class="form-lbl">Fato observado por *</label>
+              <div class="sd-wrap" id="sd-oficial-lancamento" style="display:block;width:100%;">
+                <div class="sd-trigger" id="sd-oficial-lancamento-trigger"
+                  onclick="toggleSd('sd-oficial-lancamento')"
+                  style="width:100%;display:block;">— Selecione o superior —</div>
+                <div class="sd-panel" id="sd-oficial-lancamento-panel" style="width:100%;">
+                  <input class="sd-search" placeholder="Buscar superior..." oninput="filterSd('sd-oficial-lancamento', this.value)" />
+                  <div class="sd-list" id="sd-oficial-lancamento-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Infração -->
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Infração</span>
+              <span id="lancamento-infracao-pts" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--danger);"></span>
+            </div>
+            <div class="lancamento-body">
+              <label class="form-lbl">Tipo de infração *</label>
+              <div class="sd-wrap" id="sd-infracao-lancamento" style="display:block;width:100%;">
+                <div class="sd-trigger" id="sd-infracao-lancamento-trigger"
+                  onclick="toggleSd('sd-infracao-lancamento')"
+                  style="width:100%;display:block;">— Selecione a infração —</div>
+                <div class="sd-panel" id="sd-infracao-lancamento-panel" style="width:100%;">
+                  <input class="sd-search" placeholder="Buscar infração..." oninput="filterSd('sd-infracao-lancamento', this.value)" />
+                  <div class="sd-list" id="sd-infracao-lancamento-list"></div>
+                </div>
+              </div>
+              <div class="form-grid-1" style="margin-top:16px;">
+                <label class="form-lbl">Descrição do fato <span style="font-size:10px;color:var(--muted);">(opcional)</span></label>
+                <textarea class="form-ctrl" id="lanc-descricao" placeholder="Descreva detalhadamente os fatos observados..."></textarea>
+              </div>
+              <div class="form-grid-1" style="margin-top:12px;">
+                <label class="form-lbl">Data do fato *</label>
+                <div class="dp-wrap" id="dp-wrap-fato">
+                  <div class="dp-trigger" onclick="dpToggle('dp-fato', event)">
+                    <span class="dp-icon">📅</span>
+                    <span class="dp-label" id="dp-fato-label">Selecionar data</span>
+                  </div>
+                  <div class="dp-popup" id="dp-fato">
+                    <div class="dp-header">
+                      <button class="dp-nav" onclick="dpNav('dp-fato',-1,event)">‹</button>
+                      <div class="dp-month" id="dp-fato-month"></div>
+                      <button class="dp-nav" onclick="dpNav('dp-fato',1,event)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-fato-grid"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="lanc-data-fato" />
+              </div>
+              <div class="form-grid-1" style="margin-top:12px;">
+                <label class="form-lbl">Anexos <span style="font-size:10px;color:var(--muted);">(opcional — JPG, PNG, PDF · máx. 20 MB cada)</span></label>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                  <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                    📎 Selecionar arquivos
+                    <input type="file" id="lanc-anexos" multiple accept=".jpg,.jpeg,.png,.pdf" style="display:none;" onchange="updateAnexosList()">
+                  </label>
+                  <span id="lanc-anexos-label" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Nenhum arquivo selecionado</span>
+                </div>
+                <div id="lanc-anexos-preview" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cadetes -->
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Alunos Anotados</span>
+              <span id="lanc-cadetes-count" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">0 selecionado(s)</span>
+            </div>
+            <div class="lancamento-body">
+              <label class="form-lbl">Adicionar aluno</label>
+              <div class="sd-wrap" id="sd-cadetes-lancamento" style="display:block;width:100%;margin-bottom:14px;">
+                <div class="sd-trigger" id="sd-cadetes-lancamento-trigger"
+                  onclick="toggleSd('sd-cadetes-lancamento')"
+                  style="width:100%;display:block;">Buscar e adicionar aluno...</div>
+                <div class="sd-panel" id="sd-cadetes-lancamento-panel" style="width:100%;">
+                  <input class="sd-search" placeholder="Nome de guerra ou número..." oninput="filterSd('sd-cadetes-lancamento', this.value)" />
+                  <div class="sd-list" id="sd-cadetes-lancamento-list"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+                <label class="form-lbl" style="margin:0;white-space:nowrap;">Adicionar pelotão:</label>
+                <select id="sel-pel-lancamento" class="role-select" style="flex:1;min-width:140px;">
+                  <option value="">— Selecionar —</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="adicionarPelotao()" style="white-space:nowrap;">+ Pelotão</button>
+              </div>
+              <div class="cadetes-lista" id="lanc-cadetes-lista">
+                <div class="cadetes-vazio">Nenhum aluno adicionado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Painel direito: resumo + resultado -->
+        <div>
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Resumo</span>
+            </div>
+            <div class="lancamento-body" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);line-height:2;">
+              <div>Superior: <span id="resumo-oficial" style="color:var(--text);">—</span></div>
+              <div>Infração: <span id="resumo-infracao" style="color:var(--text);">—</span></div>
+              <div>Pontos: <span id="resumo-pts" style="color:var(--danger);">—</span></div>
+              <div>Data do fato: <span id="resumo-data-fato" style="color:var(--text);">—</span></div>
+              <div>Alunos: <span id="resumo-cadetes" style="color:var(--accent);">0</span></div>
+            </div>
+            <div style="padding:0 18px 18px;">
+              <button class="btn btn-primary btn-full" id="btn-lancar" onclick="lancarLote()">
+                ✚ LANÇAR ANOTAÇÕES
+              </button>
+              <div class="alert error"   id="lanc-error"   style="margin-top:12px;"></div>
+              <div class="alert success" id="lanc-success" style="margin-top:12px;"></div>
+            </div>
+          </div>
+
+          <!-- Resultado do lote -->
+          <div class="lancamento-card" id="lanc-resultado-card" style="display:none;">
+            <div class="lancamento-header">
+              <span class="card-title">Resultado do Lançamento</span>
+            </div>
+            <div class="lancamento-body">
+              <div class="lote-resultado" id="lote-resultado-lista"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="section" id="section-pernoite-inopinado">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Lançamento</div>
+          <div class="page-title">Punição <span>Inopinada</span></div>
+          <div class="page-meta">Anotação FO- já aprovada, com punição anexada num só passo - sem notificação por e-mail</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="resetPernoiteInopinado()">↺ Limpar</button>
+      </div>
+
+      <div class="lancamento-grid">
+        <div>
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Alunos Anotados</span>
+              <span id="pernoite-cadetes-count" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">0 selecionado(s)</span>
+            </div>
+            <div class="lancamento-body">
+              <label class="form-lbl">Adicionar aluno</label>
+              <div class="sd-wrap" id="sd-pernoite-aluno" style="display:block;width:100%;margin-bottom:14px;">
+                <div class="sd-trigger" id="sd-pernoite-aluno-trigger"
+                  onclick="toggleSd('sd-pernoite-aluno')"
+                  style="width:100%;display:block;">Buscar e adicionar aluno...</div>
+                <div class="sd-panel" id="sd-pernoite-aluno-panel" style="width:100%;">
+                  <input class="sd-search" placeholder="Nome de guerra ou número..." oninput="filterSd('sd-pernoite-aluno', this.value)" />
+                  <div class="sd-list" id="sd-pernoite-aluno-list"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+                <label class="form-lbl" style="margin:0;white-space:nowrap;">Adicionar pelotão:</label>
+                <select id="sel-pel-pernoite" class="role-select" style="flex:1;min-width:140px;">
+                  <option value="">— Selecionar —</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="adicionarPelotaoPernoite()" style="white-space:nowrap;">+ Pelotão</button>
+              </div>
+              <div class="cadetes-lista" id="pernoite-cadetes-lista">
+                <div class="cadetes-vazio">Nenhum aluno adicionado</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Motivo</span>
+            </div>
+            <div class="lancamento-body">
+              <label class="form-lbl">Descrição do motivo *</label>
+              <textarea class="form-ctrl" id="pernoite-descricao" placeholder="Descreva o motivo da punição inopinada..."></textarea>
+              <div class="form-grid-1" style="margin-top:12px;">
+                <label class="form-lbl">Data do fato</label>
+                <div class="dp-wrap" id="dp-wrap-pernoite-fato">
+                  <div class="dp-trigger" onclick="dpToggle('dp-pernoite-fato', event)">
+                    <span class="dp-icon">📅</span>
+                    <span class="dp-label" id="dp-pernoite-fato-label">Hoje</span>
+                  </div>
+                  <div class="dp-popup" id="dp-pernoite-fato">
+                    <div class="dp-header">
+                      <button class="dp-nav" onclick="dpNav('dp-pernoite-fato',-1,event)">‹</button>
+                      <div class="dp-month" id="dp-pernoite-fato-month"></div>
+                      <button class="dp-nav" onclick="dpNav('dp-pernoite-fato',1,event)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-pernoite-fato-grid"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="pernoite-data-fato" />
+              </div>
+            </div>
+          </div>
+
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Punição</span>
+            </div>
+            <div class="lancamento-body">
+              <label class="form-lbl">Tipo de punição *</label>
+              <select class="role-select" id="pernoite-resultado" style="width:100%;padding:9px 10px;font-size:12px;" onchange="updateResumoPernoite()"></select>
+              <div class="form-grid-1" style="margin-top:14px;">
+                <label class="form-lbl">Datas de cumprimento *</label>
+                <div class="dp-wrap" id="dp-wrap-pernoite-cumpr">
+                  <div class="dp-trigger" onclick="dpToggle('dp-pernoite-cumpr', event)">
+                    <span class="dp-icon">📅</span>
+                    <span class="dp-label">Selecionar datas</span>
+                  </div>
+                  <div class="dp-popup" id="dp-pernoite-cumpr">
+                    <div class="dp-header">
+                      <button class="dp-nav" onclick="dpNav('dp-pernoite-cumpr',-1,event)">‹</button>
+                      <div class="dp-month" id="dp-pernoite-cumpr-month"></div>
+                      <button class="dp-nav" onclick="dpNav('dp-pernoite-cumpr',1,event)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-pernoite-cumpr-grid"></div>
+                  </div>
+                </div>
+                <div class="dp-pills" id="dp-pernoite-cumpr-pills"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="lancamento-card">
+            <div class="lancamento-header">
+              <span class="card-title">Resumo</span>
+            </div>
+            <div class="lancamento-body" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);line-height:2;">
+              <div>Punição: <span id="resumo-pernoite-resultado" style="color:var(--text);">—</span></div>
+              <div>Datas: <span id="resumo-pernoite-datas" style="color:var(--accent);">—</span></div>
+              <div>Alunos: <span id="resumo-pernoite-cadetes" style="color:var(--accent);">0</span></div>
+            </div>
+            <div style="padding:0 18px 18px;">
+              <button class="btn btn-primary btn-full" id="btn-pernoite-lancar" onclick="submitPernoiteInopinado()">
+                🌙 LANÇAR PUNIÇÃO INOPINADA
+              </button>
+              <div class="alert error"   id="pernoite-error"   style="margin-top:12px;"></div>
+              <div class="alert success" id="pernoite-success" style="margin-top:12px;"></div>
+            </div>
+          </div>
+
+          <!-- Resultado do lote -->
+          <div class="lancamento-card" id="pernoite-resultado-card" style="display:none;">
+            <div class="lancamento-header">
+              <span class="card-title">Resultado do Lançamento</span>
+            </div>
+            <div class="lancamento-body">
+              <div class="lote-resultado" id="pernoite-lote-resultado-lista"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-minhas-anotacoes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Dia CFO</div>
+          <div class="page-title">Anotações <span>Lançadas</span></div>
+          <div class="page-meta" id="meta-minhas">Anotações dos últimos 7 dias</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadMinhasAnotacoes()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Lançada por:</span>
+        <div class="sd-wrap" id="sd-resp-minhas">
+          <div class="sd-trigger" id="sd-resp-minhas-trigger" onclick="toggleSd('sd-resp-minhas')">Todos</div>
+          <div class="sd-panel" id="sd-resp-minhas-panel">
+            <input class="sd-search" placeholder="Buscar..." oninput="filterSd('sd-resp-minhas', this.value)" />
+            <div class="sd-list" id="sd-resp-minhas-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-resp-minhas', loadMinhasAnotacoes)">Limpar filtro</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Data do Fato</th>
+                <th>Lançada por</th>
+                <th>Aluno Anotado</th>
+                <th>Infração / Pontos</th>
+                <th>Descrição do Fato</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-minhas">
+              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-justificar">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Minhas Anotações</div>
+          <div class="page-title">Anotações para <span>Justificar</span></div>
+          <div class="page-meta" id="meta-justificar">Anotações aprovadas aguardando sua justificativa</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadJustificar()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Data do Fato</th>
+                <th>Aprovada em</th>
+                <th>Infração / Pontos</th>
+                <th>Descrição do Fato</th>
+                <th>Justificativa</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-justificar">
+              <tr class="loading-row"><td colspan="7">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-meus-vereditos">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Minhas Anotações</div>
+          <div class="page-title">Meus <span>Vereditos</span></div>
+          <div class="page-meta" id="meta-meus-vereditos">Anotações com veredito do coordenador</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadMeusVereditos()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Resultado:</span>
+        <select class="role-select" id="filter-meus-ver-resultado" onchange="loadMeusVereditos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="justificada">Justificada</option>
+          <option value="perda_de_ponto">Perda de Ponto</option>
+          <option value="pernoite">Pernoite</option>
+          <option value="licença_nao_concedida">Licença Não Concedida</option>
+          <option value="recolher">Recolher</option>
+          <option value="servico_extra">Serviço Extra</option>
+          <option value="pre_alvorada">Pré-Alvorada</option>
+          <option value="trabalhos_e_estudos">Trabalhos e Estudos</option>
+        </select>
+        <span class="anot-filter-label" style="margin-left:8px;">Mês:</span>
+        <select class="role-select" id="filter-meus-ver-mes" onchange="loadMeusVereditos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="1">Jan</option><option value="2">Fev</option>
+          <option value="3">Mar</option><option value="4">Abr</option>
+          <option value="5">Mai</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Ago</option>
+          <option value="9">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+        <select class="role-select" id="filter-meus-ver-ano" onchange="loadMeusVereditos(1)" style="width:auto;"></select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="meus_vereditos" data-sort-reload="loadMeusVereditos">
+            <thead>
+              <tr>
+                <th data-sort-key="id">ID</th>
+                <th>Data</th>
+                <th data-sort-key="data_fato">Data do Fato</th>
+                <th data-sort-key="infracao">Infração / Pontos</th>
+                <th>Descrição do Fato</th>
+                <th>Justificativa</th>
+                <th data-sort-key="resultado">Resultado</th>
+                <th>Observação</th>
+                <th data-sort-key="veredito_decidido_em">Decidido em</th>
+                <th>Recurso</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-meus-vereditos">
+              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-meus-vereditos">—</span>
+          <div class="pag-btns" id="pag-btns-meus-vereditos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-recursos">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Coordenador</div>
+          <div class="page-title">Pedidos de <span>Recurso</span></div>
+          <div class="page-meta" id="meta-recursos">Requerimentos de revisão de veredito</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadRecursos()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Status:</span>
+        <select class="role-select" id="filter-recursos-status" onchange="loadRecursos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="pendente">Pendentes</option>
+          <option value="despachado">Despachados</option>
+          <option value="deferido">Deferidos</option>
+          <option value="indeferido">Indeferidos</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="recursos" data-sort-reload="loadRecursos">
+            <thead>
+              <tr>
+                <th data-sort-key="id">ID</th>
+                <th>Anotação</th>
+                <th data-sort-key="cadete">Aluno</th>
+                <th data-sort-key="infracao">Infração</th>
+                <th data-sort-key="veredito_resultado">Veredito Original</th>
+                <th data-sort-key="motivo">Motivo do Recurso</th>
+                <th data-sort-key="criado_em">Solicitado em</th>
+                <th data-sort-key="status">Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-recursos">
+              <tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-recursos">—</span>
+          <div class="pag-btns" id="pag-btns-recursos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-comandante-recursos">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Comandante</div>
+          <div class="page-title">Julgamento de <span>Recursos</span></div>
+          <div class="page-meta" id="meta-cmd-recursos">Recursos aguardando julgamento</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadComandanteRecursos()">↻ Atualizar</button>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Status:</span>
+        <select class="role-select" id="filter-cmd-recursos-status" onchange="loadComandanteRecursos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="despachado">Aguardando Julgamento</option>
+          <option value="deferido">Deferidos</option>
+          <option value="indeferido">Indeferidos</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="cmd_recursos" data-sort-reload="loadComandanteRecursos">
+            <thead>
+              <tr>
+                <th data-sort-key="id">ID</th>
+                <th>Anotação</th>
+                <th data-sort-key="cadete">Aluno</th>
+                <th data-sort-key="infracao">Infração</th>
+                <th data-sort-key="veredito_resultado">Veredito Original</th>
+                <th data-sort-key="motivo">Motivo do Recurso</th>
+                <th data-sort-key="criado_em">Solicitado em</th>
+                <th data-sort-key="status">Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-cmd-recursos">
+              <tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-cmd-recursos">—</span>
+          <div class="pag-btns" id="pag-btns-cmd-recursos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-aux-vereditos">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Auxiliar</div>
+          <div class="page-title">Anotações com <span>Veredito</span></div>
+          <div class="page-meta" id="aux-meta-veredito">Anotações com veredito registrado</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="role-select" id="aux-filter-resultado" onchange="loadAuxVereditos(1)" style="width:auto;">
+            <option value="">Todos os resultados</option>
+            <option value="justificada">Justificada</option>
+            <option value="perda_de_ponto">Perda de Ponto</option>
+            <option value="pernoite">Pernoite</option>
+            <option value="licença_nao_concedida">Licença Não Concedida</option>
+            <option value="recolher">Recolher</option>
+            <option value="servico_extra">Serviço Extra</option>
+            <option value="pre_alvorada">Pré-Alvorada</option>
+            <option value="trabalhos_e_estudos">Trabalhos e Estudos</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="loadAuxVereditos()">↻ Atualizar</button>
+        </div>
+      </div>
+      <div class="anot-filter-bar">
+        <span class="anot-filter-label">Aluno:</span>
+        <div class="sd-wrap" id="sd-cadete-aux-veredito">
+          <div class="sd-trigger" id="sd-cadete-aux-veredito-trigger" onclick="toggleSd('sd-cadete-aux-veredito')">Todos os alunos</div>
+          <div class="sd-panel" id="sd-cadete-aux-veredito-panel">
+            <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-aux-veredito', this.value)" />
+            <div class="sd-list" id="sd-cadete-aux-veredito-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-aux-veredito', loadAuxVereditos)">Limpar filtro</div>
+          </div>
+        </div>
+        <span class="anot-filter-label" style="margin-left:8px;">Turma/Pel:</span>
+        <select class="role-select" id="tp-filter-aux-veredito" onchange="loadAuxVereditos(1)" style="width:auto;">
+          <option value="">Todas</option>
+        </select>
+        <span class="anot-filter-label" style="margin-left:8px;">Mês:</span>
+        <select class="role-select" id="filter-aux-ver-mes" onchange="loadAuxVereditos(1)" style="width:auto;">
+          <option value="">Todos</option>
+          <option value="1">Jan</option><option value="2">Fev</option>
+          <option value="3">Mar</option><option value="4">Abr</option>
+          <option value="5">Mai</option><option value="6">Jun</option>
+          <option value="7">Jul</option><option value="8">Ago</option>
+          <option value="9">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+        <select class="role-select" id="filter-aux-ver-ano" onchange="loadAuxVereditos(1)" style="width:auto;"></select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="aux_veredito" data-sort-reload="loadAuxVereditos">
+            <thead>
+              <tr>
+                <th data-sort-key="id">ID</th><th data-sort-key="data">Data</th><th data-sort-key="data_fato">Data do Fato</th><th data-sort-key="cadete">Aluno Anotado</th>
+                <th data-sort-key="infracao">Infração / Pontos</th><th data-sort-key="justificativa">Justificativa (prévia)</th>
+                <th data-sort-key="veredito_decidido_em">Decidido em</th><th data-sort-key="resultado">Resultado</th><th data-sort-key="observacao">Observação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-aux-veredito">
+              <tr class="loading-row"><td colspan="8">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-aux-veredito">—</span>
+          <div class="pag-btns" id="pag-btns-aux-veredito"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-elogios-pendentes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Coordenação</div>
+          <div class="page-title">Elogios <span>Pendentes</span></div>
+          <div class="page-meta" id="meta-elogios-pend">Aguardando aprovação</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadElogiosPendentes()">↻ Atualizar</button>
+      </div>
+      <div class="filter-bar">
+        <div class="sd-wrap" id="sd-cadete-elogios-pend">
+          <div class="sd-trigger" id="sd-cadete-elogios-pend-trigger" onclick="toggleSd('sd-cadete-elogios-pend')">Todos os alunos</div>
+          <div class="sd-panel" id="sd-cadete-elogios-pend-panel">
+            <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-elogios-pend', this.value)" />
+            <div class="sd-list" id="sd-cadete-elogios-pend-list"></div>
+            <div class="sd-clear" onclick="clearSd('sd-cadete-elogios-pend', loadElogiosPendentes)">Limpar filtro</div>
+          </div>
+        </div>
+      </div>
+      <div class="bulk-bar" id="bulk-bar-elogios">
+        <span class="bulk-count" id="bulk-count-elogios">0 selecionado(s)</span>
+        <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onclick="bulkElogio('aprovado')">✓ Aprovar Selecionados</button>
+        <button class="btn btn-sm coord-only" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onclick="bulkElogio('rejeitado')">✕ Descartar Selecionados</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelectionElogios()">Limpar seleção</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="elogios_pend" data-sort-reload="loadElogiosPendentes">
+            <thead>
+              <tr>
+                <th class="cb-wrap"><input type="checkbox" class="cb-row" id="cb-all-elogios" onclick="toggleAllElogios(this)" /></th>
+                <th data-sort-key="id">ID</th>
+                <th data-sort-key="created_at">Data Lançamento</th>
+                <th data-sort-key="data_evento">Data Evento</th>
+                <th data-sort-key="cadete">Aluno Elogiado</th>
+                <th data-sort-key="responsavel">Lançado por</th>
+                <th data-sort-key="tipo_elogio">Tipo de Elogio</th>
+                <th data-sort-key="pontos">Pontos</th>
+                <th data-sort-key="motivo">Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-elogios-pend">
+              <tr class="loading-row"><td colspan="9">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-elogios-pend">—</span>
+          <div class="pag-btns" id="pag-btns-elogios-pend"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-lancar-elogio">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Auxiliar</div>
+          <div class="page-title">Lançar <span>Elogio</span></div>
+          <div class="page-meta">Registre um elogio para um aluno</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="resetLancarElogio()">↺ Limpar</button>
+      </div>
+
+      <div style="max-width:560px;">
+        <div class="lancamento-card">
+          <div class="lancamento-header">
+            <span class="card-title">Alunos Elogiados</span>
+            <span id="elogio-cadetes-count" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">0 selecionado(s)</span>
+          </div>
+          <div class="lancamento-body">
+            <label class="form-lbl">Adicionar aluno</label>
+            <div class="sd-wrap" id="sd-cadete-elogio" style="width:100%;display:block;margin-bottom:14px;">
+              <div class="sd-trigger" id="sd-cadete-elogio-trigger"
+                onclick="toggleSd('sd-cadete-elogio')"
+                style="width:100%;display:block;">Buscar e adicionar aluno...</div>
+              <div class="sd-panel" id="sd-cadete-elogio-panel" style="width:100%;">
+                <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-elogio', this.value)" />
+                <div class="sd-list" id="sd-cadete-elogio-list"></div>
+              </div>
+            </div>
+            <div class="cadetes-lista" id="elogio-cadetes-lista">
+              <div class="cadetes-vazio">Nenhum aluno adicionado</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lancamento-card">
+          <div class="lancamento-header">
+            <span class="card-title">Tipo de Elogio</span>
+            <span id="elogio-pontos-badge" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--success);"></span>
+          </div>
+          <div class="lancamento-body">
+            <label class="form-lbl">Tipo *</label>
+            <div class="sd-wrap" id="sd-tipo-elogio" style="width:100%;display:block;">
+              <div class="sd-trigger" id="sd-tipo-elogio-trigger"
+                onclick="toggleSd('sd-tipo-elogio')"
+                style="width:100%;display:block;">— Selecione —</div>
+              <div class="sd-panel" id="sd-tipo-elogio-panel" style="width:100%;">
+                <input class="sd-search" placeholder="Buscar tipo..." oninput="filterSd('sd-tipo-elogio', this.value)" />
+                <div class="sd-list" id="sd-tipo-elogio-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lancamento-card">
+          <div class="lancamento-header"><span class="card-title">Detalhes</span></div>
+          <div class="lancamento-body">
+            <div class="form-grid-2">
+              <div>
+                <label class="form-lbl">Data do Evento *</label>
+                <div class="dp-wrap" id="dp-wrap-elogio">
+                  <div class="dp-trigger" onclick="dpToggle('dp-elogio', event)">
+                    <span class="dp-icon">📅</span>
+                    <span class="dp-label" id="dp-elogio-label">Selecionar data</span>
+                  </div>
+                  <div class="dp-popup" id="dp-elogio">
+                    <div class="dp-header">
+                      <button class="dp-nav" onclick="dpNav('dp-elogio',-1,event)">‹</button>
+                      <div class="dp-month" id="dp-elogio-month"></div>
+                      <button class="dp-nav" onclick="dpNav('dp-elogio',1,event)">›</button>
+                    </div>
+                    <div class="dp-grid" id="dp-elogio-grid"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="elogio-data-evento" />
+              </div>
+            </div>
+            <div class="form-grid-1">
+              <label class="form-lbl">Descrição do Motivo *</label>
+              <textarea id="elogio-descricao" class="form-ctrl" placeholder="Descreva o motivo do elogio..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="lancamento-card">
+          <div class="lancamento-body">
+            <button class="btn btn-primary btn-full" id="btn-lancar-elogio" onclick="lancarElogio()">★ LANÇAR ELOGIO</button>
+            <div class="alert error"   id="elogio-error"   style="margin-top:12px;"></div>
+            <div class="alert success" id="elogio-success" style="margin-top:12px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-elogios-lista">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Elogios</div>
+          <div class="page-title">Elogios <span>Registrados</span></div>
+          <div class="page-meta" id="meta-elogios-lista">Todos os elogios</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadElogiosLista()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <select class="role-select" id="el-filter-mes" onchange="loadElogiosLista(1)" style="width:auto;">
+            <option value="">Todos os meses</option>
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+          <select class="role-select" id="el-filter-ano" onchange="loadElogiosLista(1)" style="width:auto;"><option value="">Todos os anos</option></select>
+          <select class="role-select" id="el-filter-status" onchange="loadElogiosLista(1)" style="width:auto;">
+            <option value="aprovado" selected>Aprovado</option>
+            <option value="rejeitado">Descartado</option>
+            <option value="pendente" id="opt-elogio-pendente" style="display:none;">Pendente</option>
+          </select>
+          <select class="role-select" id="el-filter-turma" onchange="loadElogiosLista(1)" style="width:auto;">
+            <option value="">Todas as turmas</option>
+          </select>
+          <div class="sd-wrap" id="sd-cadete-elogios-lista">
+            <div class="sd-trigger" id="sd-cadete-elogios-lista-trigger" onclick="toggleSd('sd-cadete-elogios-lista')">Todos os alunos</div>
+            <div class="sd-panel" id="sd-cadete-elogios-lista-panel">
+              <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-cadete-elogios-lista', this.value)" />
+              <div class="sd-list" id="sd-cadete-elogios-lista-list"></div>
+              <div class="sd-clear" onclick="clearSd('sd-cadete-elogios-lista', loadElogiosLista)">Limpar filtro</div>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="elogios_lista" data-sort-reload="loadElogiosLista">
+            <thead>
+              <tr>
+                <th data-sort-key="id">ID</th>
+                <th data-sort-key="created_at">Lançado em</th>
+                <th data-sort-key="data_evento">Data Evento</th>
+                <th data-sort-key="cadete">Aluno</th>
+                <th data-sort-key="turma">Turma</th>
+                <th data-sort-key="responsavel">Lançado por</th>
+                <th data-sort-key="tipo_elogio">Tipo de Elogio</th>
+                <th data-sort-key="pontos">Pontos</th>
+                <th data-sort-key="motivo">Motivo</th>
+                <th data-sort-key="status">Status</th>
+                <th>Aprovado em</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-elogios-lista">
+              <tr class="loading-row"><td colspan="11">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-elogios-lista">—</span>
+          <div class="pag-btns" id="pag-btns-elogios-lista"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-meus-elogios">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Minhas Anotações</div>
+          <div class="page-title">Meus <span>Elogios</span></div>
+          <div class="page-meta" id="meta-meus-elogios">Elogios aprovados pelo coordenador</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadMeusElogios()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="sortable-table" data-sort-mode="server" data-sort-state-key="meus_elogios" data-sort-reload="loadMeusElogios">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th data-sort-key="data_evento">Data do Evento</th>
+                <th>Aprovado em</th>
+                <th data-sort-key="tipo_elogio">Tipo de Elogio</th>
+                <th data-sort-key="pontos">Pontos</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-meus-elogios">
+              <tr class="loading-row"><td colspan="6">CARREGANDO...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pag-bar">
+          <span id="pag-info-meus-elogios">—</span>
+          <div class="pag-btns" id="pag-btns-meus-elogios"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Fatos Observados</div>
+          <div class="page-title">Dashboard</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Atualizar</button>
+      </div>
+
+      <!-- Filtros -->
+      <div id="dash-filters" class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">De</span>
+        <select id="dash-ano-inicio" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Até</span>
+        <select id="dash-ano-fim" class="role-select" style="min-width:90px;" onchange="refreshDashboard()"></select>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer;">
+          <input type="checkbox" id="dash-ocultar-vazios" checked onchange="renderDashboardStackedChart(_dashMonthlyData)" />
+          Ocultar meses sem dados
+        </label>
+        <div id="dash-filters-adv" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;">
+          <div class="sd-wrap" id="sd-dash-cadete" style="min-width:200px;">
+            <div class="sd-trigger" id="sd-dash-cadete-trigger" onclick="toggleSd('sd-dash-cadete')">Todos os alunos</div>
+            <div class="sd-panel" id="sd-dash-cadete-panel">
+              <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-dash-cadete', this.value)" />
+              <div class="sd-list" id="sd-dash-cadete-list"></div>
+            </div>
+            <div class="sd-clear" onclick="clearSd('sd-dash-cadete', refreshDashboard)">Limpar</div>
+          </div>
+          <select id="dash-turma" class="role-select" style="min-width:130px;" onchange="onDashTurmaChange()">
+            <option value="">Todas as turmas</option>
+          </select>
+          <select id="dash-pel" class="role-select" style="min-width:130px;" onchange="refreshDashboard()">
+            <option value="">Todos os pelotões</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearDashFilters()">✕ Limpar</button>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">Anotações Mensais</span>
+          <span id="dash-stacked-subtitle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">Clique em uma barra para ver o detalhe do mês</span>
+        </div>
+        <div id="dash-stacked-container" style="padding:20px 16px 8px;"></div>
+      </div>
+
+      <div class="card" style="max-width:480px;">
+        <div class="card-header">
+          <span class="card-title">Anotações por Veredito</span>
+          <span id="dash-chart-subtitle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
+        </div>
+        <div style="padding:0 24px;">
+          <button class="btn btn-ghost btn-sm" onclick="showDashTotalPeriodo()">Σ Mostrar total do período</button>
+        </div>
+        <div id="dash-chart-container" style="padding:28px 24px;"></div>
+      </div>
+    </section>
+
+    <section class="section" id="section-punicoes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Academia Bombeiro Militar</div>
+          <div class="page-title">Calendário de <span>Punições</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" id="btn-pun-export-lista" style="display:none;" onclick="exportarPunicoesLista()">↓ Lista do Dia</button>
+          <button class="btn btn-ghost btn-sm" id="btn-pun-export-csv" style="display:none;" onclick="exportarPunicoesCsv()">↓ Exportar CSV</button>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Aluno</label>
+            <div class="sd-wrap" id="sd-pun-cadete">
+              <div class="sd-trigger" id="sd-pun-cadete-trigger" onclick="toggleSd('sd-pun-cadete')">Todos os alunos</div>
+              <div class="sd-panel" id="sd-pun-cadete-panel">
+                <input class="sd-search" placeholder="Buscar aluno..." oninput="filterSd('sd-pun-cadete', this.value)" />
+                <div class="sd-list" id="sd-pun-cadete-list"></div>
+                <div class="sd-clear" onclick="clearSd('sd-pun-cadete', () => { loadPunCalendario(); loadPunicoesList(); })">Limpar</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Tipo</label>
+            <select id="pun-filtro-tipo" class="role-select" style="min-width:180px;" onchange="loadPunicoesList()">
+              <option value="">Todos os tipos</option>
+              <option value="pernoite">Pernoite</option>
+              <option value="licença_nao_concedida">Licença Não Concedida</option>
+              <option value="recolher">Recolher</option>
+              <option value="servico_extra">Serviço Extra</option>
+              <option value="pre_alvorada">Pré-Alvorada</option>
+              <option value="trabalhos_e_estudos">Trabalhos e Estudos</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Turma</label>
+            <input type="number" id="pun-filtro-turma" class="form-ctrl" placeholder="Turma" style="font-family:'IBM Plex Mono',monospace;font-size:13px;width:80px;" oninput="loadPunicoesList()" />
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Pelotão</label>
+            <select id="pun-filtro-pel" class="role-select" onchange="loadPunicoesList()">
+              <option value="">Todos</option>
+              <option value="1º">1º</option>
+              <option value="2º">2º</option>
+              <option value="3º">3º</option>
+              <option value="4º">4º</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px;">Data de Cumprimento</label>
+            <input type="date" id="pun-filtro-data" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:13px;min-width:160px;" oninput="loadPunicoesList()" />
+          </div>
+          <button class="btn btn-ghost btn-sm" style="align-self:flex-end;" onclick="clearSd('sd-pun-cadete',()=>{});document.getElementById('pun-filtro-data').value='';document.getElementById('pun-filtro-tipo').value='';document.getElementById('pun-filtro-turma').value='';document.getElementById('pun-filtro-pel').value='';loadPunCalendario();loadPunicoesList()">✕ Limpar</button>
+        </div>
+      </div>
+
+      <!-- Calendário -->
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" onclick="punMesAnterior()">‹</button>
+          <div id="pun-cal-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text);"></div>
+          <button class="btn btn-ghost btn-sm" onclick="punMesProximo()">›</button>
+        </div>
+        <div id="pun-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;"></div>
+      </div>
+
+      <!-- Lista -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div id="pun-lista-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Selecione uma data no calendário</div>
+        </div>
+        <div class="table-wrap">
+          <table class="sortable-table">
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>Nome de Guerra</th>
+                <th>Pel</th>
+                <th>Turma</th>
+                <th>Punição</th>
+                <th>Data de Cumprimento</th>
+                <th>Observação</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-punicoes">
+              <tr><td colspan="7" style="text-align:center;padding:32px;font-family:monospace;font-size:11px;color:var(--muted);">Selecione uma data no calendário ou use os filtros acima</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-minhas-punicoes">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Minhas Punições</div>
+          <div class="page-title">Meu <span>Calendário de Punições</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="initMeusPunicoes()">↻ Atualizar</button>
+      </div>
+
+      <!-- Calendário -->
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <button class="btn btn-ghost btn-sm" onclick="meuPunMesAnterior()">‹</button>
+          <div id="meu-pun-cal-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text);"></div>
+          <button class="btn btn-ghost btn-sm" onclick="meuPunMesProximo()">›</button>
+        </div>
+        <div id="meu-pun-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;"></div>
+      </div>
+
+      <!-- Lista do dia -->
+      <div class="card">
+        <div id="meu-pun-lista-titulo" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Clique em um dia para ver detalhes</div>
+        <div id="meu-pun-lista" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:center;padding:24px;">Selecione uma data no calendário</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      <div class="app-footer-grid">
+        <div>
+          <div class="app-footer-brand">
+            <img src="CBMPA.png" alt="Logo CBMPA" />
+            <span>CBMPA</span>
+          </div>
+          <p>
+            Corpo de Bombeiros Militar do Pará<br>
+            Academia Bombeiro Militar
+          </p>
+          <p><a href="https://www.bombeiros.pa.gov.br" target="_blank" rel="noopener noreferrer">bombeiros.pa.gov.br</a></p>
+        </div>
+        <div>
+          <div class="app-footer-title">&lt;/&gt; Sobre o sistema</div>
+          <ul>
+            <li>Sistema de Controle do Corpo de Alunos</li>
+            <li>
+              Desenvolvido por:<br>
+              CAD BM Lauro Correa dos Santos Junior<br>
+              CAD BM Artur Sidney Maceno Moreira
+            </li>
+          </ul>
+        </div>
+        <div>
+          <div class="app-footer-title">&lt;/&gt; Links</div>
+          <ul>
+            <li><a href="index.html">Gestão</a></li>
+            <li><a href="fatos_observados.html">Fatos Observados</a></li>
+            <li><a href="termos-de-uso.html">Termos de Uso</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="app-footer-copy">© <span id="footer-year"></span> Corpo de Bombeiros Militar do Pará. Todos os direitos reservados.</div>
+    </footer>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+  </main>
+
+<div id="toast"></div>
+<div id="fab-ordens" style="display:none;position:fixed;bottom:20px;right:20px;z-index:500;"></div>
+
+  <div class="modal-overlay" id="modal-pun-edit" onclick="if(event.target===this)closePunEdit()">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <div class="modal-title">Datas de Cumprimento</div>
+        <button class="modal-close" onclick="closePunEdit()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="pun-edit-cadete" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:14px;"></div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas registradas</label>
+          <div id="pun-edit-datas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+        </div>
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Adicionar novas datas</label>
+        <div style="margin-bottom:10px;">
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-pun-edit', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label" id="dp-pun-edit-label">Selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-pun-edit">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-pun-edit',-1,event)">‹</button>
+                <div class="dp-month" id="dp-pun-edit-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-pun-edit',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-pun-edit-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-pun-edit-pills" style="margin-top:6px;"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-sm" style="margin-bottom:14px;" onclick="punAddCumprimento()">+ Adicionar Datas Selecionadas</button>
+        <div class="alert error" id="pun-edit-error"></div>
+      </div>
+    </div>
+  </div>
+
+<div class="modal-overlay" id="modal-curso">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">Selecionar Curso</div>
+    <div id="modal-curso-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <button class="btn btn-ghost btn-full btn-sm" style="margin-top:18px;" onclick="document.getElementById('modal-curso').classList.remove('open')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-terms" style="z-index:600;">
+  <div class="modal" style="max-width:640px;padding:0;display:flex;flex-direction:column;max-height:90vh;">
+    <div style="padding:28px 32px 20px;border-bottom:1px solid var(--border);">
+      <div class="modal-title" style="margin-bottom:6px;">Termos de Uso</div>
+      <p style="font-size:.82rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;">
+        Uma nova versão dos Termos de Uso está em vigor. Leia e aceite para continuar.
+      </p>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:24px 32px;">
+      <iframe src="termos-de-uso.html" style="width:100%;height:480px;border:none;background:var(--bg);" title="Termos de Uso"></iframe>
+    </div>
+    <div style="padding:20px 32px 24px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:14px;">
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text-dim);line-height:1.5;">
+        <input type="checkbox" id="chk-terms-modal" style="width:16px;min-width:16px;height:16px;margin-top:2px;accent-color:var(--accent);cursor:pointer;" />
+        <span>
+          Li e aceito os <a href="termos-de-uso.html" target="_blank" style="color:var(--accent);text-decoration:underline;">Termos de Uso</a>
+          do Sistema de Controle do Corpo de Alunos, reconhecendo que todas as ações realizadas com minhas credenciais são de minha exclusiva responsabilidade e produzem efeitos disciplinares.
+        </span>
+      </label>
+      <div id="terms-modal-error" class="alert error" style="display:none;"></div>
+      <button class="btn btn-primary btn-full" id="btn-accept-terms" disabled style="opacity:.45;cursor:not-allowed;">
+        ACEITAR E CONTINUAR
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-infracao">
+  <div class="modal" style="max-width:480px;padding:0;">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);">
+      <div class="modal-title" style="margin-bottom:0;">Alterar Infração</div>
+    </div>
+    <div style="padding:16px 24px;">
+      <input class="filter-input" id="edit-infracao-search" placeholder="Buscar infração..." style="width:100%;margin-bottom:0;" />
+    </div>
+    <div id="sd-edit-infracao-list" style="max-height:300px;overflow-y:auto;border-top:1px solid var(--border);"></div>
+    <div style="padding:12px 24px;border-top:1px solid var(--border);">
+      <div class="alert error" id="edit-infracao-error"></div>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="document.getElementById('modal-edit-infracao').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-anot">
+  <div class="modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="manot-title">Anotação</div>
+      <button class="modal-close-btn" onclick="closeAnotModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- INFO -->
+      <div class="detail-grid">
+        <div class="detail-field"><label>ID da Anotação</label><div class="dv" id="manot-id">—</div></div>
+        <div class="detail-field"><label>Status</label><div class="dv" id="manot-status">—</div></div>
+        <div class="detail-field"><label>Aluno Anotado</label><div class="dv" id="manot-cad-anot">—</div></div>
+        <div class="detail-field"><label>Resp. pelo Lançamento</label><div class="dv" id="manot-cad-resp">—</div></div>
+        <div class="detail-field"><label>Fato observado por</label><div class="dv" id="manot-of-resp">—</div></div>
+        <div class="detail-field"><label>Data do Lançamento</label><div class="dv" id="manot-data">—</div></div>
+        <div class="detail-field"><label>Data do Fato</label><div class="dv" id="manot-data-fato">—</div></div>
+        <div class="detail-field" id="manot-approved-wrap" style="display:none;"><label>Memorando Aprovado em</label><div class="dv" id="manot-approved">—</div></div>
+      </div>
+
+      <!-- INFRAÇÃO com edição inline -->
+      <div id="manot-infracao-wrap" style="margin-bottom:16px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Infração</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div id="manot-infracao" style="font-size:13px;font-weight:500;color:var(--text);flex:1;">—</div>
+          <button id="btn-modal-edit-infracao" class="btn btn-ghost btn-sm" style="display:none;" onclick="openModalEditInfracao()">✎ Alterar</button>
+        </div>
+        <!-- Searchable list (collapsed by default) -->
+        <div id="manot-infracao-editor" style="display:none;margin-top:10px;">
+          <input class="filter-input" id="manot-infracao-search" placeholder="Buscar infração..." style="width:100%;margin-bottom:0;" />
+          <div id="manot-infracao-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-top:none;"></div>
+        </div>
+      </div>
+
+      <div class="descr-box">
+        <div class="descr-box-label" style="display:flex;align-items:center;gap:8px;">
+          Descrição do Fato
+          <button id="btn-manot-edit-descr" class="btn btn-ghost btn-sm" style="display:none;" onclick="toggleManotDescrEditor(true)">✎ Editar</button>
+        </div>
+        <p id="manot-descricao">—</p>
+        <div id="manot-descricao-editor" style="display:none;margin-top:8px;">
+          <textarea id="manot-descricao-texto" rows="3" style="width:100%;resize:vertical;background:var(--input-bg);border:1px solid var(--border);border-radius:4px;padding:8px;color:var(--text);font-size:13px;box-sizing:border-box;"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-primary btn-sm" id="btn-manot-descr-save" onclick="submitManotDescricao()">SALVAR</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleManotDescrEditor(false)">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANEXOS (coordenador — visualização) -->
+      <div class="anexos-wrap" id="manot-anexos-wrap" style="display:none;">
+        <div class="anexos-label">
+          <span>Anexos</span>
+          <span id="manot-anexos-count" style="color:var(--muted);"></span>
+        </div>
+        <div class="anexos-lista" id="manot-anexos-lista">
+          <div class="anexo-empty">—</div>
+        </div>
+      </div>
+
+      <!-- JUSTIFICATIVA -->
+      <div id="manot-just-wrap" style="display:none;">
+        <div class="just-box">
+          <div class="just-box-label">Justificativa do Aluno</div>
+          <p id="manot-just-texto" style="font-size:13px;line-height:1.6;color:var(--text-dim);white-space:pre-wrap;">—</p>
+          <div style="margin-top:8px;font-family:monospace;font-size:10px;color:var(--muted);" id="manot-just-data"></div>
+        </div>
+      </div>
+
+      <!-- VEREDITO existente (leitura) -->
+      <div id="manot-veredito-wrap" style="display:none;">
+        <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--success);padding:13px 15px;margin-bottom:16px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--success);margin-bottom:10px;">Veredito</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Resultado</div>
+              <div id="manot-veredito-resultado" style="font-size:13px;font-weight:600;"></div>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Decidido em</div>
+              <div id="manot-veredito-data" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);"></div>
+            </div>
+          </div>
+          <div id="manot-veredito-cumprimento-wrap" style="display:none;margin-top:12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Datas de Cumprimento</div>
+            <div id="manot-veredito-cumprimento" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            <!-- Adicionar data (coordenador) -->
+            <div id="manot-add-data-wrap" style="display:none;margin-top:10px;display:flex;gap:8px;align-items:center;">
+              <input type="date" id="manot-add-data-input" class="form-ctrl" style="font-family:'IBM Plex Mono',monospace;font-size:12px;flex:1;" />
+              <button class="btn btn-ghost btn-sm" onclick="manot_addCumprimento()">+ Adicionar</button>
+            </div>
+          </div>
+          <div id="manot-veredito-obs-wrap" style="display:none;margin-top:12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Observação</div>
+            <p id="manot-veredito-obs" style="font-size:13px;line-height:1.6;color:var(--text-dim);"></p>
+          </div>
+          <div id="manot-reverter-wrap" style="display:none;margin-top:14px;">
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(192,57,43,.3);" onclick="reverterVeredito()">↩ Reverter Veredito</button>
+            <span id="manot-reverter-prazo" style="margin-left:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AÇÕES: aprovar / descartar (pendentes) -->
+      <div id="manot-actions" style="display:none;">
+        <div class="action-row">
+          <button class="btn-aprovar" id="btn-aprovar" onclick="submitStatus('aprovada')">✓ Aprovar</button>
+          <button class="btn-descartar" id="btn-descartar" onclick="submitStatus('descartada')">✕ Descartar</button>
+        </div>
+      </div>
+
+      <!-- DAR VEREDITO (justificadas) -->
+      <div id="manot-dar-veredito" style="display:none;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:4px;">Dar Veredito</div>
+        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Resultado *</label>
+            <select id="veredito-resultado" class="role-select" style="width:100%;padding:9px 10px;font-size:12px;" onchange="toggleVeredtoCumprimento()">
+              <option value="">— Selecione —</option>
+              <option value="justificada">Justificada</option>
+              <option value="perda_de_ponto">Perda de Ponto</option>
+              <option value="pernoite">Pernoite</option>
+              <option value="licença_nao_concedida">Licença Não Concedida</option>
+              <option value="recolher">Recolher</option>
+              <option value="servico_extra">Serviço Extra</option>
+              <option value="pre_alvorada">Pré-Alvorada</option>
+              <option value="trabalhos_e_estudos">Trabalhos e Estudos</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação</label>
+            <input type="text" id="veredito-observacao" placeholder="Opcional..." style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-family:inherit;font-size:12px;outline:none;" />
+          </div>
+        </div>
+        <div id="veredito-cumprimento-wrap" style="display:none;margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas de Cumprimento *</label>
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-cumpr', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label">Clique para selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-cumpr">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-cumpr',-1,event)">‹</button>
+                <div class="dp-month" id="dp-cumpr-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-cumpr',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-cumpr-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-cumpr-pills"></div>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-dar-veredito" onclick="submitVeredito()">REGISTRAR VEREDITO</button>
+      </div>
+
+      <div class="alert error"   id="manot-error"   style="margin-top:14px;"></div>
+      <div class="alert success" id="manot-success" style="margin-top:14px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-pw">
+  <div class="modal">
+    <div class="modal-title">Alterar Senha</div>
+
+    <div class="alert error" id="pw-error"></div>
+    <div class="alert success" id="pw-success"></div>
+
+    <div class="field">
+      <label>Senha Atual</label>
+      <input type="password" id="pw-old" placeholder="••••••••" />
+    </div>
+    <div class="field">
+      <label>Nova Senha</label>
+      <input type="password" id="pw-new" placeholder="mínimo 8 caracteres" />
+    </div>
+    <div class="field">
+      <label>Confirmar Nova Senha</label>
+      <input type="password" id="pw-confirm" placeholder="••••••••" />
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-pw-submit" style="margin-bottom:10px;">CONFIRMAR</button>
+    <button class="btn btn-ghost btn-full" onclick="closePw()">CANCELAR</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-descr">
+  <div class="modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="diacfo-modal-title">Anotação</div>
+      <button class="modal-close-btn" onclick="closeDiaCfoModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- INFO -->
+      <div class="detail-grid">
+        <div class="detail-field"><label>ID da Anotação</label><div class="dv" id="diacfo-id">—</div></div>
+        <div class="detail-field"><label>Status</label><div class="dv" id="diacfo-status">—</div></div>
+        <div class="detail-field"><label>Aluno Anotado</label><div class="dv" id="diacfo-cad-anot">—</div></div>
+        <div class="detail-field"><label>Fato observado por</label><div class="dv" id="diacfo-of-resp">—</div></div>
+        <div class="detail-field"><label>Data do Lançamento</label><div class="dv" id="diacfo-data">—</div></div>
+        <div class="detail-field"><label>Data do Fato</label><div class="dv" id="diacfo-data-fato">—</div></div>
+      </div>
+
+      <!-- INFRAÇÃO com edição inline -->
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Infração</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div id="diacfo-infracao" style="font-size:13px;font-weight:500;color:var(--text);flex:1;">—</div>
+          <button id="btn-diacfo-edit-infracao" class="btn btn-ghost btn-sm" style="display:none;" onclick="toggleDiaCfoInfracaoEditor()">✎ Alterar</button>
+        </div>
+        <div id="diacfo-infracao-editor" style="display:none;margin-top:10px;">
+          <input class="filter-input" id="diacfo-infracao-search" placeholder="Buscar infração..." style="width:100%;margin-bottom:0;" />
+          <div id="diacfo-infracao-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-top:none;"></div>
+        </div>
+      </div>
+
+      <!-- DESCRIÇÃO com edição inline -->
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Descrição do Fato</div>
+        <div id="diacfo-descricao-view" style="font-size:13px;line-height:1.6;color:var(--text-dim);background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--accent2);padding:13px 15px;margin-bottom:8px;">—</div>
+        <div id="diacfo-descricao-editor" style="display:none;">
+          <textarea id="diacfo-descricao-texto" class="form-ctrl" style="min-height:100px;margin-bottom:8px;"></textarea>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary btn-sm" id="btn-diacfo-save-descr" onclick="submitDiaCfoDescricao()">SALVAR</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleDiaCfoDescrEditor(false)">Cancelar</button>
+          </div>
+        </div>
+        <button id="btn-diacfo-edit-descr" class="btn btn-ghost btn-sm" style="display:none;" onclick="toggleDiaCfoDescrEditor(true)">✎ Editar descrição</button>
+      </div>
+
+      <!-- ANEXOS dia_cfo -->
+      <div class="anexos-wrap" id="diacfo-anexos-wrap">
+        <div class="anexos-label">
+          <span>Anexos</span>
+          <span id="diacfo-anexos-count" style="color:var(--muted);"></span>
+        </div>
+        <div class="anexos-lista" id="diacfo-anexos-lista">
+          <div class="anexo-empty">—</div>
+        </div>
+        <div class="anexo-upload-row" id="diacfo-upload-row" style="display:none;">
+          <input type="file" id="diacfo-file-input" class="anexo-file-input" accept=".jpg,.jpeg,.png,.pdf" />
+          <button class="anexo-upload-btn" onclick="document.getElementById('diacfo-file-input').click()">+ Adicionar Anexo</button>
+          <span class="anexo-hint">JPG · PNG · PDF · máx 30 MB</span>
+        </div>
+      </div>
+
+      <div class="alert error"   id="diacfo-error"   style="margin-top:8px;"></div>
+      <div class="alert success" id="diacfo-success" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-justificativa">
+  <div class="modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="just-modal-title">Justificativa</div>
+      <button class="modal-close-btn" onclick="closeJustModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- INFO da anotação -->
+      <div class="detail-grid">
+        <div class="detail-field"><label>ID da Anotação</label><div class="dv" id="just-id">—</div></div>
+        <div class="detail-field"><label>Status</label><div class="dv" id="just-status">—</div></div>
+        <div class="detail-field"><label>Oficial de Dia</label><div class="dv" id="just-of-resp">—</div></div>
+        <div class="detail-field"><label>Lançado por</label><div class="dv" id="just-cad-resp">—</div></div>
+        <div class="detail-field"><label>Infração</label><div class="dv" id="just-infracao">—</div></div>
+        <div class="detail-field"><label>Data do Fato</label><div class="dv" id="just-data-fato">—</div></div>
+        <div class="detail-field"><label>Aprovada em</label><div class="dv" id="just-approved">—</div></div>
+        <div class="detail-field"><label>Prazo (48h)</label><div class="dv" id="just-prazo">—</div></div>
+      </div>
+
+      <div class="descr-box" style="margin-bottom:16px;">
+        <div class="descr-box-label">Descrição do Fato</div>
+        <p id="just-descricao">—</p>
+      </div>
+
+      <!-- MEMORANDO -->
+      <div id="just-memorando" style="margin-bottom:20px;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:18px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.8;color:var(--text-dim);white-space:pre-wrap;"></div>
+
+      <!-- Editor de justificativa -->
+      <div id="just-editor-wrap">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Sua Justificativa</div>
+        <textarea id="just-texto" class="form-ctrl" style="min-height:130px;margin-bottom:12px;" placeholder="Escreva sua justificativa aqui..."></textarea>
+        <div id="just-enviada-aviso" style="display:none;padding:10px 14px;background:var(--success-dim);border:1px solid rgba(46,204,113,.25);color:var(--success);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-bottom:12px;">
+          ✓ Justificativa enviada — não pode mais ser editada
+        </div>
+        <div style="display:flex;gap:10px;" id="just-btns">
+          <button class="btn btn-ghost btn-sm" id="btn-just-rascunho" onclick="submitJustificativa(false)">💾 Salvar Rascunho</button>
+          <button class="btn btn-primary" id="btn-just-enviar" onclick="submitJustificativa(true)">✓ Enviar Justificativa</button>
+        </div>
+      </div>
+
+      <!-- ANEXOS -->
+      <div class="anexos-wrap" id="just-anexos-wrap">
+        <div class="anexos-label">
+          <span>Anexos</span>
+          <span id="just-anexos-count" style="color:var(--muted);"></span>
+        </div>
+        <div class="anexos-lista" id="just-anexos-lista">
+          <div class="anexo-empty">Carregando...</div>
+        </div>
+        <div class="anexo-upload-row" id="just-upload-row" style="display:none;">
+          <input type="file" id="just-file-input" class="anexo-file-input" accept=".jpg,.jpeg,.png,.pdf" />
+          <button class="anexo-upload-btn" onclick="document.getElementById('just-file-input').click()">+ Adicionar Anexo</button>
+          <span class="anexo-hint">JPG · PNG · PDF · máx 30 MB</span>
+        </div>
+      </div>
+
+      <div class="alert error"   id="just-error"   style="margin-top:12px;"></div>
+      <div class="alert success" id="just-success" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+  <div class="modal-overlay" id="modal-batch-veredito" onclick="if(event.target===this)closeBatchVeredito()">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Veredito em Lote</div>
+        <button class="modal-close" onclick="closeBatchVeredito()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="batch-veredito-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:100px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Resultado *</label>
+            <select id="batch-resultado" class="role-select" style="width:100%;padding:9px 10px;font-size:12px;" onchange="toggleBatchCumpr()">
+              <option value="">— Selecione —</option>
+              <option value="justificada">Justificada</option>
+              <option value="perda_de_ponto">Perda de Ponto</option>
+              <option value="pernoite">Pernoite</option>
+              <option value="licença_nao_concedida">Licença Não Concedida</option>
+              <option value="recolher">Recolher</option>
+              <option value="servico_extra">Serviço Extra</option>
+              <option value="pre_alvorada">Pré-Alvorada</option>
+              <option value="trabalhos_e_estudos">Trabalhos e Estudos</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação</label>
+            <input type="text" id="batch-observacao" placeholder="Opcional..." style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:9px 10px;font-family:inherit;font-size:12px;outline:none;" />
+          </div>
+        </div>
+        <div id="batch-cumpr-wrap" style="display:none;margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Datas de Cumprimento *</label>
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-batch-cumpr', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label">Selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-batch-cumpr">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-batch-cumpr',-1,event)">‹</button>
+                <div class="dp-month" id="dp-batch-cumpr-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-batch-cumpr',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-batch-cumpr-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-batch-cumpr-pills"></div>
+        </div>
+        <div class="alert error"   id="batch-veredito-error"   style="margin-bottom:10px;"></div>
+        <div class="alert success" id="batch-veredito-success" style="margin-bottom:10px;"></div>
+        <div id="batch-veredito-log" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);max-height:120px;overflow-y:auto;margin-bottom:10px;display:none;"></div>
+        <button class="btn btn-primary btn-full" id="btn-batch-veredito-submit" onclick="submitBatchVeredito()">REGISTRAR VEREDITO EM LOTE</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal-overlay" id="modal-batch-pun" onclick="if(event.target===this)closeBatchPun()">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <div class="modal-title">Punições em Lote</div>
+        <button class="modal-close" onclick="closeBatchPun()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="batch-pun-cadetes" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:14px;max-height:80px;overflow-y:auto;border:1px solid var(--border);padding:8px;"></div>
+        <!-- Abas -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);">
+          <button id="tab-pun-add" onclick="switchBatchPunTab('add')" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;">+ ADICIONAR</button>
+          <button id="tab-pun-rem" onclick="switchBatchPunTab('rem')" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;">✕ REMOVER</button>
+        </div>
+        <!-- Aba Adicionar -->
+        <div id="tab-pun-add-content">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Nova(s) Data(s) de Cumprimento *</label>
+          <div class="dp-wrap">
+            <div class="dp-trigger" onclick="dpToggle('dp-batch-pun', event)">
+              <span class="dp-icon">📅</span>
+              <span class="dp-label">Selecionar datas</span>
+            </div>
+            <div class="dp-popup" id="dp-batch-pun">
+              <div class="dp-header">
+                <button class="dp-nav" onclick="dpNav('dp-batch-pun',-1,event)">‹</button>
+                <div class="dp-month" id="dp-batch-pun-month"></div>
+                <button class="dp-nav" onclick="dpNav('dp-batch-pun',1,event)">›</button>
+              </div>
+              <div class="dp-grid" id="dp-batch-pun-grid"></div>
+            </div>
+          </div>
+          <div class="dp-pills" id="dp-batch-pun-pills"></div>
+          <button class="btn btn-primary btn-full" id="btn-batch-pun-submit" style="margin-top:14px;" onclick="submitBatchPun()">ADICIONAR DATAS</button>
+        </div>
+        <!-- Aba Remover -->
+        <div id="tab-pun-rem-content" style="display:none;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;">Datas existentes — marque para remover</label>
+          <div id="batch-pun-rem-list" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;margin-bottom:12px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
+          </div>
+          <button class="btn btn-danger btn-full" id="btn-batch-pun-rem-submit" style="margin-top:4px;" onclick="submitBatchPunRemove()">REMOVER SELECIONADAS</button>
+        </div>
+        <div class="alert error"   id="batch-pun-error"   style="margin-top:10px;margin-bottom:6px;"></div>
+        <div class="alert success" id="batch-pun-success" style="margin-bottom:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div class="modal-overlay" id="modal-elogio" onclick="if(event.target===this)closeElogioModal()">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Detalhes do Elogio</div>
+        <button class="modal-close" onclick="closeElogioModal()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div id="elogio-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div style="text-align:center;padding:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">Carregando...</div>
+        </div>
+        <div class="alert error" id="elogio-modal-error" style="margin-top:12px;"></div>
+        <div id="elogio-modal-actions" style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal-overlay" id="modal-recurso" onclick="if(event.target===this)closeRecursoModal()">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Requerer Revisão — Anotação <span id="recurso-anot-id"></span></div>
+        <button class="modal-close-btn" onclick="closeRecursoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Descreva o motivo pelo qual você requer a revisão do veredito desta anotação. O pedido será apreciado pelo Comandante.</p>
+        <div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.3);border-left:3px solid var(--danger);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--danger);line-height:1.6;">
+          <strong>⚠ ATENÇÃO:</strong> Apresentar pedido de revisão sem fundamento pode incorrer em anotação por infração
+          <strong>G15 — Apresentar, sem fundamento, parte, queixa, representação ou pedido de revisão de provas</strong>,
+          com aplicação de <strong>perda de 1 (um) ponto</strong>.
+          Certifique-se de que o seu pedido possui embasamento antes de enviá-lo.
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Motivo</label>
+          <textarea id="recurso-motivo" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Descreva o motivo do recurso..."></textarea>
+        </div>
+        <div class="alert error" id="recurso-error" style="display:none;margin-bottom:10px;"></div>
+        <div class="alert success" id="recurso-success" style="display:none;margin-bottom:10px;"></div>
+        <button class="btn btn-primary btn-full" id="btn-recurso-enviar" onclick="submitRecurso()">ENVIAR PEDIDO DE RECURSO</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="modal-overlay" id="modal-despachar-recurso" onclick="if(event.target===this)closeDespacharRecursoModal()">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title">Despachar Recurso #<span id="despachar-recurso-id"></span></div>
+        <button class="modal-close-btn" onclick="closeDespacharRecursoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" style="margin-bottom:14px;">
+          <div class="detail-field"><label>Aluno</label><div class="dv" id="despachar-cadete">—</div></div>
+          <div class="detail-field"><label>Anotação</label><div class="dv" id="despachar-anot-id">—</div></div>
+          <div class="detail-field"><label>Veredito Original</label><div class="dv" id="despachar-veredito">—</div></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Motivo do Recurso</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="despachar-motivo"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação para o Comandante (opcional)</label>
+          <textarea id="despachar-observacao" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Comentário ao encaminhar..."></textarea>
+        </div>
+        <div class="alert error" id="despachar-error" style="display:none;margin-bottom:10px;"></div>
+        <button class="btn btn-primary btn-full" onclick="submitDespacharRecurso()">📤 DESPACHAR AO COMANDANTE</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-julgar-recurso" onclick="if(event.target===this)closeJulgarRecursoModal()">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <div class="modal-title">Julgar Recurso #<span id="julgar-recurso-id"></span></div>
+        <button class="modal-close-btn" onclick="closeJulgarRecursoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" style="margin-bottom:14px;">
+          <div class="detail-field"><label>Aluno</label><div class="dv" id="julgar-cadete">—</div></div>
+          <div class="detail-field"><label>Anotação</label><div class="dv" id="julgar-anot-id">—</div></div>
+          <div class="detail-field"><label>Data do Fato</label><div class="dv" id="julgar-data-fato">—</div></div>
+          <div class="detail-field"><label>Infração</label><div class="dv" id="julgar-infracao">—</div></div>
+          <div class="detail-field"><label>Veredito Original</label><div class="dv" id="julgar-veredito">—</div></div>
+          <div class="detail-field" id="julgar-obs-veredito-wrap" style="display:none;"><label>Obs. do Veredito</label><div class="dv" id="julgar-obs-veredito">—</div></div>
+        </div>
+        <div id="julgar-descricao-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Descrição do Fato</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.6;" id="julgar-descricao"></div>
+        </div>
+        <div id="julgar-just-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Justificativa do Aluno</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-just-texto"></div>
+        </div>
+        <div id="julgar-obs-coord-wrap" style="display:none;margin-bottom:12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Obs. do Coordenador</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--warn);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-obs-coord"></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Motivo do Recurso</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;" id="julgar-motivo"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Observação (opcional)</label>
+          <textarea id="julgar-observacao" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Observação para o aluno..."></textarea>
+        </div>
+        <div class="alert error" id="julgar-error" style="display:none;margin-bottom:10px;"></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" style="flex:1;background:var(--success);" onclick="submitJulgarRecurso('deferido')">✓ DEFERIR</button>
+          <button class="btn btn-primary" style="flex:1;background:var(--danger);" onclick="submitJulgarRecurso('indeferido')">✕ INDEFERIR</button>
+        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center;">Atenção: ao indeferir, uma anotação automática de perda de ponto será lançada para o aluno.</p>
+      </div>
+    </div>
+  </div>
+
+<script src="shared.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    $('btn-login').addEventListener('click', doLogin);
+    $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    if (!localStorage.getItem('token')) initKeycloak();
+
+    // Modal de termos — checkbox habilita botão de aceite
+    $('chk-terms-modal').addEventListener('change', () => {
+      const ok = $('chk-terms-modal').checked;
+      $('btn-accept-terms').disabled = !ok;
+      $('btn-accept-terms').style.opacity = ok ? '1' : '.45';
+      $('btn-accept-terms').style.cursor  = ok ? 'pointer' : 'not-allowed';
+    });
+    $('btn-accept-terms').addEventListener('click', doAcceptTerms);
+      $('btn-pw-submit').addEventListener('click', handleChangePw);
+    document.getElementById('modal-anot').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-anot')) closeAnotModal();
+    });
+    document.getElementById('modal-edit-infracao').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-edit-infracao'))
+        document.getElementById('modal-edit-infracao').classList.remove('open');
+    });
+    document.getElementById('edit-infracao-search').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.getElementById('sd-edit-infracao-list').querySelectorAll('.sd-option').forEach(o => {
+        o.style.display = o.dataset.search.includes(q) ? '' : 'none';
+      });
+    });
+    document.getElementById('manot-infracao-search').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.getElementById('manot-infracao-list').querySelectorAll('.sd-option').forEach(o => {
+        o.style.display = o.dataset.search.includes(q) ? '' : 'none';
+      });
+    });
+    document.getElementById('modal-edit-descr').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-edit-descr')) closeDiaCfoModal();
+    });
+    document.getElementById('diacfo-file-input').addEventListener('change', handleDiaCfoFileInput);
+    document.getElementById('diacfo-infracao-search').addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.getElementById('diacfo-infracao-list').querySelectorAll('.sd-option').forEach(o => {
+        o.style.display = o.dataset.search.includes(q) ? '' : 'none';
+      });
+    });
+    document.getElementById('modal-justificativa').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-justificativa')) closeJustModal();
+    });
+    document.getElementById('just-file-input').addEventListener('change', handleJustFileInput);
+  });
+
+
+
+  (async () => {
+    if (token()) {
+      await initApp();
+    }
+  })();
+</script>
+
+</body>
+</html>
