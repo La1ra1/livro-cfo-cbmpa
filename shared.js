@@ -5312,7 +5312,7 @@
     json.data.forEach(r => {
       const key = r.numero_geral ?? r.username;
       if (!cadeteMap[key]) {
-        cadeteMap[key] = { numero_geral: r.numero_geral, username: r.username, nome_completo: r.nome_completo, posto: r.posto, infracoes: [] };
+        cadeteMap[key] = { numero_geral: r.numero_geral, username: r.username, nome_completo: r.nome_completo, infracoes: [] };
         cadeteOrder.push(key);
       }
       cadeteMap[key].infracoes.push({ codigo: r.infracao_codigo, desconto: r.desconto, anotacao_id: r.anotacao_id });
@@ -5320,7 +5320,7 @@
 
     const allTabelaRows = cadeteOrder.map((key, i) => {
       const c = cadeteMap[key];
-      const nome = `${c.posto || 'CAD BM'} ${boldMatch(c.nome_completo || c.username, c.username)}`;
+      const nome = `CAD 1° ANO BM ${boldMatch(c.nome_completo || c.username, c.username)}`;
       // Agrupar em pares: 2 itens por linha, separados por " · ", linhas centralizadas
       const itens = c.infracoes.map(inf =>
         `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">MEM N° #${String(inf.anotacao_id).padStart(3,'0')}</span>`
