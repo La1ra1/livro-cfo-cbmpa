@@ -135,9 +135,6 @@
       <div class="nav-item" data-section="coord-matriculas" onclick="showSection('coord-matriculas')">
         <span class="nav-icon">✦</span> Matricular Aluno
       </div>
-      <div class="nav-item" data-section="exportar" onclick="showSection('exportar')">
-        <span class="nav-icon">↓</span> Exportar
-      </div>
     </div>
 
     <!-- Seção visível só para comandante (sem seções de gestão nesta página) -->
@@ -482,86 +479,6 @@
       <div id="aux-usuarios-container"></div>
     </section>
 
-
-
-    <!-- ── EXPORTAR ── -->
-    <section class="section" id="section-exportar">
-      <div class="page-header">
-        <div>
-          <div class="page-breadcrumb">CFO · Administração</div>
-          <div class="page-title">Exportar <span>Desconto de Pontos</span></div>
-          <div class="page-meta">Relatório de desconto por aluno, filtrado por turma e mês</div>
-        </div>
-      </div>
-
-      <div class="card" style="max-width:600px;margin-bottom:20px;">
-        <div class="card-header"><span class="card-title">Filtros</span></div>
-        <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:end;">
-          <div>
-            <label class="form-lbl">Turma *</label>
-            <select class="form-ctrl" id="exp-turma" style="width:100%;">
-              <option value="">— Selecione —</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-lbl">Mês *</label>
-            <select class="form-ctrl" id="exp-mes" style="width:100%;">
-              <option value="">— Selecione —</option>
-              <option value="1">Janeiro</option>
-              <option value="2">Fevereiro</option>
-              <option value="3">Março</option>
-              <option value="4">Abril</option>
-              <option value="5">Maio</option>
-              <option value="6">Junho</option>
-              <option value="7">Julho</option>
-              <option value="8">Agosto</option>
-              <option value="9">Setembro</option>
-              <option value="10">Outubro</option>
-              <option value="11">Novembro</option>
-              <option value="12">Dezembro</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-lbl">Ano *</label>
-            <select class="form-ctrl" id="exp-ano" style="width:100%;">
-            </select>
-          </div>
-        </div>
-        <div style="padding:0 20px 20px;display:flex;flex-wrap:wrap;gap:10px;">
-          <button class="btn btn-primary" onclick="gerarRelatorio()">↓ Gerar Relatório</button>
-          <button class="btn btn-ghost" id="btn-exportar-csv" style="display:none;" onclick="exportarCSV()">↓ Exportar CSV</button>
-          <button class="btn btn-ghost" id="btn-exportar-nota" style="display:none;" onclick="exportarNotaComportamento()">↓ Nota de Comportamento</button>
-          <button class="btn btn-ghost" id="btn-exportar-descontos" style="display:none;" onclick="exportarDescontosDetalhado()">↓ Descontos</button>
-        </div>
-        <div class="alert error" id="exp-error" style="margin:0 20px 16px;"></div>
-      </div>
-
-      <!-- Resultado -->
-      <div id="exp-resultado" style="display:none;">
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title" id="exp-titulo">Relatório</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);" id="exp-subtitulo"></span>
-          </div>
-          <div class="table-wrap">
-            <table class="sortable-table">
-              <thead>
-                <tr>
-                  <th>Nº Geral</th>
-                  <th>Nome de Guerra</th>
-                  <th>Pel</th>
-                  <th>Desconto (Anotações)</th>
-                  <th>Pontos (Elogios)</th>
-                  <th>Nota Final</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-exportar"></tbody>
-            </table>
-          </div>
-          <div class="pag-bar" id="exp-total-bar"></div>
-        </div>
-      </div>
-    </section>
 
 
     <!-- ── TURMAS DO CURSO (coordenador e ensino) ── -->
