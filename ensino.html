@@ -543,6 +543,7 @@
         <span id="filter-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-status-turma" onchange="loadStatus()">
+            <option value="">Todas</option>
           </select>
         </span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
@@ -573,6 +574,7 @@
         <span id="filter-disc-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-disc-turma" onchange="loadDisciplinas()">
+            <option value="">Todas</option>
           </select>
         </span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
@@ -609,6 +611,7 @@
         <span id="filter-faltas-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-faltas-turma" onchange="loadFaltas()">
+            <option value="">Todas</option>
           </select>
         </span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
@@ -852,6 +855,7 @@
         <span id="filter-notas-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-notas-turma" onchange="loadNotas()">
+            <option value="">Todas</option>
           </select>
         </span>
         <input type="search" id="filter-notas-busca" placeholder="Buscar matéria..."
@@ -881,6 +885,7 @@
         <span id="filter-dash-turma-wrap" style="display:none;align-items:center;gap:8px;">
           <label>Turma</label>
           <select id="filter-dash-turma" onchange="loadDashboard()">
+            <option value="">Todas</option>
           </select>
         </span>
       </div>
@@ -1256,7 +1261,7 @@
     ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma', 'filter-dash-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
-      while (sel.options.length > 0) sel.remove(0);
+      while (sel.options.length > 1) sel.remove(1);
       _turmas.forEach(t => {
         const o = document.createElement('option');
         o.value = t.id; o.textContent = t.id;
