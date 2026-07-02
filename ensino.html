@@ -509,6 +509,9 @@
     <div class="sidebar-section">
       <div class="sidebar-divider"></div>
       <div class="sidebar-label">Navegação</div>
+      <a href="index.html" class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon">⚙</span> Gestão
+      </a>
       <a href="fatos_observados.html" class="nav-item" style="text-decoration:none;">
         <span class="nav-icon">◧</span> Fatos Observados
       </a>
@@ -1139,8 +1142,8 @@
 
     await loadMeusCursos();
 
-    // Mostrar aba de lançamento para coordenador e ensino
-    if (_user.role === 'coordenador' || _user.role === 'ensino') {
+    // Mostrar aba de lançamento para coordenador, ensino e sub_role B3
+    if (_user.role === 'coordenador' || _user.role === 'ensino' || _user.sub_role === 'B3') {
       $('nav-lancar').style.display = 'block';
     }
 
@@ -1508,7 +1511,7 @@
           ${lista.map(d => {
             const pct      = Number(d.percentual_conclusao) || 0;
             const cls      = progressCls(pct);
-            const canEdit  = _user?.role === 'coordenador' || _user?.role === 'ensino';
+            const canEdit  = _user?.role === 'coordenador' || _user?.role === 'ensino' || _user?.sub_role === 'B3';
             const instCell = canEdit
               ? `<div class="inline-edit-wrap" id="instrutor-wrap-${d.id}">
                    <span id="instrutor-text-${d.id}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;">${d.nome_instrutor ?? '—'}</span>
