@@ -6209,6 +6209,8 @@
 
   function dpInit(id, opts = {}) {
     const now = new Date();
+    const el = document.getElementById(id);
+    const trigger = el?.previousElementSibling || el?.closest('.dp-wrap')?.querySelector('.dp-trigger');
     _dpState[id] = {
       ano: opts.ano || now.getFullYear(),
       mes: opts.mes || now.getMonth() + 1,
@@ -6218,7 +6220,14 @@
       hiddenId: opts.hiddenId || null,
       labelId: opts.labelId || null,
       pillsId: opts.pillsId || null,
+      triggerEl: trigger || null,
     };
+    // Move o popup para <body>: cards usam backdrop-filter, que cria um
+    // containing-block próprio para elementos position:fixed. Se o popup
+    // permanecer dentro do card, as coordenadas de viewport calculadas em
+    // dpToggle() ficam relativas ao card (não à janela), fazendo o
+    // calendário abrir fora da tela em vez de junto ao campo clicado.
+    if (el && el.parentElement !== document.body) document.body.appendChild(el);
     dpRender(id);
   }
 
@@ -6232,7 +6241,7 @@
       dpRender(id);
       // Position after render (rAF ensures element is visible and has dimensions)
       requestAnimationFrame(() => {
-        const trigger = el.previousElementSibling || el.closest('.dp-wrap')?.querySelector('.dp-trigger');
+        const trigger = _dpState[id]?.triggerEl;
         if (!trigger) return;
         const rect = trigger.getBoundingClientRect();
         // If trigger has no size (hidden parent), try parent chain
