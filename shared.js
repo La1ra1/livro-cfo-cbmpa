@@ -5320,7 +5320,7 @@
 
     const allTabelaRows = cadeteOrder.map((key, i) => {
       const c = cadeteMap[key];
-      const nome = `${c.posto || '_CAD BM'} ${boldMatch(c.nome_completo || c.username, c.username)}`;
+      const nome = `${c.posto || 'CAD BM'} ${boldMatch(c.nome_completo || c.username, c.username)}`;
       // Agrupar em pares: 2 itens por linha, separados por " · ", linhas centralizadas
       const itens = c.infracoes.map(inf =>
         `-${inf.desconto} (${inf.codigo}) <span style="color:#888;">MEM N° #${String(inf.anotacao_id).padStart(3,'0')}</span>`
