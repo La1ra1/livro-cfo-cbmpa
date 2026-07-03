@@ -2447,7 +2447,7 @@
     if (!resultado)        { showAlert('pernoite-error', 'Selecione o tipo de punição.'); return; }
     if (!datasCumpr.length) { showAlert('pernoite-error', 'Adicione ao menos uma data de cumprimento.'); return; }
 
-    if (!confirm(`Confirma o lançamento de punição inopinada para ${_pernoiteCadetes.length} aluno(s)?`)) return;
+    if (!confirm(`Confirma o lançamento de ação corretiva para ${_pernoiteCadetes.length} aluno(s)?`)) return;
 
     const btn = document.getElementById('btn-pernoite-lancar');
     btn.classList.add('btn-loading');
@@ -2497,7 +2497,7 @@
     btn.disabled = false;
 
     if (err === 0) {
-      showAlert('pernoite-success', `Punição inopinada lançada com sucesso para ${ok} aluno(s).`, 'success');
+      showAlert('pernoite-success', `Ação corretiva lançada com sucesso para ${ok} aluno(s).`, 'success');
       _pernoiteCadetes = [];
       document.getElementById('sd-pernoite-aluno-trigger').textContent = 'Buscar e adicionar aluno...';
       document.getElementById('pernoite-descricao').value = '';
