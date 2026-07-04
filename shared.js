@@ -414,8 +414,10 @@
       } else {
         $('pf-sub-role-row').style.display = 'none';
       }
-      $('pf-btn-transferir-funcao').style.display = ['dia_cfo', 'dia_curso', 'xerife'].includes(u.role) ? '' : 'none';
-      $('pf-btn-transferir-sub-funcao').style.display = u.sub_role ? '' : 'none';
+      const btnTransferirFuncao = $('pf-btn-transferir-funcao');
+      if (btnTransferirFuncao) btnTransferirFuncao.style.display = ['dia_cfo', 'dia_curso', 'xerife'].includes(u.role) ? '' : 'none';
+      const btnTransferirSubFuncao = $('pf-btn-transferir-sub-funcao');
+      if (btnTransferirSubFuncao) btnTransferirSubFuncao.style.display = u.sub_role ? '' : 'none';
 
       // Bottom nav mobile
       showMobileNav(u.role);
