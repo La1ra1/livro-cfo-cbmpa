@@ -227,6 +227,10 @@
           <span class="info-label">Nível de Acesso</span>
           <span class="info-value" id="pf-badge">—</span>
         </div>
+        <div style="padding:0 20px 16px; display:flex; gap:10px;">
+          <button class="btn btn-ghost btn-sm" id="pf-btn-transferir-funcao" style="display:none;" onclick="openTransferirFuncao()">⇄ Transferir Função</button>
+          <button class="btn btn-ghost btn-sm" id="pf-btn-transferir-sub-funcao" style="display:none;" onclick="openTransferirSubFuncao()">⇄ Transferir Sub-Função</button>
+        </div>
         <hr class="divider" />
         <div style="padding:16px 20px; display:flex; gap:10px;">
           <button class="btn btn-ghost btn-sm" onclick="openChangePw()">Alterar Senha</button>
@@ -821,6 +825,25 @@
 
     <button class="btn btn-primary btn-full" id="btn-pw-submit" style="margin-bottom:10px;">CONFIRMAR</button>
     <button class="btn btn-ghost btn-full" onclick="closePw()">CANCELAR</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-transferir">
+  <div class="modal">
+    <div class="modal-title" id="transferir-title">Transferir Função</div>
+
+    <div class="alert error" id="transferir-error"></div>
+    <div class="alert success" id="transferir-success"></div>
+
+    <p style="font-size:13px;color:var(--muted);margin:0 0 14px;" id="transferir-desc"></p>
+
+    <div class="field">
+      <label>Número Geral do Destinatário</label>
+      <input type="number" id="transferir-numero-geral" placeholder="Ex: 42" />
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-transferir-submit" style="margin-bottom:10px;" onclick="handleTransferir()">CONFIRMAR</button>
+    <button class="btn btn-ghost btn-full" onclick="closeTransferir()">CANCELAR</button>
   </div>
 </div>
 

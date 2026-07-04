@@ -414,6 +414,8 @@
       } else {
         $('pf-sub-role-row').style.display = 'none';
       }
+      $('pf-btn-transferir-funcao').style.display = ['dia_cfo', 'dia_curso', 'xerife'].includes(u.role) ? '' : 'none';
+      $('pf-btn-transferir-sub-funcao').style.display = u.sub_role ? '' : 'none';
 
       // Bottom nav mobile
       showMobileNav(u.role);
@@ -652,6 +654,77 @@
 
     } catch {
       showAlert('pw-error', 'Erro de conexão.');
+    } finally {
+      btn.classList.remove('btn-loading');
+      btn.textContent = 'CONFIRMAR';
+    }
+  }
+
+  // ── TRANSFERIR FUNÇÃO / SUB-FUNÇÃO (auto-serviço, mesma turma) ──────────
+  // Quem tem dia_cfo/dia_curso/xerife ou uma sub-role (B3/B4/B5) pode passar
+  // pra um colega da própria turma sem depender de coordenador/auxiliar -
+  // ver PUT /usuarios/transferir-role e /usuarios/transferir-sub-role.
+  window._transferMode = null; // 'role' | 'sub_role'
+
+  function openTransferirFuncao() {
+    window._transferMode = 'role';
+    $('transferir-title').textContent = 'Transferir Função';
+    $('transferir-desc').textContent = 'Informe o número geral do colega da sua turma que vai receber sua função. Depois da transferência, você volta a ser cadete/aluno normal.';
+    hideAlert('transferir-error');
+    hideAlert('transferir-success');
+    $('transferir-numero-geral').value = '';
+    $('modal-transferir').classList.add('open');
+  }
+
+  function openTransferirSubFuncao() {
+    window._transferMode = 'sub_role';
+    $('transferir-title').textContent = 'Transferir Sub-Função';
+    $('transferir-desc').textContent = 'Informe o número geral do colega da sua turma que vai receber sua sub-função. Isso não afeta sua função atual.';
+    hideAlert('transferir-error');
+    hideAlert('transferir-success');
+    $('transferir-numero-geral').value = '';
+    $('modal-transferir').classList.add('open');
+  }
+
+  function closeTransferir() { $('modal-transferir').classList.remove('open'); }
+
+  async function handleTransferir() {
+    hideAlert('transferir-error');
+    hideAlert('transferir-success');
+
+    const numero_geral = Number($('transferir-numero-geral').value);
+    if (!numero_geral) {
+      showAlert('transferir-error', 'Informe um número geral válido.');
+      return;
+    }
+
+    const endpoint = window._transferMode === 'sub_role'
+      ? '/usuarios/transferir-sub-role'
+      : '/usuarios/transferir-role';
+
+    const btn = $('btn-transferir-submit');
+    btn.classList.add('btn-loading');
+    btn.textContent = 'AGUARDE...';
+
+    try {
+      const res = await fetch(`${API}${endpoint}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token()}` },
+        body: JSON.stringify({ numero_geral, curso_id: cursoAtivoId() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('transferir-error', data.detail || 'Erro ao transferir.');
+        return;
+      }
+
+      showAlert('transferir-success', data.message || 'Transferência realizada com sucesso.', 'success');
+      toast(data.message || 'Transferência realizada com sucesso.');
+      setTimeout(() => { closeTransferir(); initApp(); }, 1500);
+
+    } catch {
+      showAlert('transferir-error', 'Erro de conexão.');
     } finally {
       btn.classList.remove('btn-loading');
       btn.textContent = 'CONFIRMAR';
