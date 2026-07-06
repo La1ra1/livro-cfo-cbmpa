@@ -76,6 +76,28 @@
   </div>
 </div>
 
+<!-- ══════════════════ MODAL ESQUECI A SENHA ══════════════════ -->
+<div class="modal-overlay" id="modal-forgot-pw">
+  <div class="modal">
+    <div class="modal-title">Recuperar Senha</div>
+
+    <div class="alert error" id="forgot-pw-error"></div>
+    <div class="alert success" id="forgot-pw-success"></div>
+
+    <p style="font-size:13px;color:var(--muted);margin:0 0 14px;">
+      Informe seu usuário. Se houver e-mail cadastrado, enviaremos um link para redefinir a senha.
+    </p>
+
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="forgot-pw-username" placeholder="Usuário" autocomplete="username" />
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-forgot-pw-submit" style="margin-bottom:10px;">ENVIAR LINK</button>
+    <button class="btn btn-ghost btn-full" onclick="closeForgotPw()">CANCELAR</button>
+  </div>
+</div>
+
 <!-- ══════════════════ APP SHELL ══════════════════ -->
 <div id="app">
 
@@ -829,28 +851,6 @@
 
     <button class="btn btn-primary btn-full" id="btn-pw-submit" style="margin-bottom:10px;">CONFIRMAR</button>
     <button class="btn btn-ghost btn-full" onclick="closePw()">CANCELAR</button>
-  </div>
-</div>
-
-<!-- ══════════════════ MODAL ESQUECI A SENHA ══════════════════ -->
-<div class="modal-overlay" id="modal-forgot-pw">
-  <div class="modal">
-    <div class="modal-title">Recuperar Senha</div>
-
-    <div class="alert error" id="forgot-pw-error"></div>
-    <div class="alert success" id="forgot-pw-success"></div>
-
-    <p style="font-size:13px;color:var(--muted);margin:0 0 14px;">
-      Informe seu usuário. Se houver e-mail cadastrado, enviaremos um link para redefinir a senha.
-    </p>
-
-    <div class="field">
-      <label>Usuário</label>
-      <input type="text" id="forgot-pw-username" placeholder="Usuário" autocomplete="username" />
-    </div>
-
-    <button class="btn btn-primary btn-full" id="btn-forgot-pw-submit" style="margin-bottom:10px;">ENVIAR LINK</button>
-    <button class="btn btn-ghost btn-full" onclick="closeForgotPw()">CANCELAR</button>
   </div>
 </div>
 
