@@ -490,6 +490,9 @@
       <div class="nav-item" data-section="notas" onclick="showSection('notas')">
         <span class="nav-icon">★</span> Notas
       </div>
+      <div class="nav-item" data-section="classificacao" onclick="showSection('classificacao')">
+        <span class="nav-icon">▲</span> Classificação
+      </div>
     </div>
 
     <div class="sidebar-section" id="nav-lancar" style="display:none;">
@@ -871,6 +874,33 @@
       </div>
     </section>
 
+    <!-- ── CLASSIFICAÇÃO ── -->
+    <section class="section" id="section-classificacao">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Classificação da <span>Turma</span></div>
+        </div>
+      </div>
+
+      <div class="filters-bar" id="classificacao-filters">
+        <span id="filter-classificacao-turma-wrap" style="display:none;align-items:center;gap:8px;">
+          <label>Turma</label>
+          <select id="filter-classificacao-turma" onchange="loadClassificacao()">
+            <option value="">Selecione...</option>
+          </select>
+        </span>
+        <label>Até o Semestre</label>
+        <select id="filter-classificacao-semestre" onchange="loadClassificacao()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div id="classificacao-container">
+        <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Selecione uma turma</div></div>
+      </div>
+    </section>
+
     <!-- ── DASHBOARD ── -->
     <section class="section" id="section-dashboard">
       <div class="page-header">
@@ -1114,6 +1144,7 @@
     if (name === 'instrucao')   loadInstForm();
     if (name === 'avaliacao')   loadAvalForm();
     if (name === 'notas')       loadNotas();
+    if (name === 'classificacao') loadClassificacao();
     if (name === 'dashboard')   loadDashboard();
   }
 
@@ -1154,6 +1185,7 @@
       $('filter-faltas-turma-wrap').style.display   = 'flex';
       $('filter-notas-turma-wrap').style.display    = 'flex';
       $('filter-dash-turma-wrap').style.display     = 'flex';
+      $('filter-classificacao-turma-wrap').style.display = 'flex';
     }
 
     await Promise.all([loadSemestreOptions(), loadTurmaOptions()]);
@@ -1240,7 +1272,7 @@
     if (!res.ok) return;
     const types = await res.json();
     const semestres = [...new Set(types.map(t => t.semestre).filter(Boolean))].sort((a,b) => a-b);
-    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre', 'filter-dash-semestre'].forEach(id => {
+    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre', 'filter-dash-semestre', 'filter-classificacao-semestre'].forEach(id => {
       const sel = $(id);
       const cur = sel.value;
       while (sel.options.length > 1) sel.remove(1);
@@ -1261,7 +1293,7 @@
     _turmas = permitidas ? todasTurmas.filter(t => permitidas.has(t.id)) : todasTurmas;
 
     // Filtros de exibição usam as turmas do curso ativo
-    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma', 'filter-dash-turma'].forEach(id => {
+    ['filter-status-turma', 'filter-disc-turma', 'filter-faltas-turma', 'filter-notas-turma', 'filter-dash-turma', 'filter-classificacao-turma'].forEach(id => {
       const sel = $(id);
       if (!sel) return;
       while (sel.options.length > 1) sel.remove(1);
@@ -1271,6 +1303,13 @@
         sel.appendChild(o);
       });
     });
+
+    // Classificação exige uma turma selecionada (não tem opção "Todas") -
+    // quem só tem acesso à própria turma (filtro de turma fica oculto) já
+    // sai com ela pré-selecionada, senão a seção carregaria vazia.
+    if (_RESTRITOS.has(_user?.role) && _user?.turma_id) {
+      $('filter-classificacao-turma').value = _user.turma_id;
+    }
 
     // Seletor de turma no lançamento: cadete/dia_cfo/xerife só veem a própria turma
     const selLancar = $('lancar-turma');
@@ -2675,6 +2714,86 @@
         </table>
       </div>
       ${nfs.length ? '<div style="margin-top:10px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);">⚠ = nota lançada difere da nota calculada pelo sistema</div>' : ''}`;
+  }
+
+  // ── CLASSIFICAÇÃO ────────────────────────────────────────────
+  function _corNotaClassif(v) {
+    if (v == null) return '';
+    return v >= 7 ? 'color:var(--success)' : v >= 5 ? 'color:var(--warn)' : 'color:var(--danger)';
+  }
+  function _fmtClassif(n) { return n == null ? '<span style="color:var(--muted);">—</span>' : Number(n).toFixed(4); }
+
+  function _tabelaClassificacao(titulo, linhas, colunas) {
+    const thCell = label => `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">${label}</th>`;
+    const thExtras = colunas.map(c => thCell(c.label)).join('');
+    const rows = linhas.map((l, i) => {
+      const tds = colunas.map(c => {
+        const val   = l[c.key];
+        const style = c.destaque ? `font-weight:700;${_corNotaClassif(val)}` : '';
+        return `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;${style}">${_fmtClassif(val)}</td>`;
+      }).join('');
+      return `<tr style="background:${i % 2 === 0 ? 'var(--surface)' : 'var(--surface2)'};">
+        <td style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${l.posicao}º</td>
+        <td style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${l.numero_geral ?? '—'}</td>
+        <td style="padding:6px 10px;font-size:13px;">${l.username}</td>
+        ${tds}
+      </tr>`;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:32px;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;color:var(--accent);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">${titulo}</div>
+        <div style="overflow-x:auto;">
+          <table class="sortable-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr>
+              <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">POS.</th>
+              <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">Nº</th>
+              <th style="padding:6px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface2);">CADETE</th>
+              ${thExtras}
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  async function loadClassificacao() {
+    const turma     = $('filter-classificacao-turma').value;
+    const semestre  = $('filter-classificacao-semestre').value;
+    const container = $('classificacao-container');
+
+    if (!turma) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Selecione uma turma</div></div>';
+      return;
+    }
+
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+
+    const params = new URLSearchParams();
+    if (semestre) params.set('semestre', semestre);
+
+    const res = await fetch(`${API}/turma/${turma}/classificacao?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
+    const data = await res.json();
+
+    if (!data.disciplinas_tfm.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhum cadete matriculado nesta turma</div></div>';
+      return;
+    }
+
+    const tabela1 = _tabelaClassificacao('CLASSIFICAÇÃO — DISCIPLINAS + TFM', data.disciplinas_tfm, [
+      { label: 'DISCIPLINAS',  key: 'nota_somente_disciplinas' },
+      { label: 'TFM',          key: 'media_tfm' },
+      { label: 'DISC.+TFM',    key: 'disciplinas_tfm', destaque: true },
+    ]);
+
+    const tabela2 = _tabelaClassificacao('CLASSIFICAÇÃO — DISCIPLINAS + TFM + COMPORTAMENTO', data.disciplinas_tfm_comportamento, [
+      { label: 'DISC.+TFM',       key: 'disciplinas_tfm' },
+      { label: 'COMPORTAMENTO',   key: 'nota_comportamento' },
+      { label: 'CLASSIF. FINAL',  key: 'classificacao_final', destaque: true },
+    ]);
+
+    container.innerHTML = tabela1 + tabela2;
   }
 
   // ── DASHBOARD ────────────────────────────────────────────────
