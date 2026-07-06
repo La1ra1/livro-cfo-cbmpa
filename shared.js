@@ -358,6 +358,7 @@
 
       if (!res.ok) {
         showAlert('login-error', data.detail || 'Credenciais inválidas.');
+        $('forgot-pw-wrap').style.display = 'block';
         return;
       }
 
