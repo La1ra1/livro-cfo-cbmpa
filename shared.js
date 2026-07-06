@@ -218,6 +218,12 @@
     $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
     if (!localStorage.getItem('token')) initKeycloak();
 
+    $('link-forgot-pw').addEventListener('click', e => { e.preventDefault(); openForgotPw(); });
+    $('btn-forgot-pw-submit').addEventListener('click', handleForgotPw);
+    document.getElementById('modal-forgot-pw').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-forgot-pw')) closeForgotPw();
+    });
+
     // Modal de termos — checkbox habilita botão de aceite
     $('chk-terms-modal').addEventListener('change', () => {
       const ok = $('chk-terms-modal').checked;
@@ -659,6 +665,52 @@
     } finally {
       btn.classList.remove('btn-loading');
       btn.textContent = 'CONFIRMAR';
+    }
+  }
+
+  // ── ESQUECI A SENHA ──────────────────────────────────
+  function openForgotPw() {
+    hideAlert('forgot-pw-error');
+    hideAlert('forgot-pw-success');
+    $('forgot-pw-username').value = $('login-username').value.trim();
+    $('modal-forgot-pw').classList.add('open');
+  }
+  function closeForgotPw() { $('modal-forgot-pw').classList.remove('open'); }
+
+  async function handleForgotPw() {
+    hideAlert('forgot-pw-error');
+    hideAlert('forgot-pw-success');
+
+    const username = $('forgot-pw-username').value.trim();
+    if (!username) {
+      showAlert('forgot-pw-error', 'Informe o usuário.');
+      return;
+    }
+
+    const btn = $('btn-forgot-pw-submit');
+    btn.classList.add('btn-loading');
+    btn.textContent = 'AGUARDE...';
+
+    try {
+      const res = await fetch(`${API}/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('forgot-pw-error', data.detail || 'Erro ao solicitar recuperação.');
+        return;
+      }
+
+      showAlert('forgot-pw-success', data.message, 'success');
+
+    } catch {
+      showAlert('forgot-pw-error', 'Não foi possível conectar à API.');
+    } finally {
+      btn.classList.remove('btn-loading');
+      btn.textContent = 'ENVIAR LINK';
     }
   }
 

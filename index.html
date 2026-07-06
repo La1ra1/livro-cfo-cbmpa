@@ -41,6 +41,10 @@
       </div>
       <button class="btn btn-primary btn-full" id="btn-login">ENTRAR NO SISTEMA</button>
 
+      <div style="text-align:center;margin-top:12px;">
+        <a href="#" id="link-forgot-pw" style="font-size:12px;color:var(--muted);text-decoration:underline;">Esqueceu a senha?</a>
+      </div>
+
       <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
         <div style="flex:1;height:1px;background:var(--border);"></div>
         <span class="login-sub" style="margin:0;">OU</span>
@@ -825,6 +829,28 @@
 
     <button class="btn btn-primary btn-full" id="btn-pw-submit" style="margin-bottom:10px;">CONFIRMAR</button>
     <button class="btn btn-ghost btn-full" onclick="closePw()">CANCELAR</button>
+  </div>
+</div>
+
+<!-- ══════════════════ MODAL ESQUECI A SENHA ══════════════════ -->
+<div class="modal-overlay" id="modal-forgot-pw">
+  <div class="modal">
+    <div class="modal-title">Recuperar Senha</div>
+
+    <div class="alert error" id="forgot-pw-error"></div>
+    <div class="alert success" id="forgot-pw-success"></div>
+
+    <p style="font-size:13px;color:var(--muted);margin:0 0 14px;">
+      Informe seu usuário. Se houver e-mail cadastrado, enviaremos um link para redefinir a senha.
+    </p>
+
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="forgot-pw-username" placeholder="Usuário" autocomplete="username" />
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btn-forgot-pw-submit" style="margin-bottom:10px;">ENVIAR LINK</button>
+    <button class="btn btn-ghost btn-full" onclick="closeForgotPw()">CANCELAR</button>
   </div>
 </div>
 
