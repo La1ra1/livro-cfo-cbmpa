@@ -1018,6 +1018,13 @@
       <span class="card-title" id="disc-inst-modal-title">Instruções</span>
       <button class="btn btn-ghost btn-sm" onclick="closeDiscInstModal()">✕</button>
     </div>
+    <div class="filters-bar" style="padding:10px 16px;margin-bottom:0;flex-shrink:0;border-bottom:1px solid var(--border);">
+      <label>De</label>
+      <input type="date" id="disc-inst-filtro-de" onchange="loadDiscInstrucoes()">
+      <label>Até</label>
+      <input type="date" id="disc-inst-filtro-ate" onchange="loadDiscInstrucoes()">
+      <button class="btn btn-ghost btn-sm" onclick="limparFiltroDiscInst()" title="Limpar período">✕ Limpar</button>
+    </div>
     <div style="overflow-y:auto;flex:1;" id="disc-inst-modal-body">
       <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
     </div>
@@ -1583,13 +1590,30 @@
   async function openDiscInstModal(id, nome, event) {
     if (event) event.stopPropagation();
     _discInstModalId = id;
-    const modal = $('disc-inst-modal');
-    const body  = $('disc-inst-modal-body');
     $('disc-inst-modal-title').textContent = nome;
-    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
-    modal.style.display = 'flex';
+    $('disc-inst-filtro-de').value  = '';
+    $('disc-inst-filtro-ate').value = '';
+    $('disc-inst-modal').style.display = 'flex';
+    await loadDiscInstrucoes();
+  }
 
-    const res = await fetch(`${API}/disciplinas/${id}/instrucoes`, { headers: { Authorization: `Bearer ${token()}` } });
+  function limparFiltroDiscInst() {
+    $('disc-inst-filtro-de').value  = '';
+    $('disc-inst-filtro-ate').value = '';
+    loadDiscInstrucoes();
+  }
+
+  async function loadDiscInstrucoes() {
+    const body = $('disc-inst-modal-body');
+    body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+
+    const params = new URLSearchParams();
+    const de  = $('disc-inst-filtro-de').value;
+    const ate = $('disc-inst-filtro-ate').value;
+    if (de)  params.set('data_inicio', de);
+    if (ate) params.set('data_fim', ate);
+
+    const res = await fetch(`${API}/disciplinas/${_discInstModalId}/instrucoes?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
     const lista = await res.json();
 
@@ -1714,8 +1738,8 @@
     }
     toast('Faltas salvas com sucesso!');
     closeDiscFaltasModal();
-    // Reabrir modal de instruções para atualizar contagem
-    if (_discInstModalId) openDiscInstModal(_discInstModalId, $('disc-inst-modal-title').textContent);
+    // Atualiza a contagem de faltas mantendo o filtro de período aplicado
+    if (_discInstModalId) loadDiscInstrucoes();
   }
 
   // ── LANÇAR DISCIPLINA (B3) ────────────────────────────────
