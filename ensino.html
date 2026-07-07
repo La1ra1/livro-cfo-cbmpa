@@ -479,7 +479,7 @@
         <span class="nav-icon">◉</span> Status das Disciplinas
       </div>
       <div class="nav-item" data-section="disciplinas" onclick="showSection('disciplinas')">
-        <span class="nav-icon">▣</span> Disciplinas
+        <span class="nav-icon">▣</span> Instruções
       </div>
       <div class="nav-item" data-section="faltas" onclick="showSection('faltas')">
         <span class="nav-icon">⚑</span> Faltas
@@ -583,6 +583,11 @@
             <option value="">Todas</option>
           </select>
         </span>
+        <label>De</label>
+        <input type="date" id="filter-disc-data-inicio" onchange="loadDisciplinas()">
+        <label>Até</label>
+        <input type="date" id="filter-disc-data-fim" onchange="loadDisciplinas()">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('filter-disc-data-inicio').value='';document.getElementById('filter-disc-data-fim').value='';loadDisciplinas()" title="Limpar período">✕ Limpar período</button>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
           <input type="checkbox" id="filter-disc-ocultar-concluidas" onchange="loadDisciplinas()" style="cursor:pointer;">
           Ocultar concluídas
@@ -1017,13 +1022,6 @@
     <div class="card-header" style="flex-shrink:0;">
       <span class="card-title" id="disc-inst-modal-title">Instruções</span>
       <button class="btn btn-ghost btn-sm" onclick="closeDiscInstModal()">✕</button>
-    </div>
-    <div class="filters-bar" style="padding:10px 16px;margin-bottom:0;flex-shrink:0;border-bottom:1px solid var(--border);">
-      <label>De</label>
-      <input type="date" id="disc-inst-filtro-de" onchange="loadDiscInstrucoes()">
-      <label>Até</label>
-      <input type="date" id="disc-inst-filtro-ate" onchange="loadDiscInstrucoes()">
-      <button class="btn btn-ghost btn-sm" onclick="limparFiltroDiscInst()" title="Limpar período">✕ Limpar</button>
     </div>
     <div style="overflow-y:auto;flex:1;" id="disc-inst-modal-body">
       <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>
@@ -1523,10 +1521,14 @@
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
 
     const params = new URLSearchParams();
-    const semestre = $('filter-disc-semestre').value;
-    const turma    = $('filter-disc-turma').value;
-    if (semestre) params.set('semestre', semestre);
-    if (turma)    params.set('id_turma', turma);
+    const semestre   = $('filter-disc-semestre').value;
+    const turma      = $('filter-disc-turma').value;
+    const dataInicio = $('filter-disc-data-inicio').value;
+    const dataFim    = $('filter-disc-data-fim').value;
+    if (semestre)   params.set('semestre', semestre);
+    if (turma)      params.set('id_turma', turma);
+    if (dataInicio) params.set('data_inicio', dataInicio);
+    if (dataFim)    params.set('data_fim', dataFim);
 
     const res = await fetch(`${API}/disciplinas?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
@@ -1590,30 +1592,13 @@
   async function openDiscInstModal(id, nome, event) {
     if (event) event.stopPropagation();
     _discInstModalId = id;
+    const modal = $('disc-inst-modal');
+    const body  = $('disc-inst-modal-body');
     $('disc-inst-modal-title').textContent = nome;
-    $('disc-inst-filtro-de').value  = '';
-    $('disc-inst-filtro-ate').value = '';
-    $('disc-inst-modal').style.display = 'flex';
-    await loadDiscInstrucoes();
-  }
-
-  function limparFiltroDiscInst() {
-    $('disc-inst-filtro-de').value  = '';
-    $('disc-inst-filtro-ate').value = '';
-    loadDiscInstrucoes();
-  }
-
-  async function loadDiscInstrucoes() {
-    const body = $('disc-inst-modal-body');
     body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+    modal.style.display = 'flex';
 
-    const params = new URLSearchParams();
-    const de  = $('disc-inst-filtro-de').value;
-    const ate = $('disc-inst-filtro-ate').value;
-    if (de)  params.set('data_inicio', de);
-    if (ate) params.set('data_fim', ate);
-
-    const res = await fetch(`${API}/disciplinas/${_discInstModalId}/instrucoes?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
+    const res = await fetch(`${API}/disciplinas/${id}/instrucoes`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
     const lista = await res.json();
 
@@ -1630,6 +1615,7 @@
         <td class="td-mono" style="font-size:12px;">${dataFmt}</td>
         <td style="font-size:13px;">${i.assunto ?? '—'}</td>
         <td class="td-mono" style="font-size:12px;">${i.xerife_nome ?? '—'}</td>
+        <td class="td-mono" style="font-size:12px;">${i.lancado_por ?? '—'}</td>
         <td class="td-mono" style="font-size:12px;text-align:center;">${i.total_faltas ?? 0}</td>
         <td>${editBtn}</td>
       </tr>`;
@@ -1641,6 +1627,7 @@
         <th style="width:96px;">Data</th>
         <th>Tema</th>
         <th style="width:120px;">Xerife</th>
+        <th style="width:120px;">Lançado por</th>
         <th style="width:64px;">Faltas F</th>
         <th style="width:80px;"></th>
       </tr></thead>
@@ -1738,8 +1725,8 @@
     }
     toast('Faltas salvas com sucesso!');
     closeDiscFaltasModal();
-    // Atualiza a contagem de faltas mantendo o filtro de período aplicado
-    if (_discInstModalId) loadDiscInstrucoes();
+    // Reabrir modal de instruções para atualizar contagem
+    if (_discInstModalId) openDiscInstModal(_discInstModalId, $('disc-inst-modal-title').textContent);
   }
 
   // ── LANÇAR DISCIPLINA (B3) ────────────────────────────────
