@@ -262,6 +262,8 @@
     }
     .sd-option:hover { background: rgba(180,10,10,.08); }
     .sd-option.sd-selected { background: rgba(180,10,10,.12); color: var(--accent); }
+    .sd-option.sd-option-warn { background: var(--warn-dim); color: var(--warn); }
+    .sd-option.sd-option-warn.sd-selected { background: rgba(194,103,15,.22); }
     .sd-clear {
       padding: 7px 12px; font-family: 'IBM Plex Mono', monospace;
       font-size: 10px; color: var(--muted); cursor: pointer;
@@ -779,9 +781,15 @@
 
           <div class="form-group" style="margin-bottom:16px;">
             <label>Disciplina</label>
-            <select id="aval-disciplina" onchange="onAvalDisciplinaChange()">
-              <option value="">Carregando...</option>
-            </select>
+            <div class="sd-wrap" id="aval-disciplina-sd">
+              <button type="button" class="sd-trigger" id="aval-disciplina-sd-trigger"
+                      onclick="toggleAvalDisciplinaSd()" data-placeholder="Selecione a disciplina...">Carregando...</button>
+              <div class="sd-panel" id="aval-disciplina-sd-panel">
+                <input class="sd-search" placeholder="Pesquisar disciplina..."
+                       oninput="filterAvalDisciplinaSd(this.value)">
+                <div class="sd-list" id="aval-disciplina-sd-list"></div>
+              </div>
+            </div>
           </div>
 
           <div id="aval-config-wrap" style="display:none;">
@@ -2374,9 +2382,41 @@
   let _avalCadetes     = [];    // [{ id, username, numero_geral }]
   let _avalVerificacaoId = null; // id criado/reutilizado em verificacoes
 
+  let _avalDisciplinas = []; // cache bruto pra alimentar a busca do dropdown
+
+  function _populateAvalDisciplinaSd() {
+    const list = $('aval-disciplina-sd-list');
+    list.innerHTML = _avalDisciplinas.map(d => {
+      const label     = `${d.semestre}º · ${d.tipo_nome} — Turma ${d.id_turma}`;
+      const semAval   = Number(d.verificacoes_lancadas) === 0;
+      const search    = `${d.tipo_nome} ${d.id_turma} ${d.semestre}`.toLowerCase();
+      const payload   = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome }).replace(/'/g, "&#39;");
+      return `<div class="sd-option${semAval ? ' sd-option-warn' : ''}" data-value="${d.id}" data-search="${search}"
+            onclick='selectAvalDisciplina(${payload})'>${label}${semAval ? ' · sem avaliação lançada' : ''}</div>`;
+    }).join('');
+  }
+
+  function toggleAvalDisciplinaSd() {
+    const panel = $('aval-disciplina-sd-panel');
+    const isOpen = panel.classList.contains('open');
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+    if (!isOpen) {
+      panel.classList.add('open');
+      const s = panel.querySelector('.sd-search');
+      s.value = ''; filterAvalDisciplinaSd(''); s.focus();
+    }
+  }
+
+  function filterAvalDisciplinaSd(q) {
+    $('aval-disciplina-sd-list').querySelectorAll('.sd-option').forEach(o => {
+      o.style.display = o.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
   async function loadAvalForm() {
-    const sel = $('aval-disciplina');
-    sel.innerHTML = '<option value="">Carregando...</option>';
+    const trigger = $('aval-disciplina-sd-trigger');
+    trigger.textContent = 'Carregando...';
+    $('aval-disciplina-sd-list').innerHTML = '';
     $('aval-config-wrap').style.display = 'none';
     $('aval-notas-wrap').style.display  = 'none';
     $('aval-alert').className = 'alert';
@@ -2386,25 +2426,27 @@
 
     try {
       const res = await fetch(`${API}/disciplinas`, { headers: { Authorization: `Bearer ${token()}` } });
-      if (!res.ok) { sel.innerHTML = '<option value="">Erro ao carregar</option>'; return; }
-      const discs = await res.json();
-      sel.innerHTML = '<option value="">Selecione a disciplina...</option>';
-      discs.forEach(d => {
-        const o = document.createElement('option');
-        o.value = JSON.stringify({ id: d.id, id_turma: d.id_turma, nome: d.tipo_nome });
-        o.textContent = `${d.semestre}º · ${d.tipo_nome} — Turma ${d.id_turma}`;
-        sel.appendChild(o);
-      });
-    } catch { sel.innerHTML = '<option value="">Erro de conexão</option>'; }
+      if (!res.ok) { trigger.textContent = 'Erro ao carregar'; return; }
+      _avalDisciplinas = await res.json();
+      trigger.textContent = trigger.dataset.placeholder;
+      _populateAvalDisciplinaSd();
+    } catch { trigger.textContent = 'Erro de conexão'; }
   }
 
-  async function onAvalDisciplinaChange() {
-    const val = $('aval-disciplina').value;
+  function selectAvalDisciplina(disciplina) {
+    $('aval-disciplina-sd-trigger').textContent = disciplina.nome;
+    $('aval-disciplina-sd-list').querySelectorAll('.sd-option').forEach(o =>
+      o.classList.toggle('sd-selected', o.dataset.value === String(disciplina.id))
+    );
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+    onAvalDisciplinaChange(disciplina);
+  }
+
+  async function onAvalDisciplinaChange(disciplina) {
     $('aval-notas-wrap').style.display  = 'none';
     $('aval-alert').className = 'alert';
     $('aval-resumo-verif').style.display = 'none';
-    if (!val) { $('aval-config-wrap').style.display = 'none'; return; }
-    _avalDisciplina = JSON.parse(val);
+    _avalDisciplina = disciplina;
     $('aval-peso').value  = '';
     $('aval-link').value  = '';
     $('aval-is-nota-final').checked = false;
