@@ -495,6 +495,9 @@
       <div class="nav-item" data-section="classificacao" onclick="showSection('classificacao')">
         <span class="nav-icon">▲</span> Classificação
       </div>
+      <div class="nav-item" data-section="boletim" onclick="showSection('boletim')">
+        <span class="nav-icon">↓</span> Boletim
+      </div>
     </div>
 
     <div class="sidebar-section" id="nav-lancar" style="display:none;">
@@ -914,6 +917,38 @@
       </div>
     </section>
 
+    <!-- ── BOLETIM ── -->
+    <section class="section" id="section-boletim">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Exportar <span>Boletim</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:560px;">
+        <div class="card-header"><span class="card-title">Cadete</span></div>
+        <div class="card-body">
+          <div class="form-group" id="bol-cadete-wrap" style="display:none;margin-bottom:16px;">
+            <label>Selecione o cadete</label>
+            <div class="sd-wrap" id="bol-cadete-sd">
+              <button type="button" class="sd-trigger" id="bol-cadete-sd-trigger"
+                      onclick="toggleBolCadeteSd()" data-placeholder="Selecione o cadete...">Carregando...</button>
+              <div class="sd-panel" id="bol-cadete-sd-panel">
+                <input class="sd-search" placeholder="Pesquisar cadete..."
+                       oninput="filterBolCadeteSd(this.value)">
+                <div class="sd-list" id="bol-cadete-sd-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="bol-alert" class="alert error"></div>
+
+          <button class="btn btn-primary" id="bol-gerar-btn" onclick="gerarBoletim()" disabled>↓ Gerar Boletim</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ── DASHBOARD ── -->
     <section class="section" id="section-dashboard">
       <div class="page-header">
@@ -1158,6 +1193,7 @@
     if (name === 'avaliacao')   loadAvalForm();
     if (name === 'notas')       loadNotas();
     if (name === 'classificacao') loadClassificacao();
+    if (name === 'boletim')     loadBoletimForm();
     if (name === 'dashboard')   loadDashboard();
   }
 
@@ -2364,6 +2400,221 @@
     const obs = row.dataset.obs || '';
     $('obs-submodal-text').textContent = obs;
     $('obs-submodal').style.display = 'flex';
+  }
+
+  // ── BOLETIM ──────────────────────────────────────────────
+  const _STAFF_ROLES_BOLETIM = new Set(['coordenador', 'auxiliar', 'ensino', 'comandante', 'comandante_de_pelotao']);
+  let _bolCadetes   = [];
+  let _bolCadeteId  = null;
+
+  function _podeEscolherOutroCadete() {
+    return _STAFF_ROLES_BOLETIM.has(_user?.role) || _user?.sub_role === 'B3';
+  }
+
+  async function loadBoletimForm() {
+    $('bol-alert').className = 'alert';
+    const podeEscolher = _podeEscolherOutroCadete();
+    $('bol-cadete-wrap').style.display = podeEscolher ? 'block' : 'none';
+
+    if (!podeEscolher) {
+      _bolCadeteId = _user.user_id;
+      $('bol-gerar-btn').textContent = '↓ Gerar Meu Boletim';
+      $('bol-gerar-btn').disabled = false;
+      return;
+    }
+
+    $('bol-gerar-btn').textContent = '↓ Gerar Boletim';
+    _bolCadeteId = null;
+    $('bol-gerar-btn').disabled = true;
+
+    const trigger = $('bol-cadete-sd-trigger');
+    trigger.textContent = 'Carregando...';
+    $('bol-cadete-sd-list').innerHTML = '';
+    try {
+      const res = await fetch(`${API}/usuarios/cadetes${qsCurso()}`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) { trigger.textContent = 'Erro ao carregar'; return; }
+      _bolCadetes = await res.json();
+      trigger.textContent = trigger.dataset.placeholder;
+      _populateBolCadeteSd();
+    } catch { trigger.textContent = 'Erro de conexão'; }
+  }
+
+  function _populateBolCadeteSd() {
+    const list = $('bol-cadete-sd-list');
+    list.innerHTML = _bolCadetes.map(u => {
+      const label = u.numero_geral != null ? `${u.numero_geral} · ${u.username}` : u.username;
+      const turma = u.turma != null ? `Turma ${u.turma}${u.pel ?? ''}` : '';
+      const search = `${label} ${turma}`.toLowerCase();
+      return `<div class="sd-option" data-value="${u.id}" data-search="${search}"
+            onclick="selectBolCadete(${u.id},'${label.replace(/'/g, "\\'")}')">
+            ${label}${turma ? ` <span style="color:var(--muted);font-size:10px;">· ${turma}</span>` : ''}</div>`;
+    }).join('') || '<div class="sd-option" style="color:var(--muted);cursor:default;">Nenhum cadete encontrado</div>';
+  }
+
+  function toggleBolCadeteSd() {
+    const panel = $('bol-cadete-sd-panel');
+    const isOpen = panel.classList.contains('open');
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+    if (!isOpen) {
+      panel.classList.add('open');
+      const s = panel.querySelector('.sd-search');
+      s.value = ''; filterBolCadeteSd(''); s.focus();
+    }
+  }
+
+  function filterBolCadeteSd(q) {
+    $('bol-cadete-sd-list').querySelectorAll('.sd-option').forEach(o => {
+      o.style.display = o.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function selectBolCadete(id, label) {
+    _bolCadeteId = id;
+    $('bol-cadete-sd-trigger').textContent = label;
+    $('bol-cadete-sd-list').querySelectorAll('.sd-option').forEach(o =>
+      o.classList.toggle('sd-selected', o.dataset.value === String(id))
+    );
+    document.querySelectorAll('.sd-panel.open').forEach(p => p.classList.remove('open'));
+    $('bol-gerar-btn').disabled = false;
+  }
+
+  async function gerarBoletim() {
+    if (!_bolCadeteId) { toast('Selecione um cadete', 'error'); return; }
+    $('bol-alert').className = 'alert';
+    const btn = $('bol-gerar-btn');
+    btn.disabled = true; btn.classList.add('btn-loading');
+
+    try {
+      const res = await fetch(`${API}/cadetes/${_bolCadeteId}/boletim`, { headers: { Authorization: `Bearer ${token()}` } });
+      const data = await res.json();
+      if (!res.ok) {
+        $('bol-alert').textContent = data.detail || 'Erro ao gerar boletim.';
+        $('bol-alert').className = 'alert error show';
+        return;
+      }
+      await _abrirBoletimDoc(data);
+    } catch {
+      $('bol-alert').textContent = 'Erro de conexão.';
+      $('bol-alert').className = 'alert error show';
+    } finally {
+      btn.disabled = false; btn.classList.remove('btn-loading');
+    }
+  }
+
+  async function _abrirBoletimDoc(data) {
+    const toBase64 = async (src) => {
+      try {
+        const r   = await fetch(src);
+        const blob = await r.blob();
+        return await new Promise(resolve => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(fr.result);
+          fr.readAsDataURL(blob);
+        });
+      } catch { return ''; }
+    };
+    const [abmBase64, cbmpaBase64] = await Promise.all([toBase64('ABM.png'), toBase64('CBMPA.png')]);
+
+    const anoAtual  = new Date().getFullYear();
+    const { cadete, curso, disciplinas } = data;
+    const corNota = n => n == null ? '#555' : (n >= 7 ? '#1e7e34' : n >= 5 ? '#a15c00' : '#b02a2a');
+
+    const bySem = {};
+    disciplinas.forEach(d => {
+      const s = d.semestre ?? 0;
+      if (!bySem[s]) bySem[s] = [];
+      bySem[s].push(d);
+    });
+
+    const semestresHtml = Object.keys(bySem).sort((a, b) => a - b).map(sem => {
+      const rows = bySem[sem].map((d, i) => `
+        <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
+          <td style="padding:4px 8px;border:1px solid #bbb;font-size:11px;">${d.nome}</td>
+          <td style="padding:4px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${d.peso}</td>
+          <td style="padding:4px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;font-weight:700;color:${corNota(d.nota_final)};">
+            ${d.nota_final != null ? Number(d.nota_final).toFixed(4) : '—'}
+          </td>
+        </tr>`).join('');
+      return `
+        <div style="page-break-inside:avoid;margin-bottom:18px;">
+          <div style="font-weight:700;font-size:12px;letter-spacing:1px;background:#e8e8e8;padding:5px 8px;border:1px solid #bbb;border-bottom:none;">
+            ${sem === '0' ? 'SEM SEMESTRE DEFINIDO' : `${sem}º SEMESTRE`}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="text-align:left;padding:4px 8px;border:1px solid #bbb;">DISCIPLINA</th>
+                <th style="text-align:center;padding:4px 8px;border:1px solid #bbb;width:70px;">PESO</th>
+                <th style="text-align:center;padding:4px 8px;border:1px solid #bbb;width:100px;">NOTA FINAL</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }).join('');
+
+    const notasValidas = disciplinas.map(d => d.nota_final).filter(n => n != null);
+    const mediaGeral = notasValidas.length ? notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length : null;
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>BOLETIM ESCOLAR - ${cadete.username}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; color: #111; font-size: 12px; }
+    @media print {
+      .no-print { display: none !important; }
+      @page { margin: 8mm 12mm; }
+    }
+  </style>
+</head>
+<body style="padding:10px 20px;">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:14px;gap:12px;">
+    <div style="flex-shrink:0;">${cbmpaBase64 ? `<img src="${cbmpaBase64}" alt="CBMPA" style="height:52px;width:auto;display:block;" />` : ''}</div>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;line-height:1.7;">
+        CORPO DE BOMBEIROS MILITAR DO PARÁ<br>
+        COORDENADORIA ESTADUAL DE PROTEÇÃO E DEFESA CIVIL<br>
+        DEPARTAMENTO-GERAL DE CULTURA, EDUCAÇÃO E PESQUISA<br>
+        ACADEMIA BOMBEIRO MILITAR "CAPITÃO ANTÔNIO VERÍSSIMO IVO DE ABREU"<br>
+        ${(curso || '').toUpperCase()} ${anoAtual}
+      </div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:6px;border-top:1px solid #ccc;padding-top:5px;">
+        BOLETIM ESCOLAR<br>
+        <span style="font-size:11px;">TURMA ${data.turma_id ?? '—'}</span>
+      </div>
+      <div style="font-size:10px;color:#444;margin-top:2px;">
+        Nº ${cadete.numero_geral ?? '—'} · ${cadete.username}
+      </div>
+    </div>
+    <div style="flex-shrink:0;">${abmBase64 ? `<img src="${abmBase64}" alt="ABM" style="height:52px;width:auto;display:block;" />` : ''}</div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:16px;font-size:12px;">
+    <div><strong>Média geral:</strong> <span style="font-weight:700;color:${corNota(mediaGeral)};">${mediaGeral != null ? mediaGeral.toFixed(4) : '—'}</span></div>
+  </div>
+
+  ${semestresHtml || '<div style="color:#777;font-size:12px;">Nenhuma disciplina lançada.</div>'}
+
+  <div style="margin-top:16px;border-top:1px solid #ccc;padding-top:8px;font-size:9px;color:#aaa;">
+    Gerado em ${new Date().toLocaleString('pt-BR')} · Sistema de Controle do Corpo de Alunos
+  </div>
+
+  <div class="no-print" style="margin-top:20px;text-align:center;">
+    <button onclick="window.print()" style="padding:10px 32px;font-size:13px;cursor:pointer;background:#111;color:#fff;border:none;border-radius:4px;letter-spacing:1px;font-weight:600;">IMPRIMIR / SALVAR PDF</button>
+  </div>
+
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (win) win.focus();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   // ── BOOT ─────────────────────────────────────────────────
