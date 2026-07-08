@@ -2530,6 +2530,7 @@
       const rows = bySem[sem].map((d, i) => `
         <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'};">
           <td style="padding:4px 8px;border:1px solid #bbb;font-size:11px;">${d.nome}</td>
+          <td style="padding:4px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${d.horas_aula ?? '—'}</td>
           <td style="padding:4px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;">${d.peso}</td>
           <td style="padding:4px 8px;border:1px solid #bbb;text-align:center;font-family:monospace;font-size:11px;font-weight:700;color:${corNota(d.nota_final)};">
             ${d.nota_final != null ? Number(d.nota_final).toFixed(4) : '—'}
@@ -2544,6 +2545,7 @@
             <thead>
               <tr style="background:#f0f0f0;">
                 <th style="text-align:left;padding:4px 8px;border:1px solid #bbb;">DISCIPLINA</th>
+                <th style="text-align:center;padding:4px 8px;border:1px solid #bbb;width:80px;">C.H.</th>
                 <th style="text-align:center;padding:4px 8px;border:1px solid #bbb;width:70px;">PESO</th>
                 <th style="text-align:center;padding:4px 8px;border:1px solid #bbb;width:100px;">NOTA FINAL</th>
               </tr>
@@ -2553,8 +2555,7 @@
         </div>`;
     }).join('');
 
-    const notasValidas = disciplinas.map(d => d.nota_final).filter(n => n != null);
-    const mediaGeral = notasValidas.length ? notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length : null;
+    const mediaGeral = data.media_geral;
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
