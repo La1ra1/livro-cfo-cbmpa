@@ -2999,7 +2999,17 @@
       }).join('');
       const mediaCell  = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;border-left:1px solid var(--border);">${fmt(c.media_ponderada)}</td>`;
       const calcCell   = `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${notaCalc != null ? (notaCalc >= 7 ? 'color:var(--success)' : notaCalc >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaCalc)}</td>`;
-      const diretaCell = nfs.length ? `<td style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${diverge ? 'color:var(--danger);' : ''}${notaDireta != null && !diverge ? (notaDireta >= 7 ? 'color:var(--success)' : notaDireta >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''};">${fmt(notaDireta)}${diverge ? ' <span title="Diverge da nota calculada" style="font-size:10px;">⚠</span>' : ''}</td>` : '';
+      // Só dá pra editar a nota final lançada inline quando há uma única verificação
+      // is_nota_final - com mais de uma, notaDireta é a média entre elas e não há uma
+      // nota individual pra apontar o clique.
+      const nfSingle   = nfs.length === 1 ? nfs[0] : null;
+      const nfNotaId   = nfSingle ? c.nota_ids?.[nfSingle.id] : null;
+      const diretaStyle = `padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${diverge ? 'color:var(--danger);' : ''}${notaDireta != null && !diverge ? (notaDireta >= 7 ? 'color:var(--success)' : notaDireta >= 5 ? 'color:var(--warn)' : 'color:var(--danger)') : ''}`;
+      const diretaCellId = `notacell-${c.id}-${nfSingle ? nfSingle.id : 'nf'}`;
+      const diretaLabel  = `${fmt(notaDireta)}${diverge ? ' <span title="Diverge da nota calculada" style="font-size:10px;">⚠</span>' : ''}`;
+      const diretaCell = !nfs.length ? '' : (nfNotaId != null && _canEditNotas
+        ? `<td id="${diretaCellId}" style="${diretaStyle};cursor:pointer;" title="Clique para editar" onclick="startEditNota(${nfNotaId},${c.id},${nfSingle.id})">${diretaLabel}</td>`
+        : `<td id="${diretaCellId}" style="${diretaStyle};">${diretaLabel}</td>`);
 
       return `<tr style="background:${i%2===0?'var(--surface)':'var(--surface2)'};">
         <td style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);">${c.numero_geral ?? '—'}</td>
