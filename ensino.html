@@ -1228,8 +1228,10 @@
       $('nav-lancar').style.display = 'block';
     }
 
-    // Somente coordenador/ensino podem editar notas já lançadas (mesmo escopo do PUT /notas/{id} no backend)
-    _canEditNotas = _user.role === 'coordenador' || _user.role === 'ensino';
+    // Somente ensino pode editar notas já lançadas (mesmo escopo do PUT /notas/{id} no backend).
+    // Usa a lista completa de papéis (_user.roles), não o _user.role resolvido por prioridade -
+    // um usuário com papéis "auxiliar"+"ensino", por exemplo, teria role="auxiliar" em /me.
+    _canEditNotas = (_user.roles || []).some(r => r.role === 'ensino');
 
     // Mostrar filtro de turma para coord/auxiliar/comandante
     if (!_RESTRITOS.has(_user.role)) {
