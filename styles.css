@@ -634,6 +634,28 @@
       position: relative;
     }
 
+    .modal-box {
+      background: var(--surface);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      box-shadow: 0 12px 40px rgba(15,23,42,.15);
+      width: 100%; max-width: 480px;
+      max-height: 90vh; overflow-y: auto;
+      position: relative;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .modal-close {
+      background: none; border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer; padding: 0 4px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
     .modal-title {
       font-family: 'Rajdhani', sans-serif;
       font-size: 20px; font-weight: 700;
