@@ -576,7 +576,7 @@
 <div id="toast"></div>
 
 <script>
-  const API = 'https://api.cfo-cbmpa.com.br';
+  const API = window.__API_BASE__ || '/api';
   const token = () => localStorage.getItem('token');
 
   // ── CURSO ATIVO ────────────────────────────

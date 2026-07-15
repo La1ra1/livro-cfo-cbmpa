@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fatos Observados — Academia Bombeiro Militar</title>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    window.__APP_CONFIG__ = window.__APP_CONFIG__ || {
+      apiBase: '/api',
+      keycloak: {
+        url: 'https://auth.bombeiros.pa.gov.br',
+        realm: 'cbmpa',
+        clientId: 'frontend-test',
+      },
+    };
+  </script>
+  <script src="config.js"></script>
   <script type="module">
     import Keycloak from 'https://esm.sh/keycloak-js@26.2.3';
     window.Keycloak = Keycloak;

@@ -1,4 +1,5 @@
-  const API = 'https://api.cfo-cbmpa.com.br';
+  const APP_CONFIG = window.__APP_CONFIG__ || {};
+  const API = APP_CONFIG.apiBase || window.__API_BASE__ || '/api';
 
   // ── UTILS ──────────────────────────────────
   const $ = id => document.getElementById(id);
@@ -272,9 +273,9 @@
 
   // ── KEYCLOAK ──────────────────────────────────
   const KEYCLOAK_CONFIG = {
-    url: 'https://auth.bombeiros.pa.gov.br',
-    realm: 'cbmpa',
-    clientId: 'frontend-test',
+    url: APP_CONFIG.keycloak?.url || 'https://auth.bombeiros.pa.gov.br',
+    realm: APP_CONFIG.keycloak?.realm || 'cbmpa',
+    clientId: APP_CONFIG.keycloak?.clientId || 'frontend-test',
   };
   let _keycloak = null;
 

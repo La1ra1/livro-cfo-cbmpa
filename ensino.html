@@ -1106,7 +1106,7 @@
 <div id="toast"></div>
 
 <script>
-  const API = 'https://api.cfo-cbmpa.com.br';
+  const API = window.__API_BASE__ || '/api';
   const $   = id => document.getElementById(id);
 
   function token() { return localStorage.getItem('token'); }
