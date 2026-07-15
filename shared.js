@@ -510,6 +510,7 @@
   function doLogout() {
     localStorage.removeItem('token');
     localStorage.removeItem('auth_provider');
+    document.documentElement.classList.remove('has-token');
     $('login-username').value = '';
     $('login-password').value = '';
     $('screen-login').classList.remove('hidden');
