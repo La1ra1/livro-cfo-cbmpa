@@ -1259,6 +1259,7 @@
 
   function doLogout() {
     localStorage.removeItem('token');
+    document.documentElement.classList.remove('has-token');
     $('screen-login').classList.remove('hidden');
     $('app').classList.remove('visible');
     _user = null;
