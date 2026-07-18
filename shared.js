@@ -718,14 +718,14 @@
 
   // ── TRANSFERIR FUNÇÃO / SUB-FUNÇÃO (auto-serviço, mesma turma) ──────────
   // Quem tem dia_cfo/dia_curso/xerife ou uma sub-role (B3/B4/B5) pode passar
-  // pra um colega da própria turma sem depender de coordenador/auxiliar -
+  // pra um cadete da própria turma sem depender de coordenador/auxiliar -
   // ver PUT /usuarios/transferir-role e /usuarios/transferir-sub-role.
   window._transferMode = null; // 'role' | 'sub_role'
 
   function openTransferirFuncao() {
     window._transferMode = 'role';
     $('transferir-title').textContent = 'Transferir Função';
-    $('transferir-desc').textContent = 'Informe o número geral do colega da sua turma que vai receber sua função. Depois da transferência, você volta a ser cadete/aluno normal.';
+    $('transferir-desc').textContent = 'Informe o número geral do cadete da sua turma que vai receber sua função. Depois da transferência, você volta a ser cadete/aluno normal.';
     hideAlert('transferir-error');
     hideAlert('transferir-success');
     $('transferir-numero-geral').value = '';
@@ -735,7 +735,7 @@
   function openTransferirSubFuncao() {
     window._transferMode = 'sub_role';
     $('transferir-title').textContent = 'Transferir Sub-Função';
-    $('transferir-desc').textContent = 'Informe o número geral do colega da sua turma que vai receber sua sub-função. Isso não afeta sua função atual.';
+    $('transferir-desc').textContent = 'Informe o número geral do cadete da sua turma que vai receber sua sub-função. Isso não afeta sua função atual.';
     hideAlert('transferir-error');
     hideAlert('transferir-success');
     $('transferir-numero-geral').value = '';
