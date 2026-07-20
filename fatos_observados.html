@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fatos Observados — Academia Bombeiro Militar</title>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script type="module">
+    import Keycloak from 'https://esm.sh/keycloak-js@26.2.3';
+    window.Keycloak = Keycloak;
+  </script>
   <script src="table-sort.js" defer></script>
   <link rel="stylesheet" href="styles.css?v=3" />
 </head>
@@ -35,6 +39,14 @@
         <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
       </div>
       <button class="btn btn-primary btn-full" id="btn-login">ENTRAR NO SISTEMA</button>
+
+      <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span class="login-sub" style="margin:0;">OU</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <button class="btn btn-ghost btn-full" id="btn-login-keycloak" onclick="doLoginKeycloak()">ENTRAR COM KEYCLOAK</button>
     </div>
   </div>
 </div>
@@ -2458,6 +2470,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     $('btn-login').addEventListener('click', doLogin);
     $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    if (!localStorage.getItem('token')) initKeycloak();
 
     // Modal de termos — checkbox habilita botão de aceite
     $('chk-terms-modal').addEventListener('change', () => {
