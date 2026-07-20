@@ -1033,15 +1033,22 @@
   </div>
 </div>
 
-<!-- ── SUBMODAL OBSERVAÇÃO DA INSTRUÇÃO ── -->
+<!-- ── SUBMODAL TEMA/OBSERVAÇÃO DA INSTRUÇÃO ── -->
 <div id="obs-submodal" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.55);align-items:center;justify-content:center;" onclick="if(event.target===this)$('obs-submodal').style.display='none'">
   <div class="card" style="width:420px;max-width:95vw;">
     <div class="card-header">
-      <span class="card-title">Observação</span>
+      <span class="card-title">Detalhes da Instrução</span>
       <button class="btn btn-ghost btn-sm" onclick="$('obs-submodal').style.display='none'">✕</button>
     </div>
     <div class="card-body">
-      <p id="obs-submodal-text" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;margin:0;"></p>
+      <div id="obs-submodal-tema-wrap" style="margin-bottom:14px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Tema</div>
+        <p id="obs-submodal-tema" style="font-size:13px;line-height:1.5;color:var(--text);margin:0;"></p>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Observação</div>
+        <p id="obs-submodal-text" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;margin:0;"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -1661,14 +1668,16 @@
     const rows = lista.map(i => {
       const dataFmt = i.data ? i.data.substring(0, 10) : '—';
       const editBtn = `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openDiscFaltasModal(${i.id},'Aula ${i.numero_aula} — ${(i.assunto||'').replace(/'/g,"\\'")}',event)">+ Faltas</button>`;
-      return `<tr>
+      const temaAttr = ` data-tema="${(i.assunto || '—').replace(/"/g,'&quot;')}"`;
+      const obsAttr  = ` data-obs="${(i.observacoes || '').replace(/"/g,'&quot;')}"`;
+      return `<tr style="cursor:pointer;"${temaAttr}${obsAttr} onclick="openObsSubmodal(this)">
         <td class="td-mono" style="font-size:12px;">${i.numero_aula}</td>
         <td class="td-mono" style="font-size:12px;">${dataFmt}</td>
         <td style="font-size:13px;">${i.assunto ?? '—'}</td>
         <td class="td-mono" style="font-size:12px;">${i.xerife_nome ?? '—'}</td>
         <td class="td-mono" style="font-size:12px;">${i.lancado_por ?? '—'}</td>
         <td class="td-mono" style="font-size:12px;text-align:center;">${i.total_faltas ?? 0}</td>
-        <td>${editBtn}</td>
+        <td onclick="event.stopPropagation()">${editBtn}</td>
       </tr>`;
     }).join('');
 
@@ -2404,7 +2413,15 @@
   }
 
   function openObsSubmodal(row) {
-    const obs = row.dataset.obs || '';
+    const tema = row.dataset.tema || '';
+    const obs  = row.dataset.obs || '';
+    const temaWrap = $('obs-submodal-tema-wrap');
+    if (tema) {
+      $('obs-submodal-tema').textContent = tema;
+      temaWrap.style.display = '';
+    } else {
+      temaWrap.style.display = 'none';
+    }
     $('obs-submodal-text').textContent = obs;
     $('obs-submodal').style.display = 'flex';
   }
