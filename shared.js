@@ -216,6 +216,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     $('btn-login').addEventListener('click', doLogin);
     $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    if (!localStorage.getItem('token')) initKeycloak();
 
     $('link-forgot-pw').addEventListener('click', e => { e.preventDefault(); openForgotPw(); });
     $('btn-forgot-pw-submit').addEventListener('click', handleForgotPw);
@@ -268,6 +269,70 @@
   });
 
   // ── LOGIN ──────────────────────────────────
+
+  // ── KEYCLOAK ──────────────────────────────────
+  const KEYCLOAK_CONFIG = {
+    url: 'https://auth.bombeiros.pa.gov.br',
+    realm: 'cbmpa',
+    clientId: 'frontend-test',
+  };
+  let _keycloak = null;
+
+  async function initKeycloak() {
+    if (typeof Keycloak === 'undefined') {
+      console.warn('[keycloak] adaptador keycloak-js não carregou.');
+      return;
+    }
+    _keycloak = new Keycloak(KEYCLOAK_CONFIG);
+    try {
+      const authenticated = await _keycloak.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        checkLoginIframe: false,
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+      });
+      if (authenticated) await loginWithKeycloakToken();
+    } catch (e) {
+      console.error('[keycloak] falha ao inicializar', e);
+    }
+  }
+
+  async function doLoginKeycloak() {
+    if (!_keycloak) {
+      showAlert('login-error', 'Keycloak não inicializado. Recarregue a página.');
+      return;
+    }
+    await _keycloak.login();
+  }
+
+  async function loginWithKeycloakToken() {
+    hideAlert('login-error');
+    const btn = $('btn-login-keycloak');
+    if (btn) { btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...'; }
+
+    try {
+      const res = await fetch(`${API}/login/keycloak`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keycloak_token: _keycloak.token }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('login-error', data.detail || 'Falha na autenticação via Keycloak.');
+        return;
+      }
+
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('auth_provider', 'keycloak');
+      await initApp();
+
+    } catch {
+      showAlert('login-error', 'Não foi possível conectar à API.');
+    } finally {
+      if (btn) { btn.classList.remove('btn-loading'); btn.textContent = 'ENTRAR COM KEYCLOAK'; }
+    }
+  }
 
   async function doLogin() {
     hideAlert('login-error');
@@ -504,7 +569,14 @@
       });
     } catch {}
 
+    const viaKeycloak = localStorage.getItem('auth_provider') === 'keycloak';
     doLogout();
+
+    // Sessão veio do Keycloak: encerra o SSO também, senão o check-sso
+    // silencioso reautentica o usuário sem pedir login de novo.
+    if (viaKeycloak && _keycloak) {
+      await _keycloak.logout({ redirectUri: window.location.origin + window.location.pathname });
+    }
   }
 
   function doLogout() {
