@@ -1963,8 +1963,9 @@
     if (!_modalAnotId) return;
     const btnAp = document.getElementById('btn-aprovar');
     const btnDs = document.getElementById('btn-descartar');
+    const htmlAp = btnAp.innerHTML, htmlDs = btnDs.innerHTML;
     btnAp.disabled = btnDs.disabled = true;
-    btnAp.textContent = btnDs.textContent = '...';
+    btnAp.innerHTML = btnDs.innerHTML = '...';
 
     try {
       const res = await fetch(`${API}/anotacoes/${_modalAnotId}/status`, {
@@ -1976,18 +1977,18 @@
       if (!res.ok) {
         showAlert('manot-error', data.detail || 'Erro.');
         btnAp.disabled = btnDs.disabled = false;
-        btnAp.textContent = '✓ Aprovar'; btnDs.textContent = '✕ Descartar';
+        btnAp.innerHTML = htmlAp; btnDs.innerHTML = htmlDs;
         return;
       }
       btnAp.disabled = btnDs.disabled = false;
-      btnAp.textContent = '✓ Aprovar'; btnDs.textContent = '✕ Descartar';
+      btnAp.innerHTML = htmlAp; btnDs.innerHTML = htmlDs;
       toast(`Anotação #${_modalAnotId} ${status === 'aprovada' ? 'aprovada' : 'descartada'}.`);
       closeAnotModal();
       loadPendentes(ANOT_STATE.pendentes.page);
     } catch {
       showAlert('manot-error', 'Erro de conexão.');
       btnAp.disabled = btnDs.disabled = false;
-      btnAp.textContent = '✓ Aprovar'; btnDs.textContent = '✕ Descartar';
+      btnAp.innerHTML = htmlAp; btnDs.innerHTML = htmlDs;
     }
   }
 
@@ -4879,8 +4880,26 @@
     document.getElementById('elogio-success').className = 'alert success';
   }
 
+  // Roda antes do hold começar a contar - campo faltando dá erro na hora.
+  function validarLancarElogio() {
+    const tipoId     = _elogioSel.tipoId;
+    const dataEvento = document.getElementById('elogio-data-evento').value;
+    const descricao  = document.getElementById('elogio-descricao').value.trim();
+    document.getElementById('elogio-error').className   = 'alert error';
+    document.getElementById('elogio-success').className = 'alert success';
+    if (!_elogioCadetes.length) { showAlert('elogio-error', 'Adicione ao menos um aluno.'); return false; }
+    if (!tipoId)     { showAlert('elogio-error', 'Selecione o tipo de elogio.'); return false; }
+    if (!dataEvento) { showAlert('elogio-error', 'Informe a data do evento.'); return false; }
+    if (!descricao)  { showAlert('elogio-error', 'Preencha a descrição do motivo.'); return false; }
+    return true;
+  }
+
+  function iniciarHoldLancarElogio(e) {
+    if (!validarLancarElogio()) return;
+    iniciarHold(e, lancarElogio);
+  }
+
   async function lancarElogio() {
-    const _ignored  = null; // cadetes via _elogioCadetes
     const tipoId     = _elogioSel.tipoId;
     const dataEvento = document.getElementById('elogio-data-evento').value;
     const descricao  = document.getElementById('elogio-descricao').value.trim();
@@ -4888,13 +4907,9 @@
     document.getElementById('elogio-error').className   = 'alert error';
     document.getElementById('elogio-success').className = 'alert success';
 
-    if (!_elogioCadetes.length) { showAlert('elogio-error', 'Adicione ao menos um aluno.'); return; }
-    if (!tipoId)     { showAlert('elogio-error', 'Selecione o tipo de elogio.'); return; }
-    if (!dataEvento) { showAlert('elogio-error', 'Informe a data do evento.'); return; }
-    if (!descricao)  { showAlert('elogio-error', 'Preencha a descrição do motivo.'); return; }
-
     const btn = document.getElementById('btn-lancar-elogio');
-    btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...';
+    const btnHtmlOriginal = btn.innerHTML;
+    btn.classList.add('btn-loading'); btn.innerHTML = 'AGUARDE...';
 
     try {
       let ok = 0, errs = 0;
@@ -4926,7 +4941,7 @@
       }
       if (ok > 0) { toast(`${ok} elogio(s) lançado(s).`); resetLancarElogio(); }
     } catch { showAlert('elogio-error', 'Erro de conexão.'); }
-    finally { btn.classList.remove('btn-loading'); btn.textContent = '★ LANÇAR ELOGIO'; }
+    finally { btn.classList.remove('btn-loading'); btn.innerHTML = btnHtmlOriginal; }
   }
 
 
@@ -5215,7 +5230,11 @@
     if (isCoordAux && e.status === 'pendente') {
       acts.innerHTML = `
         <button class="btn btn-primary" style="flex:1;" onclick="elogioAcao(${e.id},'aprovado')">✓ Aprovar</button>
-        <button class="btn btn-danger" style="flex:1;" onclick="elogioAcao(${e.id},'rejeitado')">✕ Descartar</button>`;
+        <button type="button" class="btn btn-danger hold-confirm" style="flex:1;"
+                onmousedown="iniciarHold(event, elogioAcao.bind(null, ${e.id}, 'rejeitado'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                ontouchstart="iniciarHold(event, elogioAcao.bind(null, ${e.id}, 'rejeitado'))" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✕ Segure p/ descartar</span>
+        </button>`;
     } else if (isCoordAux && e.status !== 'pendente') {
       acts.innerHTML = `
         <button class="btn btn-ghost btn-sm" onclick="elogioAcao(${e.id},'pendente')">↺ Devolver para Pendente</button>`;

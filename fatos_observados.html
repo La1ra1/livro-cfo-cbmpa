@@ -1429,7 +1429,11 @@
 
         <div class="lancamento-card">
           <div class="lancamento-body">
-            <button class="btn btn-primary btn-full" id="btn-lancar-elogio" onclick="lancarElogio()">★ LANÇAR ELOGIO</button>
+            <button type="button" class="btn btn-primary btn-full hold-confirm" id="btn-lancar-elogio"
+                    onmousedown="iniciarHoldLancarElogio(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                    ontouchstart="iniciarHoldLancarElogio(event)" ontouchend="cancelarHold()">
+              <span class="hold-fill"></span><span>★ SEGURE P/ LANÇAR ELOGIO</span>
+            </button>
             <div class="alert error"   id="elogio-error"   style="margin-top:12px;"></div>
             <div class="alert success" id="elogio-success" style="margin-top:12px;"></div>
           </div>
@@ -2039,7 +2043,11 @@
       <div id="manot-actions" style="display:none;">
         <div class="action-row">
           <button class="btn-aprovar" id="btn-aprovar" onclick="submitStatus('aprovada')">✓ Aprovar</button>
-          <button class="btn-descartar" id="btn-descartar" onclick="submitStatus('descartada')">✕ Descartar</button>
+          <button type="button" class="btn-descartar hold-confirm" id="btn-descartar"
+                  onmousedown="iniciarHold(event, submitStatus.bind(null, 'descartada'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                  ontouchstart="iniciarHold(event, submitStatus.bind(null, 'descartada'))" ontouchend="cancelarHold()">
+            <span class="hold-fill"></span><span>✕ Segure p/ descartar</span>
+          </button>
         </div>
       </div>
 
