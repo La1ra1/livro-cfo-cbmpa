@@ -261,6 +261,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     $('btn-login').addEventListener('click', doLogin);
     $('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    if (!localStorage.getItem('token')) initKeycloak();
 
     $('link-forgot-pw').addEventListener('click', e => { e.preventDefault(); openForgotPw(); });
     $('btn-forgot-pw-submit').addEventListener('click', handleForgotPw);
@@ -313,6 +314,70 @@
   });
 
   // ── LOGIN ──────────────────────────────────
+
+  // ── KEYCLOAK ──────────────────────────────────
+  const KEYCLOAK_CONFIG = {
+    url: 'https://auth.bombeiros.pa.gov.br',
+    realm: 'cbmpa',
+    clientId: 'frontend-test',
+  };
+  let _keycloak = null;
+
+  async function initKeycloak() {
+    if (typeof Keycloak === 'undefined') {
+      console.warn('[keycloak] adaptador keycloak-js não carregou.');
+      return;
+    }
+    _keycloak = new Keycloak(KEYCLOAK_CONFIG);
+    try {
+      const authenticated = await _keycloak.init({
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        checkLoginIframe: false,
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+      });
+      if (authenticated) await loginWithKeycloakToken();
+    } catch (e) {
+      console.error('[keycloak] falha ao inicializar', e);
+    }
+  }
+
+  async function doLoginKeycloak() {
+    if (!_keycloak) {
+      showAlert('login-error', 'Keycloak não inicializado. Recarregue a página.');
+      return;
+    }
+    await _keycloak.login();
+  }
+
+  async function loginWithKeycloakToken() {
+    hideAlert('login-error');
+    const btn = $('btn-login-keycloak');
+    if (btn) { btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...'; }
+
+    try {
+      const res = await fetch(`${API}/login/keycloak`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keycloak_token: _keycloak.token }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('login-error', data.detail || 'Falha na autenticação via Keycloak.');
+        return;
+      }
+
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('auth_provider', 'keycloak');
+      await initApp();
+
+    } catch {
+      showAlert('login-error', 'Não foi possível conectar à API.');
+    } finally {
+      if (btn) { btn.classList.remove('btn-loading'); btn.textContent = 'ENTRAR COM KEYCLOAK'; }
+    }
+  }
 
   async function doLogin() {
     hideAlert('login-error');
@@ -549,7 +614,14 @@
       });
     } catch {}
 
+    const viaKeycloak = localStorage.getItem('auth_provider') === 'keycloak';
     doLogout();
+
+    // Sessão veio do Keycloak: encerra o SSO também, senão o check-sso
+    // silencioso reautentica o usuário sem pedir login de novo.
+    if (viaKeycloak && _keycloak) {
+      await _keycloak.logout({ redirectUri: window.location.origin + window.location.pathname });
+    }
   }
 
   function doLogout() {
@@ -1891,8 +1963,9 @@
     if (!_modalAnotId) return;
     const btnAp = document.getElementById('btn-aprovar');
     const btnDs = document.getElementById('btn-descartar');
+    const htmlAp = btnAp.innerHTML, htmlDs = btnDs.innerHTML;
     btnAp.disabled = btnDs.disabled = true;
-    btnAp.textContent = btnDs.textContent = '...';
+    btnAp.innerHTML = btnDs.innerHTML = '...';
 
     try {
       const res = await fetch(`${API}/anotacoes/${_modalAnotId}/status`, {
@@ -1904,18 +1977,18 @@
       if (!res.ok) {
         showAlert('manot-error', data.detail || 'Erro.');
         btnAp.disabled = btnDs.disabled = false;
-        btnAp.textContent = '✓ Aprovar'; btnDs.textContent = '✕ Descartar';
+        btnAp.innerHTML = htmlAp; btnDs.innerHTML = htmlDs;
         return;
       }
       btnAp.disabled = btnDs.disabled = false;
-      btnAp.textContent = '✓ Aprovar'; btnDs.textContent = '✕ Descartar';
+      btnAp.innerHTML = htmlAp; btnDs.innerHTML = htmlDs;
       toast(`Anotação #${_modalAnotId} ${status === 'aprovada' ? 'aprovada' : 'descartada'}.`);
       closeAnotModal();
       loadPendentes(ANOT_STATE.pendentes.page);
     } catch {
       showAlert('manot-error', 'Erro de conexão.');
       btnAp.disabled = btnDs.disabled = false;
-      btnAp.textContent = '✓ Aprovar'; btnDs.textContent = '✕ Descartar';
+      btnAp.innerHTML = htmlAp; btnDs.innerHTML = htmlDs;
     }
   }
 
@@ -4807,8 +4880,26 @@
     document.getElementById('elogio-success').className = 'alert success';
   }
 
+  // Roda antes do hold começar a contar - campo faltando dá erro na hora.
+  function validarLancarElogio() {
+    const tipoId     = _elogioSel.tipoId;
+    const dataEvento = document.getElementById('elogio-data-evento').value;
+    const descricao  = document.getElementById('elogio-descricao').value.trim();
+    document.getElementById('elogio-error').className   = 'alert error';
+    document.getElementById('elogio-success').className = 'alert success';
+    if (!_elogioCadetes.length) { showAlert('elogio-error', 'Adicione ao menos um aluno.'); return false; }
+    if (!tipoId)     { showAlert('elogio-error', 'Selecione o tipo de elogio.'); return false; }
+    if (!dataEvento) { showAlert('elogio-error', 'Informe a data do evento.'); return false; }
+    if (!descricao)  { showAlert('elogio-error', 'Preencha a descrição do motivo.'); return false; }
+    return true;
+  }
+
+  function iniciarHoldLancarElogio(e) {
+    if (!validarLancarElogio()) return;
+    iniciarHold(e, lancarElogio);
+  }
+
   async function lancarElogio() {
-    const _ignored  = null; // cadetes via _elogioCadetes
     const tipoId     = _elogioSel.tipoId;
     const dataEvento = document.getElementById('elogio-data-evento').value;
     const descricao  = document.getElementById('elogio-descricao').value.trim();
@@ -4816,13 +4907,9 @@
     document.getElementById('elogio-error').className   = 'alert error';
     document.getElementById('elogio-success').className = 'alert success';
 
-    if (!_elogioCadetes.length) { showAlert('elogio-error', 'Adicione ao menos um aluno.'); return; }
-    if (!tipoId)     { showAlert('elogio-error', 'Selecione o tipo de elogio.'); return; }
-    if (!dataEvento) { showAlert('elogio-error', 'Informe a data do evento.'); return; }
-    if (!descricao)  { showAlert('elogio-error', 'Preencha a descrição do motivo.'); return; }
-
     const btn = document.getElementById('btn-lancar-elogio');
-    btn.classList.add('btn-loading'); btn.textContent = 'AGUARDE...';
+    const btnHtmlOriginal = btn.innerHTML;
+    btn.classList.add('btn-loading'); btn.innerHTML = 'AGUARDE...';
 
     try {
       let ok = 0, errs = 0;
@@ -4854,7 +4941,7 @@
       }
       if (ok > 0) { toast(`${ok} elogio(s) lançado(s).`); resetLancarElogio(); }
     } catch { showAlert('elogio-error', 'Erro de conexão.'); }
-    finally { btn.classList.remove('btn-loading'); btn.textContent = '★ LANÇAR ELOGIO'; }
+    finally { btn.classList.remove('btn-loading'); btn.innerHTML = btnHtmlOriginal; }
   }
 
 
@@ -5143,7 +5230,11 @@
     if (isCoordAux && e.status === 'pendente') {
       acts.innerHTML = `
         <button class="btn btn-primary" style="flex:1;" onclick="elogioAcao(${e.id},'aprovado')">✓ Aprovar</button>
-        <button class="btn btn-danger" style="flex:1;" onclick="elogioAcao(${e.id},'rejeitado')">✕ Descartar</button>`;
+        <button type="button" class="btn btn-danger hold-confirm" style="flex:1;"
+                onmousedown="iniciarHold(event, elogioAcao.bind(null, ${e.id}, 'rejeitado'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                ontouchstart="iniciarHold(event, elogioAcao.bind(null, ${e.id}, 'rejeitado'))" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✕ Segure p/ descartar</span>
+        </button>`;
     } else if (isCoordAux && e.status !== 'pendente') {
       acts.innerHTML = `
         <button class="btn btn-ghost btn-sm" onclick="elogioAcao(${e.id},'pendente')">↺ Devolver para Pendente</button>`;
