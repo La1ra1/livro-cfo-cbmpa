@@ -1,9 +1,54 @@
-  const API = 'https://api.cfo-cbmpa.com.br';
+  // Local (127.0.0.1/localhost) aponta pra API rodando localmente; qualquer
+  // outro host (produção) continua usando a API oficial - sem build step
+  // nesse frontend, então não há process.env/variável de ambiente real.
+  const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000'
+    : 'https://api.cfo-cbmpa.com.br';
 
   // ── UTILS ──────────────────────────────────
   const $ = id => document.getElementById(id);
 
   function token() { return localStorage.getItem('token'); }
+
+  // ── HOLD-TO-CONFIRM ────────────────────────
+  // Padrão de confirmação sem popup: em vez de window.confirm(), o botão
+  // precisa ser pressionado e segurado por ~2s (uma barra de preenchimento
+  // mostra o progresso). Usar a classe "hold-confirm" no botão + os dois
+  // <span> internos (".hold-fill" e o texto), e os handlers abaixo nos
+  // eventos de mouse/toque. `callback` só roda se o usuário segurar até o
+  // fim; soltar antes cancela sem executar nada.
+  (function _injetarHoldCss() {
+    const css = `
+      .hold-confirm { position: relative; overflow: hidden; }
+      .hold-confirm .hold-fill {
+        position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+        background: rgba(0,0,0,.4); transition: none; z-index: 0;
+      }
+      .hold-confirm.holding .hold-fill { transition: width 2000ms linear; width: 100%; }
+      .hold-confirm span:last-child { position: relative; z-index: 1; }
+    `;
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+  })();
+
+  let _holdTimer = null;
+
+  function iniciarHold(e, callback) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    btn.classList.add('holding');
+    _holdTimer = setTimeout(async () => {
+      btn.classList.remove('holding');
+      await callback();
+    }, 2000);
+  }
+
+  function cancelarHold() {
+    clearTimeout(_holdTimer);
+    _holdTimer = null;
+    document.querySelectorAll('.hold-confirm.holding').forEach(b => b.classList.remove('holding'));
+  }
 
   // ── CURSO ATIVO ────────────────────────────
   // Quando o usuário tem matrícula/coordenação em mais de um curso, ele
@@ -2130,7 +2175,6 @@
 
   async function reverterVeredito() {
     if (!_modalAnotId) return;
-    if (!confirm('Reverter o veredito desta anotação? A justificativa será mantida e um novo veredito poderá ser registrado.')) return;
     try {
       const res = await fetch(`${API}/anotacoes/${_modalAnotId}/veredito`, {
         method: 'DELETE',
@@ -2562,6 +2606,26 @@
     renderAlunosPernoite();
   }
 
+  // Roda antes do hold começar a contar - assim campo faltando dá erro na
+  // hora, sem precisar segurar 2s pra descobrir.
+  function validarPernoiteInopinado() {
+    const descricao  = document.getElementById('pernoite-descricao').value.trim();
+    const resultado  = document.getElementById('pernoite-resultado').value;
+    const datasCumpr = dpGetSelected('dp-pernoite-cumpr');
+    document.getElementById('pernoite-error').className = 'alert error';
+    document.getElementById('pernoite-success').className = 'alert success';
+    if (!_pernoiteCadetes.length) { showAlert('pernoite-error', 'Adicione ao menos um aluno.'); return false; }
+    if (!descricao)        { showAlert('pernoite-error', 'Descreva o motivo.'); return false; }
+    if (!resultado)        { showAlert('pernoite-error', 'Selecione o tipo de punição.'); return false; }
+    if (!datasCumpr.length) { showAlert('pernoite-error', 'Adicione ao menos uma data de cumprimento.'); return false; }
+    return true;
+  }
+
+  function iniciarHoldPernoite(e) {
+    if (!validarPernoiteInopinado()) return;
+    iniciarHold(e, submitPernoiteInopinado);
+  }
+
   async function submitPernoiteInopinado() {
     const descricao  = document.getElementById('pernoite-descricao').value.trim();
     const resultado  = document.getElementById('pernoite-resultado').value;
@@ -2570,13 +2634,6 @@
 
     document.getElementById('pernoite-error').className = 'alert error';
     document.getElementById('pernoite-success').className = 'alert success';
-
-    if (!_pernoiteCadetes.length) { showAlert('pernoite-error', 'Adicione ao menos um aluno.'); return; }
-    if (!descricao)        { showAlert('pernoite-error', 'Descreva o motivo.'); return; }
-    if (!resultado)        { showAlert('pernoite-error', 'Selecione o tipo de punição.'); return; }
-    if (!datasCumpr.length) { showAlert('pernoite-error', 'Adicione ao menos uma data de cumprimento.'); return; }
-
-    if (!confirm(`Confirma o lançamento de ação corretiva para ${_pernoiteCadetes.length} aluno(s)?`)) return;
 
     const btn = document.getElementById('btn-pernoite-lancar');
     btn.classList.add('btn-loading');
@@ -2638,6 +2695,25 @@
     loadBadges();
   }
 
+  // Roda antes do hold começar a contar - campo faltando dá erro na hora.
+  function validarLancarLote() {
+    const ofResp    = _lancState.oficial;
+    const infracao  = _lancState.infracao;
+    const dataFato  = document.getElementById('lanc-data-fato').value;
+    document.getElementById('lanc-error').className = 'alert error';
+    document.getElementById('lanc-success').className = 'alert success';
+    if (!ofResp)    { showAlert('lanc-error', 'Selecione o superior responsável.'); return false; }
+    if (!infracao)  { showAlert('lanc-error', 'Selecione a infração.'); return false; }
+    if (!dataFato)  { showAlert('lanc-error', 'Informe a data do fato.'); return false; }
+    if (!_lancCadetes.length) { showAlert('lanc-error', 'Adicione ao menos um aluno.'); return false; }
+    return true;
+  }
+
+  function iniciarHoldLancarLote(e) {
+    if (!validarLancarLote()) return;
+    iniciarHold(e, lancarLote);
+  }
+
   async function lancarLote() {
     const ofResp    = _lancState.oficial;
     const infracao  = _lancState.infracao;
@@ -2647,19 +2723,13 @@
     document.getElementById('lanc-error').className = 'alert error';
     document.getElementById('lanc-success').className = 'alert success';
 
-    if (!ofResp)    { showAlert('lanc-error', 'Selecione o superior responsável.'); return; }
-    if (!infracao)  { showAlert('lanc-error', 'Selecione a infração.'); return; }
-    if (!dataFato)  { showAlert('lanc-error', 'Informe a data do fato.'); return; }
-    if (!_lancCadetes.length) { showAlert('lanc-error', 'Adicione ao menos um aluno.'); return; }
-
-    if (!confirm(`Confirma o lançamento desta anotação para ${_lancCadetes.length} aluno(s)?`)) return;
-
     const anexosInput = document.getElementById('lanc-anexos');
     const arquivos    = anexosInput ? Array.from(anexosInput.files) : [];
 
     const btn = document.getElementById('btn-lancar');
+    const btnHtmlOriginal = btn.innerHTML;
     btn.classList.add('btn-loading');
-    btn.textContent = 'LANÇANDO...';
+    btn.innerHTML = 'LANÇANDO...';
 
     // Mostra resultado card com estado pendente
     const resultadoCard = document.getElementById('lanc-resultado-card');
@@ -2710,7 +2780,7 @@
     }
 
     btn.classList.remove('btn-loading');
-    btn.textContent = '✚ LANÇAR ANOTAÇÕES';
+    btn.innerHTML = btnHtmlOriginal;
 
     if (err === 0) {
       showAlert('lanc-success', `${ok} anotação(ões) lançada(s) com sucesso.`, 'success');
@@ -2792,7 +2862,12 @@
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text-dim);">${descrPreview}</td>
           <td><span class="pill ${statusCls[a.status] || ''}">${statusMap[a.status] || a.status}</span></td>
           <td>${isMinhaAnot && isPendente
-            ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deletarAnotacao(${a.id}, this)">✕ Deletar</button>`
+            ? `<button type="button" class="btn btn-danger btn-sm hold-confirm"
+                       onmousedown="event.stopPropagation();iniciarHold(event, deletarAnotacao.bind(null, ${a.id}, this))"
+                       onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                       ontouchstart="event.stopPropagation();iniciarHold(event, deletarAnotacao.bind(null, ${a.id}, this))" ontouchend="cancelarHold()">
+                 <span class="hold-fill"></span><span>✕ Segure p/ deletar</span>
+               </button>`
             : ''
           }</td>
         </tr>`;
@@ -2951,22 +3026,22 @@
   function submitEditDescr() { submitDiaCfoDescricao(); }
 
   async function deletarAnotacao(anotId, btn) {
-    if (!confirm(`Deletar anotação #${anotId}? Esta ação não pode ser desfeita.`)) return;
     btn.disabled = true;
-    btn.textContent = '...';
+    const original = btn.innerHTML;
+    btn.innerHTML = '...';
     try {
       const res = await fetch(`${API}/anotacoes/${anotId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token()}` },
       });
       const data = await res.json();
-      if (!res.ok) { toast(data.detail || 'Erro ao deletar.', 'error'); btn.disabled = false; btn.textContent = '✕'; return; }
+      if (!res.ok) { toast(data.detail || 'Erro ao deletar.', 'error'); btn.disabled = false; btn.innerHTML = original; return; }
       toast(`Anotação #${anotId} deletada.`);
       loadMinhasAnotacoes();
     } catch {
       toast('Erro de conexão.', 'error');
       btn.disabled = false;
-      btn.textContent = '✕';
+      btn.innerHTML = original;
     }
   }
 
@@ -3131,8 +3206,6 @@
     const texto = document.getElementById('just-texto').value.trim();
     if (!texto) { showAlert('just-error', 'Escreva sua justificativa antes de continuar.'); return; }
 
-    if (enviar && !confirm('Ao enviar, a justificativa não poderá mais ser editada. Confirmar?')) return;
-
     const btnR = document.getElementById('btn-just-rascunho');
     const btnE = document.getElementById('btn-just-enviar');
     btnR.disabled = btnE.disabled = true;
@@ -3167,6 +3240,13 @@
       loadJustificar();
     } catch { showAlert('just-error', 'Erro de conexão.'); }
     finally { btnR.disabled = btnE.disabled = false; }
+  }
+
+  // Valida antes de iniciar o hold - texto vazio nem começa a contagem.
+  function iniciarHoldEnviarJustificativa(e) {
+    const texto = document.getElementById('just-texto').value.trim();
+    if (!texto) { showAlert('just-error', 'Escreva sua justificativa antes de continuar.'); return; }
+    iniciarHold(e, () => submitJustificativa(true));
   }
 
   // ══════════════════════════════════════════════════
@@ -3532,7 +3612,11 @@
               <td>${r.curso_nome}</td>
               <td>${r.username}</td>
               <td class="td-mono">${r.cpf ?? '—'}</td>
-              <td><button class="btn-edit-infracao" onclick="removerCoordenadorAdmin(${r.id})" title="Remover">✕</button></td>
+              <td><button type="button" class="btn-edit-infracao hold-confirm" title="Segure p/ remover"
+                          onmousedown="iniciarHold(event, removerCoordenadorAdmin.bind(null, ${r.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                          ontouchstart="iniciarHold(event, removerCoordenadorAdmin.bind(null, ${r.id}))" ontouchend="cancelarHold()">
+                <span class="hold-fill"></span><span>✕</span>
+              </button></td>
             </tr>`).join('')
         : `<tr><td colspan="4" style="text-align:center;color:var(--muted);">Nenhum coordenador cadastrado.</td></tr>`;
 
@@ -3563,7 +3647,6 @@
   }
 
   async function removerCoordenadorAdmin(roleId) {
-    if (!confirm('Remover este coordenador?')) return;
     try {
       const res = await fetch(`${API}/admin/coordenadores/${roleId}`, {
         method: 'DELETE',
@@ -3630,7 +3713,11 @@
               <td>${roleLabel(r.role)}</td>
               <td>${r.username}</td>
               <td class="td-mono">${r.turma_id ? `${r.turma_id} ${r.pel ?? ''}` : '—'}</td>
-              <td><button class="btn-edit-infracao" onclick="removerStaff(${r.id})" title="Remover">✕</button></td>
+              <td><button type="button" class="btn-edit-infracao hold-confirm" title="Segure p/ remover"
+                          onmousedown="iniciarHold(event, removerStaff.bind(null, ${r.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                          ontouchstart="iniciarHold(event, removerStaff.bind(null, ${r.id}))" ontouchend="cancelarHold()">
+                <span class="hold-fill"></span><span>✕</span>
+              </button></td>
             </tr>`).join('')
         : `<tr><td colspan="4" style="text-align:center;color:var(--muted);">Nenhum staff cadastrado.</td></tr>`;
     } catch { toast('Erro ao carregar staff.', 'error'); }
@@ -3672,7 +3759,6 @@
   }
 
   async function removerStaff(roleId) {
-    if (!confirm('Remover este membro da staff?')) return;
     try {
       const res = await fetch(`${API}/coordenador/staff/${roleId}`, {
         method: 'DELETE',
@@ -4025,7 +4111,11 @@
             <span class="anexo-nome">📎 ${a.descricao}</span>
             <div class="anexo-actions">
               <a class="anexo-btn-ver" href="${a.url}" target="_blank" rel="noopener">Ver</a>
-              ${canEdit ? `<button class="anexo-btn-del" onclick="deleteJustAnexo(${anotId}, ${a.id})" title="Remover">✕</button>` : ''}
+              ${canEdit ? `<button type="button" class="anexo-btn-del hold-confirm" title="Segure p/ remover"
+                                    onmousedown="iniciarHold(event, deleteJustAnexo.bind(null, ${anotId}, ${a.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                                    ontouchstart="iniciarHold(event, deleteJustAnexo.bind(null, ${anotId}, ${a.id}))" ontouchend="cancelarHold()">
+                            <span class="hold-fill"></span><span>✕</span>
+                          </button>` : ''}
             </div>
           </div>`).join('');
       }
@@ -4035,7 +4125,6 @@
   }
 
   async function deleteJustAnexo(anotId, anexoId) {
-    if (!confirm('Remover este anexo?')) return;
     try {
       const res = await fetch(`${API}/anotacoes/${anotId}/anexos/${anexoId}`, {
         method: 'DELETE',
@@ -4388,7 +4477,11 @@
             <span class="anexo-nome">📎 ${a.descricao}</span>
             <div class="anexo-actions">
               <a class="anexo-btn-ver" href="${a.url}" target="_blank" rel="noopener">Ver</a>
-              ${canEdit ? `<button class="anexo-btn-del" onclick="deleteDiaCfoAnexo(${anotId}, ${a.id})" title="Remover">✕</button>` : ''}
+              ${canEdit ? `<button type="button" class="anexo-btn-del hold-confirm" title="Segure p/ remover"
+                                    onmousedown="iniciarHold(event, deleteDiaCfoAnexo.bind(null, ${anotId}, ${a.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                                    ontouchstart="iniciarHold(event, deleteDiaCfoAnexo.bind(null, ${anotId}, ${a.id}))" ontouchend="cancelarHold()">
+                            <span class="hold-fill"></span><span>✕</span>
+                          </button>` : ''}
             </div>
           </div>`).join('');
       }
@@ -4398,7 +4491,6 @@
   }
 
   async function deleteDiaCfoAnexo(anotId, anexoId) {
-    if (!confirm('Remover este anexo?')) return;
     try {
       const res = await fetch(`${API}/anotacoes/${anotId}/anexos/${anexoId}`, {
         method: 'DELETE',
@@ -4571,9 +4663,6 @@
   async function bulkStatus(status) {
     const ids = getCheckedPendentes();
     if (!ids.length) return;
-
-    const label = status === 'aprovada' ? 'aprovar' : 'descartar';
-    if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} ${ids.length} anotação(ões)?`)) return;
 
     const bar = document.getElementById('bulk-bar-pendentes');
     bar.querySelectorAll('button').forEach(b => { b.disabled = true; });
@@ -5199,8 +5288,6 @@
   async function bulkElogio(status) {
     const ids = getCheckedElogios();
     if (!ids.length) return;
-    const label = status === 'aprovado' ? 'aprovar' : 'rejeitar';
-    if (!confirm(`${label.charAt(0).toUpperCase()+label.slice(1)} ${ids.length} elogio(s)?`)) return;
     const bar = document.getElementById('bulk-bar-elogios');
     bar.querySelectorAll('button').forEach(b => b.disabled = true);
     let ok = 0, err = 0;
@@ -7186,7 +7273,6 @@
   async function submitJulgarRecurso(status) {
     if (!_julgarRecursoId) return;
     const observacao = document.getElementById('julgar-observacao').value.trim() || null;
-    if (status === 'indeferido' && !confirm('Confirma o indeferimento? Uma anotação de perda de ponto será lançada automaticamente.')) return;
     try {
       const res = await fetch(`${API}/recursos/${_julgarRecursoId}/julgar`, {
         method: 'PATCH',

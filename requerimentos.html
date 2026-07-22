@@ -676,6 +676,16 @@
     @media (max-width: 640px) {
       .app-footer-grid { grid-template-columns: 1fr; gap: 16px; }
     }
+
+    /* Hold-to-confirm: segurar ~2s (barra de preenchimento) em vez de
+       window.confirm() para ações sensíveis. */
+    .hold-confirm { position: relative; overflow: hidden; }
+    .hold-confirm .hold-fill {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+      background: rgba(0,0,0,.4); transition: none; z-index: 0;
+    }
+    .hold-confirm.holding .hold-fill { transition: width 2000ms linear; width: 100%; }
+    .hold-confirm span:last-child { position: relative; z-index: 1; }
   </style>
 </head>
 <script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
@@ -948,9 +958,14 @@
             </div>
           </div>
         </div>
+        <div id="req-envio-resumo" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:13px;line-height:1.7;margin-bottom:12px;"></div>
         <div class="alert error" id="novo-error"></div>
         <div class="alert success" id="novo-success"></div>
-        <button class="btn btn-primary btn-full" id="btn-enviar-req" onclick="enviarRequerimento()">✦ ENVIAR REQUERIMENTO</button>
+        <button type="button" class="btn btn-primary btn-full hold-confirm" id="btn-enviar-req"
+                onmousedown="prepararESegurarEnvio(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                ontouchstart="prepararESegurarEnvio(event)" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✦ SEGURE P/ ENVIAR REQUERIMENTO</span>
+        </button>
       </div>
     </div>
 
@@ -991,24 +1006,6 @@
 
   </div><!-- .page-wrap -->
 </div><!-- #app -->
-
-<!-- ══ MODAL CONFIRMAÇÃO ENVIO ══ -->
-<div class="modal-overlay" id="modal-confirm-envio">
-  <div class="modal-box" style="max-width:420px;">
-    <div class="modal-header">
-      <div class="modal-title">Confirmar Envio</div>
-      <button class="modal-close" onclick="closeModal('modal-confirm-envio')">✕</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Revise antes de enviar:</p>
-      <div id="confirm-envio-resumo" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:13px;line-height:1.7;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-confirm-envio')">Cancelar</button>
-      <button class="btn btn-primary btn-sm" id="btn-confirm-envio-ok" onclick="_confirmarEnvioRequerimento()">✦ Enviar</button>
-    </div>
-  </div>
-</div>
 
 <!-- ══ MODAL DETALHE ══ -->
 <div class="modal-overlay" id="modal-detalhe">
@@ -1053,7 +1050,11 @@
           <textarea class="form-ctrl" id="desp-obs" placeholder="Observações ou justificativa da decisão (opcional)..." rows="3"></textarea>
         </div>
         <div class="alert error" id="desp-error"></div>
-        <button class="btn btn-primary btn-full" id="btn-despachar" onclick="despachar()">✦ CONFIRMAR DESPACHO</button>
+        <button type="button" class="btn btn-primary btn-full hold-confirm" id="btn-despachar"
+                onmousedown="prepararESegurarDespacho(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                ontouchstart="prepararESegurarDespacho(event)" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✦ SEGURE P/ CONFIRMAR DESPACHO</span>
+        </button>
       </div>
 
       <!-- Anexos -->
@@ -1074,6 +1075,11 @@
 
     </div>
     <div class="modal-footer">
+      <button type="button" class="btn btn-danger btn-sm hold-confirm" id="btn-deletar-req" style="display:none;"
+              onmousedown="iniciarHold(event, deletarRequerimentoProprio)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+              ontouchstart="iniciarHold(event, deletarRequerimentoProprio)" ontouchend="cancelarHold()">
+        <span class="hold-fill"></span><span>🗑 Segure p/ excluir</span>
+      </button>
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-detalhe')">Fechar</button>
     </div>
   </div>
@@ -1082,7 +1088,12 @@
 <div id="toast"></div>
 
 <script>
-  const API   = 'https://api.cfo-cbmpa.com.br';
+  // Local (127.0.0.1/localhost) aponta pra API rodando localmente; qualquer
+  // outro host (produção) continua usando a API oficial - sem build step
+  // nesse frontend, então não há process.env/variável de ambiente real.
+  const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000'
+    : 'https://api.cfo-cbmpa.com.br';
   const token = () => localStorage.getItem('token');
 
   // ── CURSO ATIVO ────────────────────────────
@@ -1240,20 +1251,24 @@
       document.getElementById('th-cadete').style.display   = '';
       document.getElementById('page-meta').textContent     = 'Todos os requerimentos do CFO';
       loadCadeteSelect();
-      if (_canManage) {
-        document.getElementById('tab-btn-calendario').style.display = '';
-        const navCal = document.getElementById('nav-calendario');
-        if (navCal) navCal.style.display = '';
-      }
+      document.getElementById('tab-btn-calendario').style.display = '';
+      const navCal = document.getElementById('nav-calendario');
+      if (navCal) navCal.style.display = '';
     } else {
       document.getElementById('filter-bar-cadete').style.display = 'flex';
-      // Cadete: mostra botão e tab de novo requerimento
-      document.getElementById('btn-novo-req').style.display  = 'inline-flex';
-      document.getElementById('tab-btn-novo').style.display  = '';
-      const navNovo = document.getElementById('nav-novo');
-      if (navNovo) navNovo.style.display = '';
-      document.getElementById('page-meta').textContent       = 'Meus requerimentos';
+      document.getElementById('page-meta').textContent = 'Meus requerimentos';
     }
+
+    // "Novo Requerimento" sempre disponível pra qualquer usuário autenticado,
+    // independente de também ter um papel de staff (_canManage) - o backend
+    // já suporta staff abrindo requerimento próprio (routers/requerimentos.py,
+    // abrir_requerimento: matricula_id fica None quando o requerente não tem
+    // matrícula). Sem isso, comandante de pelotão/líder do corpo de alunos
+    // que também são requerentes nunca viam essa opção.
+    document.getElementById('btn-novo-req').style.display = 'inline-flex';
+    document.getElementById('tab-btn-novo').style.display = '';
+    const navNovo = document.getElementById('nav-novo');
+    if (navNovo) navNovo.style.display = '';
   }
 
   async function loadCadeteSelect() {
@@ -1415,6 +1430,7 @@
     document.getElementById('mdet-despacho-form').style.display = 'none';
     document.getElementById('mdet-anexos-lista').innerHTML = '<div class="anexo-empty">—</div>';
     document.getElementById('mdet-upload-row').style.display = 'none';
+    document.getElementById('btn-deletar-req').style.display = 'none';
     document.getElementById('desp-error').className = 'alert error';
     document.getElementById('desp-status').value = '';
     document.getElementById('desp-obs').value    = '';
@@ -1474,10 +1490,16 @@
       // Anexos
       await loadAnexos(id, r.status, r.decidido_em);
 
-      // Upload: cadete dono pode adicionar a qualquer momento
-      const isCadeteDono = !_canManage && String(r.cadete_id) === String(_userId);
-      if (isCadeteDono) {
+      // Dono do requerimento - independe de também ter papel de staff (ex.:
+      // comandante de pelotão/líder do corpo de alunos que também são
+      // requerentes do próprio requerimento).
+      const isDono = String(r.cadete_id) === String(_userId);
+      if (isDono) {
         document.getElementById('mdet-upload-row').style.display = 'flex';
+      }
+      // Excluir: só o dono, só enquanto pendente (ver DELETE /requerimentos/{id}).
+      if (isDono && r.status === 'pendente') {
+        document.getElementById('btn-deletar-req').style.display = 'inline-flex';
       }
 
     } catch {
@@ -1516,7 +1538,11 @@
             <span class="anexo-nome">📎 ${a.descricao}</span>
             <div style="display:flex;gap:6px;align-items:center;">
               <a class="anexo-btn-ver" href="${a.url}" target="_blank" rel="noopener">Ver</a>
-              ${podeDeletar ? `<button class="anexo-btn-del" onclick="deletarAnexo(${a.id})" title="Remover">✕</button>` : ''}
+              ${podeDeletar ? `<button type="button" class="anexo-btn-del hold-confirm" title="Segure p/ remover"
+                                      onmousedown="iniciarHold(event, deletarAnexo.bind(null, ${a.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                                      ontouchstart="iniciarHold(event, deletarAnexo.bind(null, ${a.id}))" ontouchend="cancelarHold()">
+                                <span class="hold-fill"></span><span>✕</span>
+                              </button>` : ''}
             </div>
           </div>`;
         }).join('');
@@ -1526,8 +1552,27 @@
     }
   }
 
+  // Hold-to-confirm: segurar ~2s em vez de window.confirm(). `callback` só
+  // roda se o usuário segurar até o fim; soltar antes cancela sem executar.
+  let _holdTimer = null;
+
+  function iniciarHold(e, callback) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    btn.classList.add('holding');
+    _holdTimer = setTimeout(async () => {
+      btn.classList.remove('holding');
+      await callback();
+    }, 2000);
+  }
+
+  function cancelarHold() {
+    clearTimeout(_holdTimer);
+    _holdTimer = null;
+    document.querySelectorAll('.hold-confirm.holding').forEach(b => b.classList.remove('holding'));
+  }
+
   async function deletarAnexo(anexoId) {
-    if (!confirm('Remover este anexo?')) return;
     try {
       const res = await fetch(`${API}/requerimentos/${_currentReqId}/anexos/${anexoId}`, {
         method: 'DELETE',
@@ -1546,6 +1591,24 @@
         document.getElementById('mdet-anexos-lista').innerHTML = '<div class="anexo-empty">Nenhum anexo</div>';
       }
       toast('Anexo removido.');
+    } catch { toast('Erro de conexão.', 'error'); }
+  }
+
+  async function deletarRequerimentoProprio() {
+    if (!_currentReqId) return;
+    try {
+      const res = await fetch(`${API}/requerimentos/${_currentReqId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast(err.detail || 'Erro ao excluir requerimento.', 'error');
+        return;
+      }
+      toast('Requerimento excluído.');
+      closeModal('modal-detalhe');
+      loadLista(_currentPage);
     } catch { toast('Erro de conexão.', 'error'); }
   }
 
@@ -1579,21 +1642,34 @@
   }
 
   // ── Despachar ───────────────────────────────────────────────────
+  // Roda antes do hold começar a contar - decisão não selecionada dá erro na hora.
+  function validarDespacho() {
+    const status = document.getElementById('desp-status').value;
+    const errEl  = document.getElementById('desp-error');
+    errEl.className = 'alert error';
+    if (!status) {
+      errEl.textContent = 'Selecione uma decisão.';
+      errEl.classList.add('show');
+      return false;
+    }
+    return true;
+  }
+
+  function prepararESegurarDespacho(e) {
+    if (!validarDespacho()) return;
+    iniciarHold(e, despachar);
+  }
+
   async function despachar() {
     const status = document.getElementById('desp-status').value;
     const obs    = document.getElementById('desp-obs').value.trim();
     const errEl  = document.getElementById('desp-error');
     errEl.className = 'alert error';
 
-    if (!status) {
-      errEl.textContent = 'Selecione uma decisão.';
-      errEl.classList.add('show');
-      return;
-    }
-
     const btn = document.getElementById('btn-despachar');
+    const btnHtmlOriginal = btn.innerHTML;
     btn.classList.add('btn-loading');
-    btn.textContent = 'Despachando...';
+    btn.innerHTML = 'Despachando...';
 
     try {
       const res = await fetch(`${API}/requerimentos/${_currentReqId}/status`, {
@@ -1613,7 +1689,7 @@
     } catch { errEl.textContent = 'Erro de conexão.'; errEl.classList.add('show'); }
     finally {
       btn.classList.remove('btn-loading');
-      btn.textContent = '✦ CONFIRMAR DESPACHO';
+      btn.innerHTML = btnHtmlOriginal;
     }
   }
 
@@ -1684,26 +1760,32 @@
       _pendingReqBody.data_afastamento_fim    = dataFim;
     }
 
-    // Montar resumo para o modal
+    // Monta o resumo (fixo na tela, não mais em popup) antes do hold começar.
     let resumo = `<strong>Categoria:</strong> ${categoriaNome}<br>`;
     resumo    += `<strong>Título:</strong> ${titulo}<br>`;
     if (descricao) resumo += `<strong>Descrição:</strong> ${descricao}<br>`;
     if (nome === 'dispensa') resumo += `<strong>Período:</strong> ${dataIniRaw} → ${dataFimRaw}<br>`;
     if (_novosArquivos.length) resumo += `<strong>Anexos:</strong> ${_novosArquivos.length} arquivo(s)<br>`;
-    document.getElementById('confirm-envio-resumo').innerHTML = resumo;
-    document.getElementById('modal-confirm-envio').classList.add('open');
+    document.getElementById('req-envio-resumo').innerHTML = resumo;
+    document.getElementById('req-envio-resumo').style.display = 'block';
+    return true;
+  }
+
+  function prepararESegurarEnvio(e) {
+    if (!enviarRequerimento()) return;
+    iniciarHold(e, _confirmarEnvioRequerimento);
   }
 
   async function _confirmarEnvioRequerimento() {
-    document.getElementById('modal-confirm-envio').classList.remove('open');
     const body  = _pendingReqBody;
     const errEl = document.getElementById('novo-error');
     const sucEl = document.getElementById('novo-success');
     const btn   = document.getElementById('btn-enviar-req');
+    const btnHtmlOriginal = btn.innerHTML;
     errEl.className = 'alert error';
     sucEl.className = 'alert success';
     btn.classList.add('btn-loading');
-    btn.textContent = 'Enviando...';
+    btn.innerHTML = 'Enviando...';
     try {
       const res = await fetch(`${API}/requerimentos`, {
         method: 'POST',
@@ -1743,7 +1825,7 @@
       errEl.classList.add('show');
     } finally {
       btn.classList.remove('btn-loading');
-      btn.textContent = '✦ ENVIAR REQUERIMENTO';
+      btn.innerHTML = btnHtmlOriginal;
     }
   }
 
@@ -1784,6 +1866,7 @@
     document.getElementById('novo-anexos-lista').innerHTML = '';
     document.getElementById('novo-error').className = 'alert error';
     document.getElementById('novo-success').className = 'alert success';
+    document.getElementById('req-envio-resumo').style.display = 'none';
     switchTab('lista');
   }
 
