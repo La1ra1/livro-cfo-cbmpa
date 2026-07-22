@@ -302,6 +302,88 @@
       position: absolute; top: 0; width: 1px; height: 6px; opacity: .8;
     }
 
+    /* ── QIS (Quadro de Instrução Semanal) ── */
+    #qis-table th, #qis-table td, .qis-hist-preview th, .qis-hist-preview td { text-align: center; white-space: nowrap; }
+    #qis-table th:first-child, #qis-table td:first-child,
+    .qis-hist-preview th:first-child, .qis-hist-preview td:first-child { text-align: left; white-space: normal; }
+    .qis-hist-preview { width: 100%; margin-top: 4px; }
+    .qis-hist-preview th, .qis-hist-preview td:first-child {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); padding: 3px 6px;
+    }
+    .qis-cell-trigger {
+      width: 100%; min-width: 88px; max-width: 88px; background: var(--bg); border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border); color: var(--text);
+      padding: 4px 6px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; line-height: 1.25; cursor: pointer; transition: border-color .2s;
+      white-space: normal;
+    }
+    .qis-cell-trigger:hover { border-color: var(--accent); border-bottom-color: var(--accent); }
+    .qis-cell-readonly {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-dim);
+      padding: 4px 6px; display: block; line-height: 1.25; white-space: normal;
+    }
+    /* Hold-to-confirm: padrão de confirmação sem popup usado em todo botão
+       sensível desta página - segurar ~2s (barra de preenchimento visual)
+       em vez de window.confirm(). */
+    .hold-confirm { position: relative; overflow: hidden; }
+    .hold-confirm .hold-fill {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+      background: rgba(0,0,0,.4); transition: none; z-index: 0;
+    }
+    .hold-confirm.holding .hold-fill { transition: width 2000ms linear; width: 100%; }
+    .hold-confirm span:last-child { position: relative; z-index: 1; }
+    .qis-table-pasting .qis-cell-trigger { cursor: copy; }
+    /* Paleta categórica sequencial: não é fixa por disciplina - a 1ª
+       disciplina distinta que aparece no quadro (varrendo linha x dia) pega
+       a cor 1, a 2ª pega a cor 2, etc. Só reforço visual: a identidade da
+       disciplina continua sempre pelo texto da célula, nunca só pela cor. */
+    .qis-cat-1 { background: rgba(42,120,214,.16); }
+    .qis-cat-2 { background: rgba(235,104,52,.16); }
+    .qis-cat-3 { background: rgba(27,175,122,.16); }
+    .qis-cat-4 { background: rgba(237,161,0,.18); }
+    .qis-cat-5 { background: rgba(232,123,164,.18); }
+    .qis-cat-6 { background: rgba(0,131,0,.14); }
+    .qis-cat-7 { background: rgba(74,58,167,.16); }
+    .qis-cat-8 { background: rgba(227,73,72,.16); }
+
+    /* ── Calendário customizado (seleção de semana do QIS) ── */
+    .qis-week-trigger {
+      width: 100%; text-align: left; background: var(--bg); border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border); color: var(--text);
+      padding: 10px 13px; font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px; cursor: pointer; transition: border-color .2s;
+    }
+    .qis-week-trigger:hover, .qis-week-trigger:focus { border-color: var(--accent); border-bottom-color: var(--accent); outline: none; }
+    .qis-week-picker {
+      width: 260px; background: var(--surface2); border: 1px solid var(--border2);
+      box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 10px; backdrop-filter: var(--glass-blur);
+    }
+    .qis-week-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: capitalize;
+      margin-bottom: 8px;
+    }
+    .qis-week-nav button {
+      background: none; border: none; color: var(--text); cursor: pointer; font-size: 15px;
+      width: 22px; height: 22px; line-height: 1; padding: 0;
+    }
+    .qis-week-nav button:hover { color: var(--accent); }
+    .qis-week-daynames, .qis-week-row {
+      display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
+    }
+    .qis-week-daynames span {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted);
+      padding-bottom: 4px;
+    }
+    .qis-week-row { cursor: pointer; border-radius: 3px; transition: background .12s; }
+    .qis-week-row:hover { background: var(--accent-dim); }
+    .qis-week-day {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text);
+      padding: 5px 0;
+    }
+    .qis-week-day.outro-mes { color: var(--muted); opacity: .5; }
+    .qis-week-day.hoje { font-weight: 700; text-decoration: underline; }
+
     /* ── FILTERS BAR ── */
     .filters-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
     .filters-bar label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 0; white-space: nowrap; }
@@ -486,6 +568,9 @@
       <div class="nav-item" data-section="faltas" onclick="showSection('faltas')">
         <span class="nav-icon">⚑</span> Faltas
       </div>
+      <div class="nav-item" data-section="qis" onclick="showSection('qis')">
+        <span class="nav-icon">▤</span> Quadro de Instrução Semanal
+      </div>
       <div class="nav-item" data-section="dashboard" onclick="showSection('dashboard')">
         ▦ Dashboard
       </div>
@@ -641,6 +726,96 @@
       </div>
     </section>
 
+    <!-- ── QUADRO DE INSTRUÇÃO SEMANAL (QIS) ── -->
+    <section class="section" id="section-qis">
+      <div class="page-header">
+        <div>
+          <div class="page-breadcrumb">CFO · Ensino e Instrução</div>
+          <div class="page-title">Quadro de <span>Instrução Semanal</span></div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <label>Turma</label>
+        <select id="qis-turma-select" onchange="onQisTurmaChange()">
+          <option value="">Selecione...</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="qis-btn-novo" style="display:none;" onclick="abrirQisCriacao()">+ Novo QIS</button>
+      </div>
+
+      <div id="qis-historico">
+        <div class="empty-state"><div class="empty-state-icon">▤</div><div class="empty-state-text">Selecione uma turma</div></div>
+      </div>
+
+      <div class="card" id="qis-grid-card" style="display:none;">
+        <div class="card-header">
+          <span class="card-title" id="qis-grid-title">Novo QIS</span>
+          <button class="btn btn-ghost btn-sm" onclick="fecharQisGrid()">✕ Fechar</button>
+        </div>
+        <div class="card-body">
+          <div id="qis-alert" class="alert error"></div>
+
+          <div class="form-row" id="qis-novo-form" style="margin-bottom:18px;">
+            <div class="form-group" style="position:relative;">
+              <label>Semana</label>
+              <button type="button" class="qis-week-trigger" id="qis-week-trigger" onclick="toggleQisWeekPicker(event)">Selecione a semana</button>
+              <input type="hidden" id="qis-input-semana">
+            </div>
+            <div class="form-group">
+              <label>Nº de horas-aula (linhas)</label>
+              <input type="number" id="qis-input-linhas" min="1" max="20" value="6">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <button class="btn btn-primary btn-sm" onclick="gerarGradeQis()">Gerar grade</button>
+            </div>
+          </div>
+
+          <div id="qis-paste-bar" style="display:none;margin-bottom:12px;padding:8px 12px;background:rgba(52,152,219,.12);border:1px solid var(--accent);border-radius:4px;align-items:center;justify-content:space-between;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;">
+            <span>📋 Colando: <strong id="qis-paste-bar-nome"></strong> — clique nas células para colar, Esc para cancelar</span>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="cancelQisPaste()">Cancelar</button>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table id="qis-table" style="display:none;">
+              <thead><tr id="qis-table-head"></tr></thead>
+              <tbody id="qis-table-body"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:18px;display:none;" id="qis-grid-actions">
+            <button class="btn btn-primary btn-sm" onclick="salvarQis()">Salvar QIS</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel de busca de disciplina compartilhado entre as células da grade -->
+      <!-- (não usa a classe sd-wrap/a classe 'open': é um único painel flutuante
+           reaproveitado por até 20×7 células, e o handler global de "clique fora"
+           de .sd-panel.open (linha ~2646) fecharia este quando o gatilho clicado
+           - uma célula da tabela - não está aninhado dentro dele; por isso ele
+           tem seu próprio listener de clique-fora, ver fecharQisCellSdSeClicouFora) -->
+      <div class="sd-panel" id="qis-cell-sd" style="position:fixed;width:260px;display:none;z-index:401;">
+        <input class="sd-search" placeholder="Pesquisar disciplina..." oninput="filterQisCellSd(this.value)">
+        <div class="sd-list" id="qis-cell-sd-list"></div>
+        <div class="sd-clear" onclick="limparQisCell()">✕ Limpar célula</div>
+      </div>
+
+      <!-- Calendário customizado do "Semana": sempre seleciona a semana (Seg-Dom)
+           inteira, nunca um dia avulso - ao clicar em qualquer dia de uma linha,
+           a segunda-feira daquela linha vira semana_inicio. -->
+      <div class="qis-week-picker" id="qis-week-picker" style="position:fixed;display:none;z-index:401;">
+        <div class="qis-week-nav">
+          <button type="button" onclick="qisWeekPickerMes(-1)">‹</button>
+          <span id="qis-week-picker-label"></span>
+          <button type="button" onclick="qisWeekPickerMes(1)">›</button>
+        </div>
+        <div class="qis-week-daynames">
+          <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div id="qis-week-picker-grid"></div>
+      </div>
+    </section>
+
     <!-- ── LANÇAR DISCIPLINA (B3) ── -->
     <section class="section" id="section-lancar">
       <div class="page-header">
@@ -756,10 +931,15 @@
           </span>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-ghost btn-sm" id="inst-add-btn" onclick="addHorario()">✚ Horário</button>
-            <button class="btn btn-primary btn-sm" id="inst-lancar-btn" onclick="lancarInstrucoes()">Lançar</button>
+            <button type="button" class="btn btn-primary btn-sm hold-confirm" id="inst-lancar-btn"
+                    onmousedown="prepararESegurarLancamento(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                    ontouchstart="prepararESegurarLancamento(event)" ontouchend="cancelarHold()">
+              <span class="hold-fill"></span><span>Segure p/ lançar</span>
+            </button>
           </div>
         </div>
 
+        <div id="inst-resumo" class="alert" style="display:none;white-space:pre-wrap;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;"></div>
         <div id="inst-alert" class="alert error"></div>
 
         <div style="overflow-x:auto;">
@@ -1096,24 +1276,16 @@
   </div>
 </div>
 
-<!-- ── MODAL CONFIRMAÇÃO INSTRUÇÃO ── -->
-<div id="inst-confirm-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
-  <div class="card" style="width:380px;max-width:95vw;">
-    <div class="card-header"><span class="card-title">Confirmar Lançamento</span></div>
-    <div class="card-body">
-      <p id="inst-confirm-msg" style="font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;"></p>
-      <div style="display:flex;justify-content:flex-end;gap:8px;">
-        <button class="btn btn-ghost btn-sm" onclick="$('inst-confirm-modal').style.display='none'">Cancelar</button>
-        <button class="btn btn-primary btn-sm" id="inst-confirm-ok" onclick="_confirmarLancamento()">Confirmar</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div id="toast"></div>
 
 <script>
-  const API = 'https://api.cfo-cbmpa.com.br';
+  // Local (127.0.0.1/localhost) aponta pra API rodando localmente; qualquer
+  // outro host (produção) continua usando a API oficial - sem build step
+  // nesse frontend, então não há process.env/variável de ambiente real.
+  const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000'
+    : 'https://api.cfo-cbmpa.com.br';
   const $   = id => document.getElementById(id);
 
   function token() { return localStorage.getItem('token'); }
@@ -1195,6 +1367,7 @@
     if (name === 'status')      loadStatus();
     if (name === 'disciplinas') loadDisciplinas();
     if (name === 'faltas')      loadFaltas();
+    if (name === 'qis')         loadQisSection();
     if (name === 'lancar')      loadLancarForm();
     if (name === 'instrucao')   loadInstForm();
     if (name === 'avaliacao')   loadAvalForm();
@@ -2085,17 +2258,20 @@
     _renderInstTable();
   }
 
-  function lancarInstrucoes() {
+  // Valida e monta o resumo (fixo na tela, não mais em popup) antes do hold
+  // começar a contar - assim um campo faltando dá erro na hora.
+  function validarEPrepararLancamento() {
     const alertEl = $('inst-alert');
     alertEl.className = 'alert';
-    if (!_instDisciplina) return;
+    $('inst-resumo').style.display = 'none';
+    if (!_instDisciplina) return false;
     _saveFaltaValues();
 
     const dataGlobal = $('inst-data-global').value;
     if (!dataGlobal) {
       alertEl.textContent = 'Informe a data antes de lançar.';
       alertEl.className   = 'alert error show';
-      return;
+      return false;
     }
 
     const errosVal = [];
@@ -2105,7 +2281,7 @@
     if (errosVal.length) {
       alertEl.textContent = errosVal.join(' · ');
       alertEl.className   = 'alert error show';
-      return;
+      return false;
     }
 
     const aulaBase = (_instDisciplina?.instrucoes_realizadas || 0) + 1;
@@ -2124,20 +2300,25 @@
     const lines = _instHorarios.map((h, idx) =>
       `• Aula ${aulaBase + idx}: ${h.assunto}`
     ).join('\n');
-    $('inst-confirm-msg').textContent =
+    $('inst-resumo').textContent =
       `Disciplina: ${_instDisciplina.nome}\nData: ${dataGlobal}   Xerife: ${xerifeLabel}\nFaltas registradas: ${totalFaltas}\n\n${lines}`;
-    $('inst-confirm-msg').style.whiteSpace = 'pre-wrap';
-    $('inst-confirm-modal').style.display = 'flex';
+    $('inst-resumo').style.display = 'block';
+    return true;
+  }
+
+  function prepararESegurarLancamento(e) {
+    if (!validarEPrepararLancamento()) return;
+    iniciarHold(e, _confirmarLancamento);
   }
 
   async function _confirmarLancamento() {
-    $('inst-confirm-modal').style.display = 'none';
     const alertEl = $('inst-alert');
     alertEl.className = 'alert';
 
     const btn = $('inst-lancar-btn');
+    const btnHtmlOriginal = btn.innerHTML;
     btn.disabled = true;
-    btn.textContent = 'Lançando...';
+    btn.innerHTML = 'Lançando...';
 
     const dataGlobal   = $('inst-data-global').value;
     const xerifeGlobal = _instXerifeValue;
@@ -2176,7 +2357,7 @@
     }
 
     btn.disabled = false;
-    btn.textContent = 'Lançar';
+    btn.innerHTML = btnHtmlOriginal;
 
     if (erros.length) {
       alertEl.textContent = erros.join(' · ');
@@ -2184,6 +2365,7 @@
     }
     if (sucessos > 0) {
       toast(`${sucessos} instrução(ões) lançada(s) com sucesso!`);
+      $('inst-resumo').style.display = 'none';
       await loadInstForm();
     }
   }
@@ -2640,6 +2822,495 @@
     const win  = window.open(url, '_blank');
     if (win) win.focus();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  // ── QIS (Quadro de Instrução Semanal) ─────────────────────
+  const _QIS_DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+  let _qisTurmas      = [];
+  let _qisTurmaId     = null;
+  let _qisCanManage   = false; // 'ensino' escopado ao curso da turma selecionada
+  let _qisHistorico   = [];
+  let _qisGridItens   = {};    // "linha-dia" -> {linha, dia_semana, disciplina_id, disciplina_nome, nome_instrutor}
+  let _qisNumLinhas   = 0;
+  let _qisEditingId   = null;  // null = criando um QIS novo
+  let _qisDisciplinas = [];    // cache das disciplinas da turma selecionada
+  let _qisCellAlvo    = null;  // {linha, dia} da célula sendo editada no painel flutuante
+  let _qisClipboard   = null;  // {disciplina_id, disciplina_nome, nome_instrutor} copiado de uma célula, ou null
+
+  function qisAlerta(msg) {
+    const el = $('qis-alert');
+    el.textContent = msg;
+    el.className = 'alert error show';
+  }
+
+  async function loadQisSection() {
+    const sel = $('qis-turma-select');
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    fecharQisGrid();
+    try {
+      const res = await fetch(`${API}/qis/turmas-visiveis${qsCurso()}`, { headers: { Authorization: `Bearer ${token()}` } });
+      _qisTurmas = res.ok ? await res.json() : [];
+    } catch { _qisTurmas = []; }
+    _qisTurmas.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id;
+      o.textContent = t.nome;
+      sel.appendChild(o);
+    });
+    _qisTurmaId = null;
+    $('qis-btn-novo').style.display = 'none';
+    $('qis-historico').innerHTML = _qisTurmas.length
+      ? '<div class="empty-state"><div class="empty-state-icon">▤</div><div class="empty-state-text">Selecione uma turma</div></div>'
+      : '<div class="empty-state"><div class="empty-state-icon">▤</div><div class="empty-state-text">Nenhuma turma disponível</div></div>';
+  }
+
+  function onQisTurmaChange() {
+    _qisTurmaId = $('qis-turma-select').value || null;
+    fecharQisGrid();
+    if (!_qisTurmaId) {
+      $('qis-historico').innerHTML = '<div class="empty-state"><div class="empty-state-icon">▤</div><div class="empty-state-text">Selecione uma turma</div></div>';
+      $('qis-btn-novo').style.display = 'none';
+      return;
+    }
+    const turma = _qisTurmas.find(t => t.id === _qisTurmaId);
+    _qisCanManage = (_user.roles || []).some(r => r.role === 'ensino' && r.curso_id === turma?.curso_id);
+    $('qis-btn-novo').style.display = _qisCanManage ? 'inline-flex' : 'none';
+    loadQisHistorico();
+  }
+
+  async function loadQisHistorico() {
+    const cont = $('qis-historico');
+    cont.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
+    try {
+      const res = await fetch(`${API}/qis?turma_id=${encodeURIComponent(_qisTurmaId)}`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) { cont.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro ao carregar QIS.</div></div>'; return; }
+      _qisHistorico = await res.json();
+    } catch { cont.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro de conexão.</div></div>'; return; }
+
+    if (!_qisHistorico.length) {
+      cont.innerHTML = '<div class="empty-state"><div class="empty-state-icon">▤</div><div class="empty-state-text">Nenhum QIS cadastrado para esta turma</div></div>';
+      return;
+    }
+    cont.innerHTML = _qisHistorico.map(renderQisHistoricoCard).join('');
+    // Cada card já nasce com a grade (somente leitura) carregando embaixo -
+    // não precisa clicar em "Abrir" pra ver o quadro daquela semana.
+    _qisHistorico.forEach(q => carregarQisPreview(q.id, q.num_linhas));
+  }
+
+  function renderQisHistoricoCard(q) {
+    const ini = new Date(q.semana_inicio + 'T00:00:00');
+    const fim = new Date(ini); fim.setDate(fim.getDate() + 6);
+    const fmt = d => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    const theadCells = '<th>Hora-aula</th>' + _QIS_DIAS.map(d => `<th>${d}</th>`).join('');
+    return `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Semana de ${fmt(ini)} a ${fmt(fim)}</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);">${q.num_linhas} linha(s) · ${q.criado_por || '—'}</span>
+            <button class="btn btn-ghost btn-sm" onclick="abrirQisExistente(${q.id})">Abrir p/ editar</button>
+            ${_qisCanManage ? `
+              <button type="button" class="btn btn-danger btn-sm hold-confirm"
+                      onmousedown="iniciarHold(event, excluirQis.bind(null, ${q.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                      ontouchstart="iniciarHold(event, excluirQis.bind(null, ${q.id}))" ontouchend="cancelarHold()">
+                <span class="hold-fill"></span><span>Pressione p/ excluir</span>
+              </button>` : ''}
+          </div>
+        </div>
+        <div class="card-body" style="overflow-x:auto;">
+          <table class="qis-hist-preview">
+            <thead><tr>${theadCells}</tr></thead>
+            <tbody id="qis-hist-tbody-${q.id}"><tr><td colspan="8" style="text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:10px;">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  async function carregarQisPreview(qisId, numLinhas) {
+    const tbody = document.getElementById(`qis-hist-tbody-${qisId}`);
+    if (!tbody) return;
+    try {
+      const res = await fetch(`${API}/qis/${qisId}`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);">Erro ao carregar.</td></tr>'; return; }
+      const data = await res.json();
+      const gridItens = {};
+      data.itens.forEach(it => { gridItens[`${it.linha}-${it.dia_semana}`] = it; });
+      tbody.innerHTML = _qisLinhasHtml(gridItens, numLinhas, false);
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);">Erro de conexão.</td></tr>';
+    }
+  }
+
+  async function carregarDisciplinasQis() {
+    try {
+      const res = await fetch(`${API}/disciplinas?id_turma=${encodeURIComponent(_qisTurmaId)}&ocultar_concluidas=true`, { headers: { Authorization: `Bearer ${token()}` } });
+      _qisDisciplinas = res.ok ? await res.json() : [];
+    } catch { _qisDisciplinas = []; }
+  }
+
+  function abrirQisCriacao() {
+    if (!_qisTurmaId) return;
+    _qisEditingId = null;
+    _qisGridItens = {};
+    cancelQisPaste();
+    $('qis-grid-title').textContent = 'Novo QIS';
+    $('qis-novo-form').style.display = 'flex';
+    $('qis-input-semana').value = '';
+    $('qis-week-trigger').textContent = 'Selecione a semana';
+    $('qis-input-linhas').value = 6;
+    $('qis-table').style.display = 'none';
+    $('qis-grid-actions').style.display = 'none';
+    $('qis-alert').className = 'alert';
+    $('qis-grid-card').style.display = 'block';
+    carregarDisciplinasQis();
+    $('qis-grid-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function abrirQisExistente(id) {
+    cancelQisPaste();
+    $('qis-alert').className = 'alert';
+    $('qis-grid-card').style.display = 'block';
+    $('qis-grid-title').textContent = 'Carregando...';
+    $('qis-novo-form').style.display = 'none';
+    $('qis-table').style.display = 'none';
+    $('qis-grid-actions').style.display = 'none';
+    await carregarDisciplinasQis();
+    try {
+      const res = await fetch(`${API}/qis/${id}`, { headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) { qisAlerta('Erro ao carregar QIS.'); return; }
+      const data = await res.json();
+      _qisEditingId = id;
+      _qisNumLinhas = data.num_linhas;
+      _qisGridItens = {};
+      data.itens.forEach(it => { _qisGridItens[`${it.linha}-${it.dia_semana}`] = it; });
+      const ini = new Date(data.semana_inicio + 'T00:00:00');
+      const fim = new Date(ini); fim.setDate(fim.getDate() + 6);
+      const fmt = d => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      $('qis-grid-title').textContent = `Semana de ${fmt(ini)} a ${fmt(fim)}`;
+      renderQisTable(_qisCanManage);
+    } catch { qisAlerta('Erro de conexão.'); }
+    $('qis-grid-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function fecharQisGrid() {
+    $('qis-grid-card').style.display = 'none';
+    $('qis-cell-sd').style.display = 'none';
+    $('qis-week-picker').style.display = 'none';
+    _qisEditingId = null;
+    _qisGridItens = {};
+    cancelQisPaste();
+  }
+
+  // ── Calendário customizado: só permite escolher a semana (Seg-Dom)
+  // inteira, nunca um dia avulso - clicar em qualquer dia de uma linha
+  // grava a segunda-feira daquela linha em #qis-input-semana. ──
+  let _qisWeekPickerMes = null; // Date com dia 1 do mês em exibição no popover
+
+  function toggleQisWeekPicker(e) {
+    e.stopPropagation();
+    const panel = $('qis-week-picker');
+    if (panel.style.display === 'block') { panel.style.display = 'none'; return; }
+    const atual = $('qis-input-semana').value;
+    _qisWeekPickerMes = atual ? new Date(atual + 'T00:00:00') : new Date();
+    _qisWeekPickerMes.setDate(1);
+    renderQisWeekPicker();
+    const rect = e.currentTarget.getBoundingClientRect();
+    panel.style.top  = `${rect.bottom + 4}px`;
+    panel.style.left = `${Math.min(rect.left, window.innerWidth - 280)}px`;
+    panel.style.display = 'block';
+  }
+
+  function qisWeekPickerMes(delta) {
+    _qisWeekPickerMes.setMonth(_qisWeekPickerMes.getMonth() + delta);
+    renderQisWeekPicker();
+  }
+
+  function _qisSegundaDaSemana(data) {
+    const d = new Date(data);
+    const dow = d.getDay(); // 0=domingo..6=sábado
+    d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow));
+    return d;
+  }
+
+  function _qisFmtISO(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function renderQisWeekPicker() {
+    const mesRef = _qisWeekPickerMes;
+    $('qis-week-picker-label').textContent = mesRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const inicioGrade = _qisSegundaDaSemana(new Date(mesRef.getFullYear(), mesRef.getMonth(), 1));
+    const hojeStr = _qisFmtISO(new Date());
+    const cursor = new Date(inicioGrade);
+    let html = '';
+    for (let semana = 0; semana < 6; semana++) {
+      const mondayStr = _qisFmtISO(cursor);
+      let dias = '';
+      for (let dia = 0; dia < 7; dia++) {
+        const outroMes = cursor.getMonth() !== mesRef.getMonth();
+        const isHoje = _qisFmtISO(cursor) === hojeStr;
+        dias += `<span class="qis-week-day${outroMes ? ' outro-mes' : ''}${isHoje ? ' hoje' : ''}">${cursor.getDate()}</span>`;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      html += `<div class="qis-week-row" onclick="selecionarQisSemana('${mondayStr}')">${dias}</div>`;
+    }
+    $('qis-week-picker-grid').innerHTML = html;
+  }
+
+  function selecionarQisSemana(segundaIso) {
+    $('qis-input-semana').value = segundaIso;
+    const ini = new Date(segundaIso + 'T00:00:00');
+    const fim = new Date(ini); fim.setDate(fim.getDate() + 6);
+    const fmt = d => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    $('qis-week-trigger').textContent = `${fmt(ini)} a ${fmt(fim)}`;
+    $('qis-week-picker').style.display = 'none';
+    $('qis-alert').className = 'alert';
+  }
+
+  document.addEventListener('click', e => {
+    const panel = $('qis-week-picker');
+    if (panel && panel.style.display !== 'none' && !e.target.closest('#qis-week-picker') && e.target.id !== 'qis-week-trigger') {
+      panel.style.display = 'none';
+    }
+  });
+
+  function gerarGradeQis() {
+    const n = parseInt($('qis-input-linhas').value, 10);
+    if (!n || n < 1 || n > 20) { qisAlerta('Número de linhas deve estar entre 1 e 20.'); return; }
+    if (!$('qis-input-semana').value) { qisAlerta('Selecione a semana desejada.'); return; }
+    $('qis-alert').className = 'alert';
+    _qisNumLinhas = n;
+    renderQisTable(true);
+  }
+
+  const _QIS_NUM_CORES = 8; // qis-cat-1..8 no CSS
+
+  // Cores não são fixas por disciplina: a cada renderização, a 1ª disciplina
+  // distinta encontrada (varrendo linha x dia em ordem) recebe a cor 1, a 2ª
+  // a cor 2, etc. Depois da 8ª disciplina distinta, as demais ficam sem cor
+  // (nunca reaproveita/cicla uma cor já usada para outra disciplina).
+  function _qisMapaCores(gridItens, numLinhas) {
+    const mapa = {};
+    let proxima = 0;
+    for (let linha = 1; linha <= numLinhas; linha++) {
+      for (let dia = 1; dia <= 7; dia++) {
+        const item = gridItens[`${linha}-${dia}`];
+        if (item && item.disciplina_id != null && !(item.disciplina_id in mapa)) {
+          if (proxima < _QIS_NUM_CORES) { mapa[item.disciplina_id] = proxima; proxima++; }
+        }
+      }
+    }
+    return mapa;
+  }
+
+  // Quebra o nome no espaço mais próximo do meio (em 2 linhas), pra célula
+  // poder ficar mais estreita sem depender de white-space:nowrap esticando
+  // a coluna inteira. Nomes sem espaço (uma palavra só) não quebram.
+  function _qisQuebraNome(nome) {
+    if (!nome || nome.length < 12) return nome;
+    const meio = Math.floor(nome.length / 2);
+    let melhor = -1, melhorDist = Infinity;
+    for (let i = 0; i < nome.length; i++) {
+      if (nome[i] === ' ') {
+        const dist = Math.abs(i - meio);
+        if (dist < melhorDist) { melhorDist = dist; melhor = i; }
+      }
+    }
+    if (melhor === -1) return nome;
+    return nome.slice(0, melhor) + '<br>' + nome.slice(melhor + 1);
+  }
+
+  // Gera as linhas <tr> da grade (compartilhado entre o editor único e as
+  // prévias somente-leitura do histórico, uma por card).
+  function _qisLinhasHtml(gridItens, numLinhas, editable) {
+    const coresMapa = _qisMapaCores(gridItens, numLinhas);
+    let rows = '';
+    for (let linha = 1; linha <= numLinhas; linha++) {
+      rows += `<tr><td>${linha}ª aula</td>`;
+      for (let dia = 1; dia <= 7; dia++) {
+        const item = gridItens[`${linha}-${dia}`];
+        const label = item ? _qisQuebraNome(item.disciplina_nome) : '—';
+        const corClass = item && item.disciplina_id != null && coresMapa[item.disciplina_id] !== undefined
+          ? `qis-cat-${coresMapa[item.disciplina_id] + 1}` : '';
+        rows += editable
+          ? `<td><button type="button" class="qis-cell-trigger ${corClass}" onclick="onQisCellClick(${linha},${dia},this)" oncontextmenu="return onQisCellCopy(event,${linha},${dia})">${label}</button></td>`
+          : `<td><span class="qis-cell-readonly ${corClass}">${label}</span></td>`;
+      }
+      rows += '</tr>';
+    }
+    return rows;
+  }
+
+  function renderQisTable(editable) {
+    $('qis-table-head').innerHTML = '<th>Hora-aula</th>' + _QIS_DIAS.map(d => `<th>${d}</th>`).join('');
+    $('qis-table-body').innerHTML = _qisLinhasHtml(_qisGridItens, _qisNumLinhas, editable);
+    $('qis-table').style.display = 'table';
+    $('qis-grid-actions').style.display = editable ? 'block' : 'none';
+  }
+
+  function onQisCellClick(linha, dia, triggerEl) {
+    if (_qisClipboard) { pasteQisCell(linha, dia); return; }
+    openQisCellPicker(linha, dia, triggerEl);
+  }
+
+  function onQisCellCopy(e, linha, dia) {
+    e.preventDefault();
+    const item = _qisGridItens[`${linha}-${dia}`];
+    if (!item) return false;
+    _qisClipboard = {
+      disciplina_id: item.disciplina_id,
+      disciplina_nome: item.disciplina_nome,
+      nome_instrutor: item.nome_instrutor,
+    };
+    $('qis-cell-sd').style.display = 'none';
+    $('qis-paste-bar-nome').textContent = _qisClipboard.disciplina_nome;
+    $('qis-paste-bar').style.display = 'flex';
+    $('qis-table').classList.add('qis-table-pasting');
+    toast(`Copiado: ${item.disciplina_nome}`);
+    return false;
+  }
+
+  function pasteQisCell(linha, dia) {
+    if (!_qisClipboard) return;
+    _qisGridItens[`${linha}-${dia}`] = { linha, dia_semana: dia, ..._qisClipboard };
+    renderQisTable(true);
+  }
+
+  function cancelQisPaste() {
+    _qisClipboard = null;
+    $('qis-paste-bar').style.display = 'none';
+    const table = $('qis-table');
+    if (table) table.classList.remove('qis-table-pasting');
+  }
+
+  function openQisCellPicker(linha, dia, triggerEl) {
+    _qisCellAlvo = { linha, dia };
+    const panel = $('qis-cell-sd');
+    const rect  = triggerEl.getBoundingClientRect();
+    panel.style.top     = `${rect.bottom + 4}px`;
+    panel.style.left    = `${Math.min(rect.left, window.innerWidth - 270)}px`;
+    panel.style.display = 'block';
+    _populateQisCellSd();
+    const s = panel.querySelector('.sd-search');
+    s.value = ''; filterQisCellSd(''); s.focus();
+  }
+
+  function _populateQisCellSd() {
+    $('qis-cell-sd-list').innerHTML = _qisDisciplinas.map(d => {
+      const label  = `${d.tipo_nome} — ${d.nome_instrutor}`;
+      const search = `${d.tipo_nome} ${d.nome_instrutor}`.toLowerCase();
+      return `<div class="sd-option" data-search="${search}" onclick="selectQisCellDisciplina(${d.id})">${label}</div>`;
+    }).join('') || '<div class="sd-option" style="color:var(--muted);cursor:default;">Nenhuma disciplina cadastrada para esta turma</div>';
+  }
+
+  function filterQisCellSd(q) {
+    $('qis-cell-sd-list').querySelectorAll('.sd-option').forEach(o => {
+      if (!o.dataset.search) return;
+      o.style.display = o.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  function selectQisCellDisciplina(discId) {
+    const d = _qisDisciplinas.find(x => x.id === discId);
+    if (!d || !_qisCellAlvo) return;
+    const key = `${_qisCellAlvo.linha}-${_qisCellAlvo.dia}`;
+    _qisGridItens[key] = {
+      linha: _qisCellAlvo.linha, dia_semana: _qisCellAlvo.dia,
+      disciplina_id: d.id, disciplina_nome: d.tipo_nome, nome_instrutor: d.nome_instrutor,
+    };
+    $('qis-cell-sd').style.display = 'none';
+    renderQisTable(true);
+  }
+
+  function limparQisCell() {
+    if (!_qisCellAlvo) return;
+    delete _qisGridItens[`${_qisCellAlvo.linha}-${_qisCellAlvo.dia}`];
+    $('qis-cell-sd').style.display = 'none';
+    renderQisTable(true);
+  }
+
+  // Painel flutuante próprio (não usa a classe 'open'/o handler genérico de
+  // .sd-wrap, ver comentário no HTML) - fecha ao clicar fora dele e fora de
+  // um gatilho de célula.
+  document.addEventListener('click', e => {
+    const panel = $('qis-cell-sd');
+    if (panel && panel.style.display !== 'none' && !e.target.closest('#qis-cell-sd') && !e.target.classList.contains('qis-cell-trigger')) {
+      panel.style.display = 'none';
+    }
+  });
+
+  // Modo "colar" (copiar/colar entre células do QIS): só desativa no botão
+  // "Cancelar" da barra de aviso ou apertando Esc - clicar fora não cancela,
+  // pra permitir colar em várias células sem risco de sair do modo sem querer.
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && _qisClipboard) cancelQisPaste();
+  });
+
+  async function salvarQis() {
+    const itens = Object.values(_qisGridItens).map(it => ({
+      linha: it.linha, dia_semana: it.dia_semana, disciplina_id: it.disciplina_id,
+    }));
+    $('qis-alert').className = 'alert';
+    try {
+      const res = _qisEditingId
+        ? await fetch(`${API}/qis/${_qisEditingId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+            body: JSON.stringify({ itens }),
+          })
+        : await fetch(`${API}/qis`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+            body: JSON.stringify({
+              turma_id: _qisTurmaId, semana: $('qis-input-semana').value,
+              num_linhas: _qisNumLinhas, itens,
+            }),
+          });
+      const data = await res.json();
+      if (!res.ok) {
+        qisAlerta(Array.isArray(data.detail) ? data.detail.map(d => d.msg).join('; ') : (data.detail || 'Erro ao salvar QIS.'));
+        return;
+      }
+      toast('QIS salvo com sucesso.');
+      fecharQisGrid();
+      loadQisHistorico();
+    } catch { qisAlerta('Erro de conexão.'); }
+  }
+
+  // Hold-to-confirm genérico (reutilizado por todo botão sensível da
+  // página): segurar ~2s em vez de window.confirm(). `callback` só roda se
+  // o usuário segurar até o fim; soltar antes cancela sem executar nada.
+  let _holdTimer = null;
+
+  function iniciarHold(e, callback) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    btn.classList.add('holding');
+    _holdTimer = setTimeout(async () => {
+      btn.classList.remove('holding');
+      await callback();
+    }, 2000);
+  }
+
+  function cancelarHold() {
+    clearTimeout(_holdTimer);
+    _holdTimer = null;
+    document.querySelectorAll('.hold-confirm.holding').forEach(b => b.classList.remove('holding'));
+  }
+
+  async function excluirQis(qisId) {
+    try {
+      const res = await fetch(`${API}/qis/${qisId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token()}` } });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast(data.detail || 'Erro ao excluir QIS.', 'error');
+        return;
+      }
+      toast('QIS excluído.');
+      if (_qisEditingId === qisId) fecharQisGrid();
+      loadQisHistorico();
+    } catch { toast('Erro de conexão.', 'error'); }
   }
 
   // ── BOOT ─────────────────────────────────────────────────
