@@ -1195,7 +1195,7 @@
     if (!t) { redirect(); return; }
 
     try {
-      const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${t}` } });
+      const res = await fetch(`${API}/me${qsCurso()}`, { headers: { Authorization: `Bearer ${t}` } });
       if (!res.ok) { redirect(); return; }
       const me = await res.json();
 
