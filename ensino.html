@@ -1087,7 +1087,11 @@
           </select>
         </span>
         <label>Até o Semestre</label>
-        <select id="filter-classificacao-semestre" onchange="loadClassificacao()">
+        <select id="filter-classificacao-semestre" onchange="onClassificacaoSemestreChange()">
+          <option value="">Todos</option>
+        </select>
+        <label>Semestre Específico</label>
+        <select id="filter-classificacao-semestre-especifico" onchange="onClassificacaoSemestreEspecificoChange()">
           <option value="">Todos</option>
         </select>
       </div>
@@ -1508,7 +1512,7 @@
     if (!res.ok) return;
     const types = await res.json();
     const semestres = [...new Set(types.map(t => t.semestre).filter(Boolean))].sort((a,b) => a-b);
-    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre', 'filter-dash-semestre', 'filter-classificacao-semestre'].forEach(id => {
+    ['filter-status-semestre', 'filter-disc-semestre', 'filter-faltas-semestre', 'filter-notas-semestre', 'filter-dash-semestre', 'filter-classificacao-semestre', 'filter-classificacao-semestre-especifico'].forEach(id => {
       const sel = $(id);
       const cur = sel.value;
       while (sel.options.length > 1) sel.remove(1);
@@ -3620,6 +3624,11 @@
   }
 
   let _notasDiscAtual = { id: null, nome: null };
+  let _notasVerifCache = []; // verificações da disciplina aberta no modal, pra edição de peso/link
+
+  function _podeEditarVerificacoes() {
+    return (_user?.roles || []).some(r => r.role === 'ensino' || r.role === 'coordenador');
+  }
 
   async function openNotasDisc(id, nome, event) {
     if (event) event.stopPropagation();
@@ -3635,6 +3644,7 @@
     const data = await res.json();
 
     const { verificacoes, cadetes } = data;
+    _notasVerifCache = verificacoes;
     if (!verificacoes.length) {
       body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Nenhuma verificação lançada</div></div>';
       return;
@@ -3659,6 +3669,22 @@
         style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:3px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:4px;">
         ↗ ${labelMap[v.id]}</a>`
     ).join('');
+
+    // Edição de peso/link — somente coordenador/ensino (mesmo escopo do PUT /verificacoes/{id} no backend)
+    const podeEditarVerif = _podeEditarVerificacoes();
+    const manageVerifHtml = podeEditarVerif ? `
+      <div style="margin-bottom:14px;border:1px solid var(--border);border-radius:2px;padding:10px 12px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Editar Peso / Link das Avaliações</div>
+        ${verificacoes.map(v => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);min-width:96px;">${labelMap[v.id]}</span>
+            <input type="number" min="0" step="0.0001" value="${v.peso_avaliacao}" id="verif-peso-${v.id}"
+              style="width:100px;padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:12px;" />
+            <input type="url" placeholder="Link do Drive (opcional)" value="${v.link_drive ?? ''}" id="verif-link-${v.id}"
+              style="flex:1;min-width:180px;padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:12px;" />
+            <button class="btn btn-ghost btn-sm" onclick="salvarEdicaoVerificacao(${v.id})">Salvar</button>
+          </div>`).join('')}
+      </div>` : '';
 
     // Verificações que aparecem como colunas individuais (todas exceto nota_final)
     const colVerifs = verificacoes.filter(v => !v.is_nota_final);
@@ -3715,7 +3741,7 @@
     const thDireta = nfs.length ? `<th style="padding:6px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);border-bottom:1px solid var(--border);background:var(--surface2);">NOTA FINAL LANÇADA</th>` : '';
 
     body.innerHTML = `
-      ${linksHtml ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${linksHtml}</div>` : ''}
+      ${manageVerifHtml || (linksHtml ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${linksHtml}</div>` : '')}
       <div style="overflow-x:auto;">
         <table class="sortable-table" style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead>
@@ -3733,6 +3759,40 @@
       </div>
       ${nfs.length ? '<div style="margin-top:10px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);">⚠ = nota lançada difere da nota calculada pelo sistema</div>' : ''}
       ${_canEditNotas ? '<div style="margin-top:10px;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--muted);">Clique em uma nota para editá-la</div>' : ''}`;
+  }
+
+  async function salvarEdicaoVerificacao(verificacaoId) {
+    const v = _notasVerifCache.find(x => x.id === verificacaoId);
+    if (!v) return;
+
+    const peso = parseFloat($(`verif-peso-${verificacaoId}`).value);
+    const link = $(`verif-link-${verificacaoId}`).value.trim() || null;
+    if (isNaN(peso) || peso < 0) { toast('Peso inválido', 'error'); return; }
+
+    const btn = document.querySelector(`[onclick="salvarEdicaoVerificacao(${verificacaoId})"]`);
+    if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); }
+
+    const res = await fetch(`${API}/verificacoes/${verificacaoId}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id_disciplina:         _notasDiscAtual.id,
+        peso_avaliacao:        peso,
+        link_drive:            link,
+        is_nota_final:         v.is_nota_final,
+        is_verificacao_final:  v.is_verificacao_final,
+      }),
+    });
+
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      toast(d.detail || 'Erro ao salvar avaliação', 'error');
+      if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); }
+      return;
+    }
+
+    toast('Avaliação atualizada');
+    openNotasDisc(_notasDiscAtual.id, _notasDiscAtual.nome);
   }
 
   function startEditNota(notaId, cadeteId, verifId) {
@@ -3809,9 +3869,20 @@
       </div>`;
   }
 
+  function onClassificacaoSemestreChange() {
+    if ($('filter-classificacao-semestre').value) $('filter-classificacao-semestre-especifico').value = '';
+    loadClassificacao();
+  }
+
+  function onClassificacaoSemestreEspecificoChange() {
+    if ($('filter-classificacao-semestre-especifico').value) $('filter-classificacao-semestre').value = '';
+    loadClassificacao();
+  }
+
   async function loadClassificacao() {
-    const turma     = $('filter-classificacao-turma').value;
-    const semestre  = $('filter-classificacao-semestre').value;
+    const turma            = $('filter-classificacao-turma').value;
+    const semestre          = $('filter-classificacao-semestre').value;
+    const semestreEspecifico = $('filter-classificacao-semestre-especifico').value;
     const container = $('classificacao-container');
 
     if (!turma) {
@@ -3822,7 +3893,8 @@
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Carregando...</div></div>';
 
     const params = new URLSearchParams();
-    if (semestre) params.set('semestre', semestre);
+    if (semestreEspecifico)  params.set('semestre_especifico', semestreEspecifico);
+    else if (semestre)       params.set('semestre', semestre);
 
     const res = await fetch(`${API}/turma/${turma}/classificacao?${params}`, { headers: { Authorization: `Bearer ${token()}` } });
     if (!res.ok) { container.innerHTML = '<div class="empty-state"><div class="empty-state-text">Erro ao carregar</div></div>'; return; }
