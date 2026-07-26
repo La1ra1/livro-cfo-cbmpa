@@ -687,6 +687,7 @@
   }
 
   function redirect() {
+    sessionStorage.setItem('return_to', window.location.href);
     window.location.href = 'index.html';
   }
 

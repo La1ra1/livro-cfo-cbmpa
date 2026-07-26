@@ -6,6 +6,18 @@
 
   function token() { return localStorage.getItem('token'); }
 
+  // Páginas sem tela de login própria (ordens_em_vigor.html, requerimentos.html)
+  // mandam pra cá quando não têm token válido, guardando de onde vieram. Ao
+  // autenticar com sucesso (local ou Keycloak), volta pra lá em vez de ficar
+  // preso no dashboard.
+  function redirectAfterLogin() {
+    const back = sessionStorage.getItem('return_to');
+    if (!back) return false;
+    sessionStorage.removeItem('return_to');
+    window.location.href = back;
+    return true;
+  }
+
   // ── CURSO ATIVO ────────────────────────────
   // Quando o usuário tem matrícula/coordenação em mais de um curso, ele
   // escolhe qual está ativo no badge do topbar; o id escolhido é enviado
@@ -326,7 +338,7 @@
 
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('auth_provider', 'keycloak');
-      await initApp();
+      if (!redirectAfterLogin()) await initApp();
 
     } catch {
       showAlert('login-error', 'Não foi possível conectar à API.');
@@ -365,7 +377,7 @@
 
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('auth_provider', 'local');
-      await initApp();
+      if (!redirectAfterLogin()) await initApp();
 
     } catch {
       showAlert('login-error', 'Não foi possível conectar à API.');
@@ -583,6 +595,7 @@
   function doLogout() {
     localStorage.removeItem('token');
     localStorage.removeItem('auth_provider');
+    sessionStorage.removeItem('return_to');
     document.documentElement.classList.remove('has-token');
     $('login-username').value = '';
     $('login-password').value = '';
