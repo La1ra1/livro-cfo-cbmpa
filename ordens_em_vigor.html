@@ -419,6 +419,16 @@
     @media (max-width: 640px) {
       .app-footer-grid { grid-template-columns: 1fr; gap: 16px; }
     }
+
+    /* Hold-to-confirm: segurar ~2s (barra de preenchimento) em vez de
+       window.confirm() para ações sensíveis. */
+    .hold-confirm { position: relative; overflow: hidden; }
+    .hold-confirm .hold-fill {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+      background: rgba(0,0,0,.4); transition: none; z-index: 0;
+    }
+    .hold-confirm.holding .hold-fill { transition: width 2000ms linear; width: 100%; }
+    .hold-confirm span:last-child { position: relative; z-index: 1; }
   </style>
 </head>
 <script>if (localStorage.getItem('token')) document.documentElement.classList.add('has-token');</script>
@@ -658,7 +668,7 @@
     if (!t) { redirect(); return; }
 
     try {
-      const res = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${t}` } });
+      const res = await fetch(`${API}/me${qsCurso()}`, { headers: { Authorization: `Bearer ${t}` } });
       if (!res.ok) { redirect(); return; }
       const me = await res.json();
       _userRole = me.role;
@@ -738,10 +748,22 @@
           <button class="btn btn-ghost btn-sm" onclick="editOrdem(${o.id})" title="Editar">✎</button>
           ${_isCoord
             ? (isVigor
-                ? `<button class="btn btn-warn btn-sm" onclick="toggleStatus(${o.id},'REVOGADA')" title="Revogar">✕ Revogar</button>`
-                : `<button class="btn btn-ghost btn-sm" onclick="toggleStatus(${o.id},'EM VIGOR')" title="Reativar">↺ Reativar</button>`)
+                ? `<button type="button" class="btn btn-warn btn-sm hold-confirm" title="Segure p/ revogar"
+                           onmousedown="iniciarHold(event, toggleStatus.bind(null, ${o.id}, 'REVOGADA'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                           ontouchstart="iniciarHold(event, toggleStatus.bind(null, ${o.id}, 'REVOGADA'))" ontouchend="cancelarHold()">
+                     <span class="hold-fill"></span><span>✕ Segure p/ revogar</span>
+                   </button>`
+                : `<button type="button" class="btn btn-ghost btn-sm hold-confirm" title="Segure p/ reativar"
+                           onmousedown="iniciarHold(event, toggleStatus.bind(null, ${o.id}, 'EM VIGOR'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                           ontouchstart="iniciarHold(event, toggleStatus.bind(null, ${o.id}, 'EM VIGOR'))" ontouchend="cancelarHold()">
+                     <span class="hold-fill"></span><span>↺ Segure p/ reativar</span>
+                   </button>`)
             : ''}
-          <button class="btn btn-danger btn-sm" onclick="deletarOrdem(${o.id})" title="Deletar">🗑</button>
+          <button type="button" class="btn btn-danger btn-sm hold-confirm" title="Segure p/ deletar"
+                  onmousedown="iniciarHold(event, deletarOrdem.bind(null, ${o.id}))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                  ontouchstart="iniciarHold(event, deletarOrdem.bind(null, ${o.id}))" ontouchend="cancelarHold()">
+            <span class="hold-fill"></span><span>🗑</span>
+          </button>
         </div>` : '';
 
       return `
@@ -834,10 +856,28 @@
     }
   }
 
+  // Hold-to-confirm: segurar ~2s em vez de window.confirm(). `callback` só
+  // roda se o usuário segurar até o fim; soltar antes cancela sem executar.
+  let _holdTimer = null;
+
+  function iniciarHold(e, callback) {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    btn.classList.add('holding');
+    _holdTimer = setTimeout(async () => {
+      btn.classList.remove('holding');
+      await callback();
+    }, 2000);
+  }
+
+  function cancelarHold() {
+    clearTimeout(_holdTimer);
+    _holdTimer = null;
+    document.querySelectorAll('.hold-confirm.holding').forEach(b => b.classList.remove('holding'));
+  }
+
   // ── Alternar status ──
   async function toggleStatus(id, novoStatus) {
-    const label = novoStatus === 'REVOGADA' ? 'revogar' : 'reativar';
-    if (!confirm(`Deseja ${label} esta ordem?`)) return;
     try {
       const res = await fetch(`${API}/ordens-em-vigor/${id}/status`, {
         method: 'PATCH',
@@ -854,7 +894,6 @@
 
   // ── Deletar ──
   async function deletarOrdem(id) {
-    if (!confirm('Deletar esta ordem permanentemente?')) return;
     try {
       const res = await fetch(`${API}/ordens-em-vigor/${id}`, {
         method: 'DELETE',

@@ -436,10 +436,16 @@
       </div>
       <div class="bulk-bar" id="bulk-bar-pendentes">
         <span class="bulk-count" id="bulk-count-pendentes">0 selecionada(s)</span>
-        <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-          onclick="bulkStatus('aprovada')">✓ Aprovar Selecionadas</button>
-        <button class="btn btn-sm coord-only" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-          onclick="bulkStatus('descartada')">✕ Descartar Selecionadas</button>
+        <button type="button" class="btn btn-sm coord-only hold-confirm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onmousedown="iniciarHold(event, bulkStatus.bind(null, 'aprovada'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+          ontouchstart="iniciarHold(event, bulkStatus.bind(null, 'aprovada'))" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✓ Segure p/ aprovar selecionadas</span>
+        </button>
+        <button type="button" class="btn btn-sm coord-only hold-confirm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onmousedown="iniciarHold(event, bulkStatus.bind(null, 'descartada'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+          ontouchstart="iniciarHold(event, bulkStatus.bind(null, 'descartada'))" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✕ Segure p/ descartar selecionadas</span>
+        </button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelectionPendentes()">Limpar seleção</button>
       </div>
       <div class="card">
@@ -831,8 +837,10 @@
               <div>Alunos: <span id="resumo-cadetes" style="color:var(--accent);">0</span></div>
             </div>
             <div style="padding:0 18px 18px;">
-              <button class="btn btn-primary btn-full" id="btn-lancar" onclick="lancarLote()">
-                ✚ LANÇAR ANOTAÇÕES
+              <button type="button" class="btn btn-primary btn-full hold-confirm" id="btn-lancar"
+                      onmousedown="iniciarHoldLancarLote(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                      ontouchstart="iniciarHoldLancarLote(event)" ontouchend="cancelarHold()">
+                <span class="hold-fill"></span><span>✚ SEGURE P/ LANÇAR ANOTAÇÕES</span>
               </button>
               <div class="alert error"   id="lanc-error"   style="margin-top:12px;"></div>
               <div class="alert success" id="lanc-success" style="margin-top:12px;"></div>
@@ -962,8 +970,10 @@
               <div>Alunos: <span id="resumo-pernoite-cadetes" style="color:var(--accent);">0</span></div>
             </div>
             <div style="padding:0 18px 18px;">
-              <button class="btn btn-primary btn-full" id="btn-pernoite-lancar" onclick="submitPernoiteInopinado()">
-                🌙 LANÇAR AÇÃO CORRETIVA
+              <button type="button" class="btn btn-primary btn-full hold-confirm" id="btn-pernoite-lancar"
+                      onmousedown="iniciarHoldPernoite(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                      ontouchstart="iniciarHoldPernoite(event)" ontouchend="cancelarHold()">
+                <span class="hold-fill"></span><span>🌙 SEGURE P/ LANÇAR AÇÃO CORRETIVA</span>
               </button>
               <div class="alert error"   id="pernoite-error"   style="margin-top:12px;"></div>
               <div class="alert success" id="pernoite-success" style="margin-top:12px;"></div>
@@ -1306,10 +1316,16 @@
       </div>
       <div class="bulk-bar" id="bulk-bar-elogios">
         <span class="bulk-count" id="bulk-count-elogios">0 selecionado(s)</span>
-        <button class="btn btn-sm coord-only" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-          onclick="bulkElogio('aprovado')">✓ Aprovar Selecionados</button>
-        <button class="btn btn-sm coord-only" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
-          onclick="bulkElogio('rejeitado')">✕ Descartar Selecionados</button>
+        <button type="button" class="btn btn-sm coord-only hold-confirm" style="background:rgba(46,204,113,.12);border:1px solid var(--success);color:var(--success);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onmousedown="iniciarHold(event, bulkElogio.bind(null, 'aprovado'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+          ontouchstart="iniciarHold(event, bulkElogio.bind(null, 'aprovado'))" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✓ Segure p/ aprovar selecionados</span>
+        </button>
+        <button type="button" class="btn btn-sm coord-only hold-confirm" style="background:var(--danger-dim);border:1px solid rgba(192,57,43,.4);color:var(--danger);font-family:'Rajdhani',sans-serif;letter-spacing:1px;"
+          onmousedown="iniciarHold(event, bulkElogio.bind(null, 'rejeitado'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+          ontouchstart="iniciarHold(event, bulkElogio.bind(null, 'rejeitado'))" ontouchend="cancelarHold()">
+          <span class="hold-fill"></span><span>✕ Segure p/ descartar selecionados</span>
+        </button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelectionElogios()">Limpar seleção</button>
       </div>
       <div class="card">
@@ -1424,7 +1440,11 @@
 
         <div class="lancamento-card">
           <div class="lancamento-body">
-            <button class="btn btn-primary btn-full" id="btn-lancar-elogio" onclick="lancarElogio()">★ LANÇAR ELOGIO</button>
+            <button type="button" class="btn btn-primary btn-full hold-confirm" id="btn-lancar-elogio"
+                    onmousedown="iniciarHoldLancarElogio(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                    ontouchstart="iniciarHoldLancarElogio(event)" ontouchend="cancelarHold()">
+              <span class="hold-fill"></span><span>★ SEGURE P/ LANÇAR ELOGIO</span>
+            </button>
             <div class="alert error"   id="elogio-error"   style="margin-top:12px;"></div>
             <div class="alert success" id="elogio-success" style="margin-top:12px;"></div>
           </div>
@@ -2020,7 +2040,11 @@
             <p id="manot-veredito-obs" style="font-size:13px;line-height:1.6;color:var(--text-dim);"></p>
           </div>
           <div id="manot-reverter-wrap" style="display:none;margin-top:14px;">
-            <button class="btn btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(192,57,43,.3);" onclick="reverterVeredito()">↩ Reverter Veredito</button>
+            <button type="button" class="btn btn-ghost btn-sm hold-confirm" style="color:var(--danger);border-color:rgba(192,57,43,.3);"
+                    onmousedown="iniciarHold(event, reverterVeredito)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                    ontouchstart="iniciarHold(event, reverterVeredito)" ontouchend="cancelarHold()">
+              <span class="hold-fill"></span><span>↩ Segure p/ reverter veredito</span>
+            </button>
             <span id="manot-reverter-prazo" style="margin-left:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);"></span>
           </div>
         </div>
@@ -2030,7 +2054,11 @@
       <div id="manot-actions" style="display:none;">
         <div class="action-row">
           <button class="btn-aprovar" id="btn-aprovar" onclick="submitStatus('aprovada')">✓ Aprovar</button>
-          <button class="btn-descartar" id="btn-descartar" onclick="submitStatus('descartada')">✕ Descartar</button>
+          <button type="button" class="btn-descartar hold-confirm" id="btn-descartar"
+                  onmousedown="iniciarHold(event, submitStatus.bind(null, 'descartada'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                  ontouchstart="iniciarHold(event, submitStatus.bind(null, 'descartada'))" ontouchend="cancelarHold()">
+            <span class="hold-fill"></span><span>✕ Segure p/ descartar</span>
+          </button>
         </div>
       </div>
 
@@ -2232,7 +2260,11 @@
         </div>
         <div style="display:flex;gap:10px;" id="just-btns">
           <button class="btn btn-ghost btn-sm" id="btn-just-rascunho" onclick="submitJustificativa(false)">💾 Salvar Rascunho</button>
-          <button class="btn btn-primary" id="btn-just-enviar" onclick="submitJustificativa(true)">✓ Enviar Justificativa</button>
+          <button type="button" class="btn btn-primary hold-confirm" id="btn-just-enviar"
+                  onmousedown="iniciarHoldEnviarJustificativa(event)" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                  ontouchstart="iniciarHoldEnviarJustificativa(event)" ontouchend="cancelarHold()">
+            <span class="hold-fill"></span><span>✓ Segure p/ enviar justificativa</span>
+          </button>
         </div>
       </div>
 
@@ -2469,7 +2501,11 @@
         <div class="alert error" id="julgar-error" style="display:none;margin-bottom:10px;"></div>
         <div style="display:flex;gap:10px;">
           <button class="btn btn-primary" style="flex:1;background:var(--success);" onclick="submitJulgarRecurso('deferido')">✓ DEFERIR</button>
-          <button class="btn btn-primary" style="flex:1;background:var(--danger);" onclick="submitJulgarRecurso('indeferido')">✕ INDEFERIR</button>
+          <button type="button" class="btn btn-primary hold-confirm" style="flex:1;background:var(--danger);"
+                  onmousedown="iniciarHold(event, submitJulgarRecurso.bind(null, 'indeferido'))" onmouseup="cancelarHold()" onmouseleave="cancelarHold()"
+                  ontouchstart="iniciarHold(event, submitJulgarRecurso.bind(null, 'indeferido'))" ontouchend="cancelarHold()">
+            <span class="hold-fill"></span><span>✕ SEGURE P/ INDEFERIR</span>
+          </button>
         </div>
         <p style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center;">Atenção: ao indeferir, uma anotação automática de perda de ponto será lançada para o aluno.</p>
       </div>
