@@ -6454,7 +6454,13 @@
   function dpInit(id, opts = {}) {
     const now = new Date();
     const el = document.getElementById(id);
-    const trigger = el?.previousElementSibling || el?.closest('.dp-wrap')?.querySelector('.dp-trigger');
+    // Em reaberturas (dpInit chamado de novo no mesmo id, ex.: ao reabrir um
+    // modal), o popup já foi movido para <body> na 1ª inicialização, então
+    // previousElementSibling/closest('.dp-wrap') não encontram mais o
+    // trigger original (ele ficou para trás no card). Preserva o triggerEl
+    // já resolvido antes, senão o calendário perde a referência de
+    // posicionamento e é renderizado fora da tela.
+    const trigger = el?.previousElementSibling || el?.closest('.dp-wrap')?.querySelector('.dp-trigger') || _dpState[id]?.triggerEl;
     _dpState[id] = {
       ano: opts.ano || now.getFullYear(),
       mes: opts.mes || now.getMonth() + 1,
