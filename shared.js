@@ -6455,12 +6455,15 @@
     const now = new Date();
     const el = document.getElementById(id);
     // Em reaberturas (dpInit chamado de novo no mesmo id, ex.: ao reabrir um
-    // modal), o popup já foi movido para <body> na 1ª inicialização, então
-    // previousElementSibling/closest('.dp-wrap') não encontram mais o
-    // trigger original (ele ficou para trás no card). Preserva o triggerEl
-    // já resolvido antes, senão o calendário perde a referência de
-    // posicionamento e é renderizado fora da tela.
-    const trigger = el?.previousElementSibling || el?.closest('.dp-wrap')?.querySelector('.dp-trigger') || _dpState[id]?.triggerEl;
+    // modal), o popup já foi movido para <body> na 1ª inicialização. Lá,
+    // previousElementSibling passa a ser outro popup/modal qualquer no fim
+    // do <body> — truthy, porém NÃO é o trigger. Só aceita o irmão anterior
+    // se ele for de fato um .dp-trigger; senão cai para o .dp-wrap original
+    // ou para o triggerEl já resolvido numa inicialização anterior.
+    const prev = el?.previousElementSibling;
+    const trigger = (prev?.classList?.contains('dp-trigger') ? prev : null)
+      || el?.closest('.dp-wrap')?.querySelector('.dp-trigger')
+      || _dpState[id]?.triggerEl;
     _dpState[id] = {
       ano: opts.ano || now.getFullYear(),
       mes: opts.mes || now.getMonth() + 1,
@@ -6482,7 +6485,14 @@
   }
 
   function dpToggle(id, event) {
-    if (event) event.stopPropagation();
+    if (event) {
+      event.stopPropagation();
+      // O clique sempre vem do .dp-trigger — re-resolve e guarda a
+      // referência aqui, para que o posicionamento funcione mesmo que o
+      // triggerEl salvo no dpInit esteja errado ou desatualizado.
+      const t = event.target?.closest?.('.dp-trigger');
+      if (t && _dpState[id]) _dpState[id].triggerEl = t;
+    }
     const el = document.getElementById(id);
     const isOpen = el.classList.contains('open');
     document.querySelectorAll('.dp-popup.open').forEach(p => p.classList.remove('open'));
